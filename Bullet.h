@@ -1,0 +1,22 @@
+#ifndef BULLET_H
+#define BULLET_H
+
+#include <SFML/Graphics.hpp>
+#include "Enemy.h"
+
+class Bullet {
+private:
+    sf::CircleShape shape;
+    sf::Vector2f velocity;
+    float lifetime;
+
+public:
+   Bullet(sf::Vector2f start, sf::Vector2f target);
+
+    void update(float dt);
+    void draw(sf::RenderWindow& window) const;
+    bool isDead() const;
+};
+
+#endif
+
