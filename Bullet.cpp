@@ -17,7 +17,7 @@ else
 }
 
 void Bullet::update(float dt) {
-    shape.move(velocity * dt);
+    shape.move(direction * speed * dt); //zmiana zmiennych
     lifetime -= dt;
 }
 
@@ -40,5 +40,6 @@ sf::Vector2f Bullet::getPosition() const {
 int Bullet::getDamage() const {
     return damage;
 }
+
 
 
