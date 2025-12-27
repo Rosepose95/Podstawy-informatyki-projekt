@@ -1,36 +1,34 @@
 #include "Tower.h"
 #include <cmath>
-
-Tower::Tower(int dmg, float x, float y)
-    : damage(dmg),
-    range(150.f),
-    cooldown(0.5f),
-    timeSinceLastShot(0.f)
-{
+Tower::Tower(int dmg, float x, float y) //zmiana inicjatora
+    : damage(dmg), cooldown(0.5f), timeSinceLastShot(0.f) {
     shape.setSize(sf::Vector2f(40.f, 40.f));
     shape.setFillColor(sf::Color::Blue);
-    shape.setPosition(sf::Vector2f(x, y));
+    shape.setPosition({ x, y });
 }
 
-
-void Tower::updateAttack(Enemy& enemy, float dt,
-    std::vector<Bullet>& bullets) {
-
+void Tower::updateAttack(Enemy& enemy, float dt, std::vector<Bullet>& bullets) { //zmiana, dodanie lepszej fizyki
     timeSinceLastShot += dt;
+
     if (timeSinceLastShot < cooldown)
         return;
 
-    sf::Vector2f start =
-        shape.getPosition() + shape.getSize() / 2.f;
+     sf::Vector2f towerPos = shape.getPosition() + shape.getSize() / 2.f;
+ sf::Vector2f enemyPos = enemy.getPosition();
 
-    bullets.emplace_back(start, enemy.getPosition());
+ float dx = enemyPos.x - towerPos.x;
+ float dy = enemyPos.y - towerPos.y;
+ float dist2 = dx * dx + dy * dy;
 
-    enemy.takeDamage(damage);
-    timeSinceLastShot = 0.f;
+ const float range = 200.f;
+
+ if (dist2 <= range * range) {
+     bullets.emplace_back(towerPos, enemyPos);
+     timeSinceLastShot = 0.f;
+ }
 }
-
-
 
 void Tower::draw(sf::RenderWindow& window) const {
     window.draw(shape);
 }
+
