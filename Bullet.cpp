@@ -1,8 +1,8 @@
 #include "Bullet.h"
 #include <cmath>
 
-Bullet::Bullet(sf::Vector2f start, sf::Vector2f target)
-    : lifetime(2.f) {
+Bullet::Bullet(sf::Vector2f start, sf::Vector2f target) //dodałam do konstruktora
+    : speed(300.f), lifetime(3.f), damage(20), dead(false) {
 
     shape.setRadius(4.f);
     shape.setFillColor(sf::Color::Black);
@@ -10,10 +10,10 @@ Bullet::Bullet(sf::Vector2f start, sf::Vector2f target)
 
     sf::Vector2f dir = target - start;
     float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
-    if (len != 0.f)
-        dir /= len;
-
-    velocity = dir * 300.f;
+    if (len != 0.f) //to zmieniłam
+    direction = dir / len;
+else
+    direction = { 0.f, 0.f };
 }
 
 void Bullet::update(float dt) {
@@ -25,6 +25,20 @@ void Bullet::draw(sf::RenderWindow& window) const {
     window.draw(shape);
 }
 
-bool Bullet::isDead() const {
-    return lifetime <= 0.f;
+bool Bullet::isDead() const { //dodałam parę metod, by pociski działały poprawnie
+    return dead || lifetime <= 0.f;
 }
+
+void Bullet::kill() {
+    dead = true;
+}
+
+sf::Vector2f Bullet::getPosition() const {
+    return shape.getPosition();
+}
+
+int Bullet::getDamage() const {
+    return damage;
+}
+
+
