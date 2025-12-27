@@ -13,7 +13,9 @@ int main() {
 
     Game game;
     Map map;    //
+    game.setMap(&map);
 
+    int ts = map.tileSize;
     game.addEnemy(Enemy(200, 0.f, 80.f));
     game.addEnemy(Enemy(300, 0.f, 720.f));  //pozmienialem pozycje zeby nie byly pomiedzy bloczkami 
     game.addEnemy(Enemy(200, 0.f, 80.f));
@@ -65,4 +67,5 @@ int main() {
 
     return 0;
 }
+
 
