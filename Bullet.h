@@ -2,7 +2,6 @@
 #define BULLET_H
 
 #include <SFML/Graphics.hpp>
-#include "Enemy.h"
 
 class Bullet {
 private:
@@ -26,5 +25,6 @@ public:
 };
 
 #endif
+
 
 
