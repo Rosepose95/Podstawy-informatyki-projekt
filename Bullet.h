@@ -7,8 +7,11 @@
 class Bullet {
 private:
     sf::CircleShape shape;
-    sf::Vector2f velocity;
+    sf::Vector2f direction;  //zmiana zmiennych 
+    float speed;
     float lifetime;
+    int damage;
+    bool dead;
 
 public:
    Bullet(sf::Vector2f start, sf::Vector2f target);
@@ -16,7 +19,12 @@ public:
     void update(float dt);
     void draw(sf::RenderWindow& window) const;
     bool isDead() const;
+
+    void kill();    //usuwanie użytych pocisków i ich pozycja
+    sf::Vector2f getPosition() const;
+    int getDamage() const;
 };
 
 #endif
+
 
