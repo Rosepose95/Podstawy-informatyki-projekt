@@ -18,7 +18,9 @@ public:
     void updateAttack(Enemy& enemy, float dt,
         std::vector<Bullet>& bullets);
     void draw(sf::RenderWindow& window) const;
+    sf::Vector2f getPosition() const;
 };
 
 #endif
+
 
