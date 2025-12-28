@@ -39,6 +39,9 @@ Map::Map() {
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
             grid[i][j] = layout[i][j];
+            if (layout[i][j] == '*') { //to istnieje by enemy wiedział gdzie ma iść
+                baseTile = { j, i };
+            }
         }
     }
 }
@@ -68,3 +71,4 @@ void Map::draw(sf::RenderWindow& window) {
         }
     }
 }
+
