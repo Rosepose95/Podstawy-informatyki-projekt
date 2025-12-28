@@ -1,19 +1,20 @@
 #include "Bullet.h"
 #include <cmath>
 
-Bullet::Bullet(sf::Vector2f start, sf::Vector2f target) //dodałam do konstruktora
+Bullet::Bullet(sf::Vector2f start, sf::Vector2f target)
     : speed(300.f), lifetime(3.f), damage(20), dead(false) {
 
-    shape.setRadius(4.f);
+    shape.setRadius(5.f);
     shape.setFillColor(sf::Color::Black);
     shape.setPosition(start);
 
     sf::Vector2f dir = target - start;
     float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
-    if (len != 0.f) //to zmieniłam
-    direction = dir / len;
-else
-    direction = { 0.f, 0.f };
+
+    if (len != 0.f)
+        direction = dir / len;
+    else
+        direction = { 0.f, 0.f };
 }
 
 void Bullet::update(float dt) {
@@ -40,6 +41,7 @@ sf::Vector2f Bullet::getPosition() const {
 int Bullet::getDamage() const {
     return damage;
 }
+
 
 
 
