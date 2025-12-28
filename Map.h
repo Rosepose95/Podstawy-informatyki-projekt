@@ -12,7 +12,7 @@ public:
     char getTile(int x, int y) const;
     int getWidth() const;
     int getHeight() const;
-
+    sf::Vector2i baseTile; //do pathingu
     int tileSize = 40; // Rozmiar kafelka (800/20 = 40, 640/16 = 40)
 
 private:
@@ -21,3 +21,4 @@ private:
 };
 
 #endif
+
