@@ -8,18 +8,31 @@ private:
     int health;
     sf::CircleShape shape;
     int maxHealth;  //życie
-public:
-    Enemy(int hp, float x, float y);
-    float getRadius() const;  //by znać średnicę
+    const Map* map; //do pathing
+    sf::Vector2i tilePos;
+    sf::Vector2i nextTile;
+    sf::Vector2i prevTile;
 
-    void move(float dx, float dy);
+    float speed;
+
+    sf::Vector2i findNextTile() const;
+    sf::Vector2f tileCenter(sf::Vector2i tile) const;
+public:
+    Enemy(int h, float startX, float startY); //zmiana metod i wektorów
+    bool reachedGoal() const;
+    void setMap(const Map* m);
+    void update(float dt);
+
     void takeDamage(int dmg);
     bool isDead() const;
-    int getMaxHealth() const;
 
-    void draw(sf::RenderWindow& window) const;
     sf::Vector2f getPosition() const;
+    float getRadius() const;
+    void setSpeed(float s) { speed = s; }
+
+    void draw(sf::RenderWindow& window) const
 };
 
 #endif
+
 
