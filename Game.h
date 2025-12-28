@@ -8,32 +8,58 @@
 #include "Bullet.h"
 #include "Map.h" //dodanie nagłówka
 
+struct WaveConfig { //kostrukcja do fal
+    int count;
+    int enemyHP;
+    float speed;
+    float spawnDelay;
+};
+
 class Game {
 private:
     std::vector<Enemy> enemies;
     std::vector<Tower> towers;
     std::vector<Bullet> bullets;
-    Map* map; //dodanie mapy by się wyświetlała
-
+    Map* map = nullptr; //zmiany by działała mapa, życia, fale i spawner
+    int playerLives = 20;
     int baseHP;
     bool gameOver;
+    // WAVES
+    int currentWave = 0;
+    int enemiesToSpawn = 0;
+    int enemiesAlive = 0;
+    WaveConfig currentWaveConfig;
+
+    float spawnTimer = 0.f;
+    float spawnDelay = 0.6f; // co ile sekund enemy
+
+     // UI
+    sf::Font font;
+    sf::Text livesText;
+    sf::Text waveText;
+    sf::Text enemiesText;
 
 public:
     Game();
+    void setMap(Map* m);  //ustawianie mapy i blokady stawiania wież i rozpoczęcie nowej fali
+    void addEnemy(Enemy enemy);
+    void startNextWave();
 
-    void addEnemy(const Enemy& e);
-    void addTower(const Tower& t);
+    void addTower(Tower tower);
     void placeTower(sf::Vector2f position);
-    void setMap(Map* m);  //ustawianie mapy
+    bool canPlaceTower(sf::Vector2f pos) const;
+   
 
     void update(float dt);
     void draw(sf::RenderWindow& window) const;
+    void drawUI(sf::RenderWindow& window) const; //do ui
 
     int getBaseHP() const;
     bool isGameOver() const;
 };
 
 #endif
+
 
 
 
