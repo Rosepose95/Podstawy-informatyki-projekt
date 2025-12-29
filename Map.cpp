@@ -39,9 +39,16 @@ Map::Map() {
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
             grid[i][j] = layout[i][j];
-            if (layout[i][j] == '*') { //to istnieje by enemy wiedział gdzie ma iść
+			if (layout[i][j] == '*') { // meta
                 baseTile = { j, i };
             }
+            if (layout[i][j] == '#') {
+                if (j == 0) { // lewa krawędź = spawn
+                    spawnPoints.push_back({ j, i });
+                }
+            }
+
+
         }
     }
 }
@@ -71,4 +78,5 @@ void Map::draw(sf::RenderWindow& window) {
         }
     }
 }
+
 
