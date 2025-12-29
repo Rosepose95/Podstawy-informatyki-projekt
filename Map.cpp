@@ -47,8 +47,16 @@ Map::Map() {
                     spawnPoints.push_back({ j, i });
                 }
             }
-
-
+            if (layout[i][j] == '#') {
+                if (i == 0) {   //respienie od gory
+                    spawnPoints.push_back({ j,i });
+                }
+            }
+            if (layout[i][j] == '#') {
+                if (i == 20) {     //respienie od dolu
+                    spawnPoints.push_back({ j,i });
+                }
+            }
         }
     }
 }
