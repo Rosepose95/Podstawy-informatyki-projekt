@@ -12,58 +12,60 @@ int main() {
     );
 
     Game game;
-    Map map;    //
+    Map map;
+
     game.setMap(&map);
-    game.startNextWave(); //nowa fala
+    game.startNextWave();
 
     int ts = map.tileSize;
-   game.addEnemy(
-    Enemy(
-        200,
-        0 * ts + ts / 2.f,
-        2 * ts + ts / 2.f
-    )
-);
+
+    game.addEnemy(
+        Enemy(
+            200,
+            0 * ts + ts / 2.f,
+            2 * ts + ts / 2.f
+        )
+    );
 
 
-// TOWER (na trawie) 
-game.addTower(
-    Tower(
-        20,
-        14 * ts + ts / 2.f,
-        11 * ts + ts / 2.f
-    )
-);
+    // TOWER (na trawie) 
+    game.addTower(
+        Tower(
+            20,
+            14 * ts + ts / 2.f,
+            11 * ts + ts / 2.f
+        )
+    );
 
     sf::Clock clock;
-     while (window.isOpen()) {
 
-     while (auto ev = window.pollEvent()) {
+    while (window.isOpen()) {
 
-         if (ev->is<sf::Event::Closed>()) {
-             window.close();
-         }
+        while (auto ev = window.pollEvent()) {
 
-         if (const auto* mouse =
-             ev->getIf<sf::Event::MouseButtonPressed>()) {
+            if (ev->is<sf::Event::Closed>()) {
+                window.close();
+            }
 
-             if (mouse->button == sf::Mouse::Button::Left) {
-                 sf::Vector2f worldPos =
-                     window.mapPixelToCoords(mouse->position);
-                 //zaokroglam aby wieze nie mozna bylo postawic pomiedzy kratkami
-                 int tileSize = map.tileSize;
-                 float tileX = static_cast<int>(worldPos.x) / tileSize;
-                 float tileY = static_cast<int>(worldPos.y) / tileSize;
-               //by było wyśrodkowane
-                 float centerX = tileX * tileSize + tileSize / 2.f;
-                 float centerY = tileY * tileSize + tileSize / 2.f;
+            if (const auto* mouse =
+                ev->getIf<sf::Event::MouseButtonPressed>()) {
 
-                 game.placeTower({ centerX, centerY });
-             }
-         }
-     }
+                if (mouse->button == sf::Mouse::Button::Left) {
+                    sf::Vector2f worldPos =
+                        window.mapPixelToCoords(mouse->position);
+                    //zaokroglam aby wieze nie mozna bylo postawic pomiedzy kratkami
+                    int tileSize = map.tileSize;
+                    float tileX = static_cast<int>(worldPos.x) / tileSize;
+                    float tileY = static_cast<int>(worldPos.y) / tileSize;
+                    //by było wyśrodkowane
+                    float centerX = tileX * tileSize + tileSize / 2.f;
+                    float centerY = tileY * tileSize + tileSize / 2.f;
 
-   
+                    game.placeTower({ centerX, centerY });
+                }
+            }
+        }
+
 
         float dt = clock.restart().asSeconds();
         game.update(dt);
@@ -72,12 +74,10 @@ game.addTower(
         map.draw(window);//
 
         game.draw(window);
-        game.drawUI(window); //dodatek ui
+        game.drawUI(window);  //dodatek ui
+
         window.display();
     }
 
     return 0;
 }
-
-
-
