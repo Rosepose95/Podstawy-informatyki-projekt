@@ -2,22 +2,48 @@
 #include <cmath>
 #include <algorithm>
 
-Enemy::Enemy(int h, float startX, float startY)
-    : health(h), maxHealth(h), speed(100.f) {    //dodatek życia
-    shape.setRadius(15.f);   //tuatj dużo zmian, radzę całość zmienić
-    shape.setOrigin({ 15.f, 15.f });
-    shape.setFillColor(sf::Color::Red);
-    shape.setPosition({ startX, startY });
-    tilePos = {
-     int(startX) / 40,
-     int(startY) / 40
-    };
+Enemy::Enemy(int h, float startX, float startY, EnemyType t)
+	: health(h), maxHealth(h), type(t) { //dodatek typu enemy i życia dla bossa
 
+    shape.setRadius(15.f);
+    shape.setOrigin({ 15.f, 15.f });
+
+    switch (type) {
+    case EnemyType::Normal:
+        speed = 100.f;
+        shape.setFillColor(sf::Color::Red);
+        break;
+
+    case EnemyType::Fast:
+        speed = 160.f;
+        shape.setFillColor(sf::Color::Yellow);
+        break;
+
+    case EnemyType::Tank:
+        speed = 60.f;
+        shape.setFillColor(sf::Color(150, 0, 0));
+        break;
+    case EnemyType::Boss:
+        speed = 40.f;
+        maxHealth = health = h * 5;
+        shape.setRadius(28.f);
+        shape.setOrigin({ 28.f, 28.f });
+        shape.setFillColor(sf::Color(80, 0, 120));
+        break;
+    }
+
+    shape.setPosition({ startX, startY });
+
+    tilePos = {
+        int(startX) / 40,
+        int(startY) / 40
+    };
     prevTile = tilePos;
     nextTile = tilePos;
-
 }
-void Enemy::setMap(const Map* m) {  //nowe fukcja do pathing
+
+
+void Enemy::setMap(const Map* m) { //nowe fukcja do pathing
     map = m;
     int ts = map->tileSize;
 
@@ -28,7 +54,8 @@ void Enemy::setMap(const Map* m) {  //nowe fukcja do pathing
     nextTile = findNextTile();
 
 }
-sf::Vector2i Enemy::findNextTile() const {   //
+
+sf::Vector2i Enemy::findNextTile() const {
     static const sf::Vector2i dirs[4] = {
         {1, 0}, {-1, 0}, {0, 1}, {0, -1}
     };
@@ -64,13 +91,13 @@ sf::Vector2i Enemy::findNextTile() const {   //
     return best;
 }
 
-bool Enemy::reachedGoal() const { //
+bool Enemy::reachedGoal() const {
     if (!map) return false;
     return map->getTile(tilePos.x, tilePos.y) == '*';
 }
 
 
-sf::Vector2f Enemy::tileCenter(sf::Vector2i tile) const {  //
+sf::Vector2f Enemy::tileCenter(sf::Vector2i tile) const {
     float ts = static_cast<float>(map->tileSize);
     return {
         tile.x * ts + ts / 2.f,
@@ -78,7 +105,7 @@ sf::Vector2f Enemy::tileCenter(sf::Vector2i tile) const {  //
     };
 }
 
-void Enemy::update(float dt) {  //
+void Enemy::update(float dt) {
     if (!map) return;
     if (reachedGoal()) return;
 
@@ -108,6 +135,7 @@ void Enemy::update(float dt) {  //
 }
 
 
+
 void Enemy::takeDamage(int dmg) { //zmiana
     health -= dmg;
     if (health < 0) health = 0;
@@ -116,6 +144,15 @@ void Enemy::takeDamage(int dmg) { //zmiana
 bool Enemy::isDead() const {
     return health <= 0;
 }
+
+sf::Vector2f Enemy::getPosition() const {
+    return shape.getPosition();
+}
+
+float Enemy::getRadius() const { //metody do paska
+    return shape.getRadius();
+}
+
 
 void Enemy::draw(sf::RenderWindow& window) const {
     window.draw(shape);
@@ -135,15 +172,6 @@ void Enemy::draw(sf::RenderWindow& window) const {
 
     window.draw(back);
     window.draw(hp);
-}
-
-
-sf::Vector2f Enemy::getPosition() const {
-    return shape.getPosition();
-}
-
-float Enemy::getRadius() const { //metody do paska
-    return shape.getRadius();
 }
 
 
