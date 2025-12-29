@@ -8,28 +8,42 @@ Game::Game()               //duże zmiany w konstruktorze, pamiętajcie o pobran
     : font()
     , waveText(font)
     , enemiesText(font)
+    , currentWaveConfig{}
     , livesText(font)
     , playerLives(20)
     , baseHP(100)
     , gameOver(false)
+    , GameOverText(font)
+    , NextWaveText(font)
 {
     font.openFromFile("assets/ArialMT.ttf");
 
     waveText.setCharacterSize(20);
     enemiesText.setCharacterSize(20);
     livesText.setCharacterSize(20);
+    GameOverText.setCharacterSize(60);
+    NextWaveText.setCharacterSize(60);
 
     waveText.setFillColor(sf::Color::Black);
     enemiesText.setFillColor(sf::Color::Black);
     livesText.setFillColor(sf::Color::Black);
+    GameOverText.setFillColor(sf::Color::Red);
+    NextWaveText.setFillColor(sf::Color::Green);
 
     waveText.setPosition({ 10.f, 20.f });
     enemiesText.setPosition({ 10.f, 40.f });
     livesText.setPosition({ 10.f, 55.f });
+    GameOverText.setPosition({280.f, 420.f});   
+    NextWaveText.setPosition({280.f, 420.f});    
+
+    GameOverText.setStyle(sf::Text::Bold | sf::Text::Italic);
+    NextWaveText.setStyle(sf::Text::Bold | sf::Text::Italic);
+
+    GameOverText.setString("GAME OVER");
 }
 
 void Game::addEnemy(Enemy enemy) {
-	enemy.setMap(map);   // bardzo ważne by nam się poruszał po mapie
+    enemy.setMap(map);   // bardzo ważne by nam się poruszał po mapie
     enemies.push_back(enemy);
 }
 
@@ -89,9 +103,23 @@ void Game::startNextWave() {   //nowe fale
 void Game::update(float dt) {   //bardzo dużo zmian, od fali po przeciwników i wieże
     if (gameOver)
         return;
-    // jeśli nie ma wrogów – nowa fala
+
+    if (waveInProgress && enemies.empty() && enemiesToSpawn == 0) {
+        waveInProgress = false;
+        waveBreakTimer = 0.f;
+    }
+
     if (!waveInProgress && enemies.empty() && enemiesToSpawn == 0) {
-        startNextWave();
+        waveBreakTimer += dt; //odliczamy przerwe
+        
+        NextWaveText.setString("Get ready for wave " + std::to_string(currentWave + 1));
+        NextWaveText.move(sf::Vector2f(330.f * dt, 0.f));
+
+        if (waveBreakTimer >= breakDuration) {
+            startNextWave();
+            waveBreakTimer = 0.f;
+            NextWaveText.setPosition(sf::Vector2f(280.f, 420.f));
+        }
     }
 
     // spawn
@@ -136,19 +164,19 @@ void Game::update(float dt) {   //bardzo dużo zmian, od fali po przeciwników i
     if (playerLives <= 0) {
         gameOver = true;
     }
-   
+
     // 1. RUCH PRZECIWNIKÓW
-    
+
     for (auto it = enemies.begin(); it != enemies.end(); ) {
         it->update(dt);
 
         if (it->reachedGoal()) {
             playerLives--;
-           
+
             it = enemies.erase(it);
         }
         else if (it->isDead()) {
- 
+
             it = enemies.erase(it);
         }
 
@@ -156,21 +184,21 @@ void Game::update(float dt) {   //bardzo dużo zmian, od fali po przeciwników i
             ++it;
         }
     }
-   
+
     // 2. ATAK WIEŻ (TWORZENIE BULLETÓW)
- 
+
     for (auto& t : towers) {
         t.updateAttack(enemies, dt, bullets);  // przekazujemy cały wektor
     }
-  
+
     // 3. UPDATE BULLETÓW
-    
+
     for (auto& b : bullets) {
         b.update(dt);
     }
 
     // 4. KOLIZJE BULLET <-> ENEMY 
- 
+
     for (auto& b : bullets) {
         for (auto& e : enemies) {
 
@@ -193,9 +221,9 @@ void Game::update(float dt) {   //bardzo dużo zmian, od fali po przeciwników i
             }
         }
     }
-   
+
     // 5. USUWANIE MARTWYCH BULLETÓW
-   
+
     bullets.erase(
         std::remove_if(bullets.begin(), bullets.end(),
             [](const Bullet& b) { return b.isDead(); }),
@@ -206,7 +234,7 @@ void Game::update(float dt) {   //bardzo dużo zmian, od fali po przeciwników i
     }
 
     updateUI();
-   
+
 }
 
 void Game::draw(sf::RenderWindow& window) const {
@@ -216,6 +244,14 @@ void Game::draw(sf::RenderWindow& window) const {
         e.draw(window);
     for (const auto& b : bullets)
         b.draw(window);
+
+    if (!waveInProgress && enemies.empty() && enemiesToSpawn == 0) {
+        window.draw(NextWaveText);
+    }
+
+    if (gameOver) {
+        window.draw(GameOverText);
+    }
 }
 
 int Game::getBaseHP() const {
@@ -258,5 +294,4 @@ bool Game::canPlaceTower(sf::Vector2f pos) const {
     char tile = map->getTile(tx, ty);
     return tile == '.';
 }
-
 
