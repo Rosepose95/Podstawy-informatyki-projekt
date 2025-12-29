@@ -12,13 +12,12 @@ public:
     char getTile(int x, int y) const;
     int getWidth() const;
     int getHeight() const;
-    sf::Vector2i baseTile; //do pathingu
+    sf::Vector2i baseTile;  //do pathingu
+	std::vector<sf::Vector2i> spawnPoints; //do spawnów
     int tileSize = 40; // Rozmiar kafelka (800/20 = 40, 640/16 = 40)
 
 private:
-
     std::vector<std::vector<char>> grid;
 };
 
 #endif
-
