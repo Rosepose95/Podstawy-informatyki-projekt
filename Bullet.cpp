@@ -1,8 +1,8 @@
 #include "Bullet.h"
 #include <cmath>
 
-Bullet::Bullet(sf::Vector2f start, sf::Vector2f target)
-    : speed(300.f), lifetime(3.f), damage(20), dead(false) {
+Bullet::Bullet(sf::Vector2f start, sf::Vector2f target, int dmg) //dodatek do konstruktora
+    : speed(300.f), lifetime(3.f), damage(dmg), dead(false) {
 
     shape.setRadius(5.f);
     shape.setFillColor(sf::Color::Black);
@@ -41,6 +41,8 @@ sf::Vector2f Bullet::getPosition() const {
 int Bullet::getDamage() const {
     return damage;
 }
+
+
 
 
 
