@@ -8,19 +8,26 @@
 class Tower {
 private:
     int damage;
-    float range;
-    sf::RectangleShape shape;
     float cooldown;
     float timeSinceLastShot;
+    int level;
+    float range;
+
+    sf::RectangleShape shape;
 
 public:
     Tower(int dmg, float x, float y);
-    void updateAttack(Enemy& enemy, float dt,
-        std::vector<Bullet>& bullets);
-    void draw(sf::RenderWindow& window) const;
+
+	void updateAttack(std::vector<Enemy>& enemies, float dt, std::vector<Bullet>& bullets);  //zmiana na referencje
+    void upgrade();
+
     sf::Vector2f getPosition() const;
+    void draw(sf::RenderWindow& window) const;
 };
 
+
 #endif
+
+
 
 
