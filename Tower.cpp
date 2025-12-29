@@ -1,34 +1,67 @@
 #include "Tower.h"
 #include <cmath>
+
 Tower::Tower(int dmg, float x, float y) //zmiana inicjatora
-    : damage(dmg), cooldown(0.5f), timeSinceLastShot(0.f) {
-    shape.setSize(sf::Vector2f(40.f, 40.f));
-    shape.setOrigin({ 20.f, 20.f }); 
+    : damage(dmg),
+    cooldown(0.5f),
+    timeSinceLastShot(0.f),
+    level(1),
+    range(150.f)
+{
+    shape.setSize({ 40.f, 40.f });
+    shape.setOrigin({ 20.f, 20.f });
     shape.setFillColor(sf::Color::Blue);
     shape.setPosition({ x, y });
 }
+
+
 sf::Vector2f Tower::getPosition() const { //nowa funkcja
     return shape.getPosition();
 }
-void Tower::updateAttack(Enemy& enemy, float dt, std::vector<Bullet>& bullets) { //zmiana, dodanie lepszej fizyki
+
+void Tower::updateAttack(      //zmiana, dodanie lepszej fizyki
+    std::vector<Enemy>& enemies,
+    float dt,
+    std::vector<Bullet>& bullets
+) {
     timeSinceLastShot += dt;
+
+    Enemy* target = nullptr;
+    float bestDist = range * range;
+
+    for (auto& e : enemies) {
+        if (e.isDead())
+            continue;
+
+        sf::Vector2f diff = e.getPosition() - shape.getPosition();
+        float dist2 = diff.x * diff.x + diff.y * diff.y;
+
+        if (dist2 <= bestDist) {
+            bestDist = dist2;
+            target = &e;
+        }
+    }
+
+    if (!target)
+        return;
 
     if (timeSinceLastShot < cooldown)
         return;
 
-     sf::Vector2f towerPos = shape.getPosition() + shape.getSize() / 2.f;
- sf::Vector2f enemyPos = enemy.getPosition();
+    timeSinceLastShot = 0.f;
 
- float dx = enemyPos.x - towerPos.x;
- float dy = enemyPos.y - towerPos.y;
- float dist2 = dx * dx + dy * dy;
+    bullets.emplace_back(
+        shape.getPosition(),
+        target->getPosition(),
+        damage
+    );
+}
 
- const float range = 200.f;
-
- if (dist2 <= range * range) {
-     bullets.emplace_back(towerPos, enemyPos);
-     timeSinceLastShot = 0.f;
- }
+void Tower::upgrade() {
+    level++;
+    damage += 10;
+    range += 20.f;
+    cooldown *= 0.85f;
 }
 
 void Tower::draw(sf::RenderWindow& window) const {
