@@ -1,12 +1,17 @@
 #include "Game.h"
 #include "Enemy.h"
-#include <algorithm> //dodatek bibliotek
-#include <cmath> 
-
-Game::Game()  //duże zmiany w konstruktorze, pamiętajcie o pobraniu foldera assets!!
-    : waveText(font),
-    enemiesText(font),
-    livesText(font)
+#include "Tower.h"     //dodatek bibliotek
+#include <algorithm>
+#include <cmath>
+#include "Map.h"
+Game::Game()               //duże zmiany w konstruktorze, pamiętajcie o pobraniu foldera assets!!
+    : font()
+    , waveText(font)
+    , enemiesText(font)
+    , livesText(font)
+    , playerLives(20)
+    , baseHP(100)
+    , gameOver(false)
 {
     font.openFromFile("assets/ArialMT.ttf");
 
@@ -18,8 +23,8 @@ Game::Game()  //duże zmiany w konstruktorze, pamiętajcie o pobraniu foldera as
     enemiesText.setFillColor(sf::Color::Black);
     livesText.setFillColor(sf::Color::Black);
 
-    waveText.setPosition({ 10.f, 5.f });
-    enemiesText.setPosition({ 10.f, 30.f });
+    waveText.setPosition({ 10.f, 20.f });
+    enemiesText.setPosition({ 10.f, 40.f });
     livesText.setPosition({ 10.f, 55.f });
 }
 
@@ -28,15 +33,16 @@ void Game::addEnemy(Enemy enemy) {
     enemies.push_back(enemy);
 }
 
-void Game::addTower(const Tower& t) {
-    towers.push_back(t);
+void Game::addTower(Tower tower) {
+    towers.push_back(tower);
 }
-void Game::placeTower(sf::Vector2f position) {  //by wieże trzymały się trawy
+
+
+void Game::placeTower(sf::Vector2f position) {   //by wieże trzymały się trawy
     if (!map) return;
 
-    int gridX = position.x / map->tileSize;
-    int gridY = position.y / map->tileSize;
-
+    int gridX = static_cast<int>(position.x / map->tileSize);
+    int gridY = static_cast<int>(position.y / map->tileSize);
 
     if (gridX < 0 || gridY < 0 ||
         gridX >= map->getWidth() ||
@@ -48,38 +54,43 @@ void Game::placeTower(sf::Vector2f position) {  //by wieże trzymały się trawy
 
     for (const auto& t : towers) {
         sf::Vector2f pos = t.getPosition();
-        int tx = pos.x / map->tileSize;
-        int ty = pos.y / map->tileSize;
+        int tx = static_cast<int>(pos.x / map->tileSize);
+        int ty = static_cast<int>(pos.y / map->tileSize);
 
         if (tx == gridX && ty == gridY)
             return;
     }
 
-    float ts = map->tileSize;
-    float centerX = gridX * ts + ts / 2.f;
-    float centerY = gridY * ts + ts / 2.f;
+    float tsF = static_cast<float>(map->tileSize);
+    float centerX = gridX * tsF + tsF / 2.f;
+    float centerY = gridY * tsF + tsF / 2.f;
 
     towers.emplace_back(20, centerX, centerY);
-}
-void Game::startNextWave() {  //nowe fale
-    currentWave++;
 
-    currentWaveConfig.count = 5 + currentWave * 3;
-    currentWaveConfig.enemyHP = 100 + currentWave * 30;
-    currentWaveConfig.speed = 80.f + currentWave * 5.f;
-    currentWaveConfig.spawnDelay = std::max(0.25f, 0.7f - currentWave * 0.03f);
+}
+
+void Game::startNextWave() {   //nowe fale
+    currentWave++;
+    waveInProgress = true;
+
+    // co 5 fala = boss
+    isBossWave = (currentWave % 5 == 0);
+
+    currentWaveConfig.count = isBossWave ? 1 : (3 + currentWave);
+    currentWaveConfig.enemyHP = isBossWave ? 600 : (30 + currentWave * 30);
+    currentWaveConfig.speed = isBossWave ? 60.f : (100.f + currentWave * 2.f);
 
     enemiesToSpawn = currentWaveConfig.count;
-    enemiesAlive = enemiesToSpawn;
 
+    spawnDelay = isBossWave ? 1.2f : std::max(0.25f, 0.7f - currentWave * 0.03f);
     spawnTimer = 0.f;
 }
 
-void Game::update(float dt) {  //bardzo dużo zmian, od fali po przeciwników i wieże
+void Game::update(float dt) {   //bardzo dużo zmian, od fali po przeciwników i wieże
     if (gameOver)
         return;
     // jeśli nie ma wrogów – nowa fala
-    if (enemiesAlive == 0 && enemiesToSpawn == 0) {
+    if (!waveInProgress && enemies.empty() && enemiesToSpawn == 0) {
         startNextWave();
     }
 
@@ -92,24 +103,39 @@ void Game::update(float dt) {  //bardzo dużo zmian, od fali po przeciwników i 
 
             int ts = map->tileSize;
 
-            enemies.emplace_back(
-                currentWaveConfig.enemyHP,
-                0 * ts + ts / 2.f,
-                2 * ts + ts / 2.f
-            );
+            EnemyType type = EnemyType::Normal;
+
+            if (isBossWave) {
+                type = EnemyType::Boss;
+            }
+            else {
+                if (currentWave >= 3 && rand() % 3 == 0)
+                    type = EnemyType::Fast;
+
+                if (currentWave >= 5 && rand() % 5 == 0)
+                    type = EnemyType::Tank;
+            }
+
+            auto& spawns = map->spawnPoints;
+            sf::Vector2i spawnTile = spawns[rand() % spawns.size()];
+
+            float spawnX = static_cast<float>(spawnTile.x * ts + ts / 2);
+            float spawnY = static_cast<float>(spawnTile.y * ts + ts / 2);
+
+            enemies.emplace_back(currentWaveConfig.enemyHP, spawnX, spawnY, type);
+
 
             enemies.back().setMap(map);
             enemies.back().setSpeed(currentWaveConfig.speed);
 
-
             enemiesToSpawn--;
         }
     }
+
+
     if (playerLives <= 0) {
         gameOver = true;
     }
-
-
    
     // 1. RUCH PRZECIWNIKÓW
     
@@ -118,11 +144,11 @@ void Game::update(float dt) {  //bardzo dużo zmian, od fali po przeciwników i 
 
         if (it->reachedGoal()) {
             playerLives--;
-            enemiesAlive--;
+           
             it = enemies.erase(it);
         }
         else if (it->isDead()) {
-            enemiesAlive--;
+ 
             it = enemies.erase(it);
         }
 
@@ -130,22 +156,12 @@ void Game::update(float dt) {  //bardzo dużo zmian, od fali po przeciwników i 
             ++it;
         }
     }
-
-
-
-
    
     // 2. ATAK WIEŻ (TWORZENIE BULLETÓW)
  
     for (auto& t : towers) {
-        for (auto& e : enemies) {
-            if (!e.isDead()) {
-                t.updateAttack(e, dt, bullets);
-                break;
-            }
-        }
+        t.updateAttack(enemies, dt, bullets);  // przekazujemy cały wektor
     }
-
   
     // 3. UPDATE BULLETÓW
     
@@ -177,7 +193,6 @@ void Game::update(float dt) {  //bardzo dużo zmian, od fali po przeciwników i 
             }
         }
     }
-
    
     // 5. USUWANIE MARTWYCH BULLETÓW
    
@@ -186,16 +201,19 @@ void Game::update(float dt) {  //bardzo dużo zmian, od fali po przeciwników i 
             [](const Bullet& b) { return b.isDead(); }),
         bullets.end()
     );
+    if (waveInProgress && enemies.empty() && enemiesToSpawn == 0) {
+        waveInProgress = false;
+    }
+
+    updateUI();
    
 }
-    
-void Game::draw(sf::RenderWindow& window) const {
-    for (const auto& e : enemies)
-        e.draw(window);
 
+void Game::draw(sf::RenderWindow& window) const {
     for (const auto& t : towers)
         t.draw(window);
-
+    for (const auto& e : enemies)
+        e.draw(window);
     for (const auto& b : bullets)
         b.draw(window);
 }
@@ -207,17 +225,38 @@ int Game::getBaseHP() const {
 bool Game::isGameOver() const {
     return gameOver;
 }
-void Game::setMap(Map* m) { //nowa metoda do mapy
+void Game::setMap(Map* m) {  //nowa metoda do mapy
     map = m;
 }
-void Game::drawUI(sf::RenderWindow& window) const {  /*nowa funkcja do ui :)*/
+void Game::drawUI(sf::RenderWindow& window) const {
+    window.draw(waveText);
+    window.draw(enemiesText);
 
-    //LIVES
     for (int i = 0; i < playerLives; ++i) {
         sf::CircleShape life(6.f);
         life.setFillColor(sf::Color::Red);
         life.setPosition({ 10.f + i * 15.f, 10.f });
         window.draw(life);
     }
+}
+void Game::updateUI() {  //teksty do UI
+    waveText.setString(
+        "Wave: " + std::to_string(currentWave)
+    );
+
+    enemiesText.setString(
+        "Enemies: " + std::to_string(enemies.size() + enemiesToSpawn)
+    );
+}
+
+bool Game::canPlaceTower(sf::Vector2f pos) const {
+    if (!map) return false;
+
+    int tx = pos.x / map->tileSize;
+    int ty = pos.y / map->tileSize;
+
+    char tile = map->getTile(tx, ty);
+    return tile == '.';
+}
 
 
