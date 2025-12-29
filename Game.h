@@ -24,6 +24,7 @@ private:
     int playerLives = 20;
     int baseHP;
     bool gameOver;
+
     // WAVES
     int currentWave = 0;
     int enemiesToSpawn = 0;
@@ -36,6 +37,11 @@ private:
     sf::Text waveText;
     sf::Text enemiesText;
     sf::Text livesText;
+    sf::Text GameOverText; //
+    sf::Text NextWaveText; //
+
+    float waveBreakTimer = 0.f;
+    const float breakDuration = 3.0f; // 3 sekundy przerwy między falami aby wyswietlic tekst
 
     bool isBossWave = false;
     bool waveInProgress = false;
@@ -61,9 +67,3 @@ public:
 };
 
 #endif
-
-
-
-
-
-
