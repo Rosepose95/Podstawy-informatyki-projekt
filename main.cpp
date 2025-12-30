@@ -1,4 +1,4 @@
-#include <SFML/Graphics.hpp>#include <SFML/Graphics.hpp>
+#include <SFML/Graphics.hpp>
 #include "Game.h"
 #include "Enemy.h"
 #include "Tower.h"
@@ -48,6 +48,9 @@ int main() {
                             Tower(20, 14 * ts + ts / 2.f, 11 * ts + ts / 2.f));
 
                     }
+                    else if (menu.isExitClicked(mousepos)) {    //zamkneicie jesli exit jest klikniete
+                        window.close();
+                    }
                 }
             }
 
@@ -91,5 +94,4 @@ int main() {
 
     return 0;
 }
-
 
