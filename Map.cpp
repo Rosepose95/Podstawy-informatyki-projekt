@@ -39,24 +39,15 @@ Map::Map() {
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
             grid[i][j] = layout[i][j];
-			if (layout[i][j] == '*') { // meta
+            if (layout[i][j] == '*') { // meta
                 baseTile = { j, i };
             }
-            if (layout[i][j] == '#') {
-                if (j == 0) { // lewa krawędź = spawn
+            if (layout[i][j] == '#') {  //można to w sumie w jedneym ifie zrobić 
+                if (j == 0 || i == 0 || i == rows - 1) {
                     spawnPoints.push_back({ j, i });
                 }
             }
-            if (layout[i][j] == '#') {
-                if (i == 0) {   //respienie od gory
-                    spawnPoints.push_back({ j,i });
-                }
-            }
-            if (layout[i][j] == '#') {
-                if (i == 20) {     //respienie od dolu
-                    spawnPoints.push_back({ j,i });
-                }
-            }
+
         }
     }
 }
