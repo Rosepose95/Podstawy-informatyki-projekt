@@ -48,7 +48,7 @@ int main() {
                             Tower(20, 14 * ts + ts / 2.f, 11 * ts + ts / 2.f));
 
                     }
-                    else if (menu.isExitClicked(mousepos)) {    //zamkneicie jesli exit jest klikniete
+                    else if (menu.isExitClicked(mousepos)) {    //zamkneicie jesli exit jest kliknete
                         window.close();
                     }
                 }
@@ -75,7 +75,10 @@ int main() {
 
 
         float dt = clock.restart().asSeconds();
-        game.update(dt);
+        if (!isMenuOpen) {
+
+            game.update(dt);
+        }
 
         window.clear(sf::Color::White);
 
