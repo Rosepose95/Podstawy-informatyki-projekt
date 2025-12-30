@@ -8,15 +8,16 @@ Game::Game()               //duże zmiany w konstruktorze, pamiętajcie o pobran
     : font()
     , waveText(font)
     , enemiesText(font)
-    , currentWaveConfig{}
     , livesText(font)
+    , GameOverText(font)
+    , NextWaveText(font)
     , playerLives(20)
     , baseHP(100)
     , gameOver(false)
-    , GameOverText(font)
-    , NextWaveText(font)
 {
-    font.openFromFile("assets/ArialMT.ttf");
+    if (!font.openFromFile("assets/ArialMT.ttf")) {
+        throw std::runtime_error("Nie można wczytać czcionki");
+    }
 
     waveText.setCharacterSize(20);
     enemiesText.setCharacterSize(20);
@@ -30,18 +31,17 @@ Game::Game()               //duże zmiany w konstruktorze, pamiętajcie o pobran
     GameOverText.setFillColor(sf::Color::Red);
     NextWaveText.setFillColor(sf::Color::Green);
 
-    waveText.setPosition({ 10.f, 20.f });
-    enemiesText.setPosition({ 10.f, 40.f });
-    livesText.setPosition({ 10.f, 55.f });
-    GameOverText.setPosition({280.f, 420.f});   
-    NextWaveText.setPosition({280.f, 420.f});    
+    waveText.setPosition(sf::Vector2f{ 10.f, 20.f });
+    enemiesText.setPosition(sf::Vector2f{ 10.f, 40.f });
+    livesText.setPosition(sf::Vector2f{ 10.f, 55.f });
+    GameOverText.setPosition(sf::Vector2f{ 280.f, 420.f });
+    NextWaveText.setPosition(sf::Vector2f{ 280.f, 420.f });
 
     GameOverText.setStyle(sf::Text::Bold | sf::Text::Italic);
     NextWaveText.setStyle(sf::Text::Bold | sf::Text::Italic);
 
     GameOverText.setString("GAME OVER");
 }
-
 void Game::addEnemy(Enemy enemy) {
     enemy.setMap(map);   // bardzo ważne by nam się poruszał po mapie
     enemies.push_back(enemy);
@@ -90,7 +90,7 @@ void Game::startNextWave() {   //nowe fale
     // co 5 fala = boss
     isBossWave = (currentWave % 5 == 0);
 
-    currentWaveConfig.count = isBossWave ? 1 : (3 + currentWave);
+    currentWaveConfig.count = isBossWave ? 1 : (6 + currentWave);
     currentWaveConfig.enemyHP = isBossWave ? 600 : (30 + currentWave * 30);
     currentWaveConfig.speed = isBossWave ? 60.f : (100.f + currentWave * 2.f);
 
@@ -110,15 +110,21 @@ void Game::update(float dt) {   //bardzo dużo zmian, od fali po przeciwników i
     }
 
     if (!waveInProgress && enemies.empty() && enemiesToSpawn == 0) {
-        waveBreakTimer += dt; //odliczamy przerwe
-        
-        NextWaveText.setString("Get ready for wave " + std::to_string(currentWave + 1));
-        NextWaveText.move(sf::Vector2f(330.f * dt, 0.f));
 
+        if (waveBreakTimer == 0.f) {
+            NextWaveText.setPosition(sf::Vector2f{ -600.f, 420.f }); // start poza ekranem
+            NextWaveText.setString(
+                "Get ready for wave " + std::to_string(currentWave + 1)
+            );
+        }
+
+        waveBreakTimer += dt;
+
+        //SLIDER
+		NextWaveText.move(sf::Vector2f(600.f * dt, 0.f));  //poprawiłem przesuwanie tekstu
         if (waveBreakTimer >= breakDuration) {
             startNextWave();
             waveBreakTimer = 0.f;
-            NextWaveText.setPosition(sf::Vector2f(280.f, 420.f));
         }
     }
 
@@ -229,9 +235,6 @@ void Game::update(float dt) {   //bardzo dużo zmian, od fali po przeciwników i
             [](const Bullet& b) { return b.isDead(); }),
         bullets.end()
     );
-    if (waveInProgress && enemies.empty() && enemiesToSpawn == 0) {
-        waveInProgress = false;
-    }
 
     updateUI();
 
@@ -275,7 +278,8 @@ void Game::drawUI(sf::RenderWindow& window) const {
         window.draw(life);
     }
 }
-void Game::updateUI() {  //teksty do UI
+
+void Game::updateUI() {
     waveText.setString(
         "Wave: " + std::to_string(currentWave)
     );
@@ -284,6 +288,7 @@ void Game::updateUI() {  //teksty do UI
         "Enemies: " + std::to_string(enemies.size() + enemiesToSpawn)
     );
 }
+
 
 bool Game::canPlaceTower(sf::Vector2f pos) const {
     if (!map) return false;
@@ -294,4 +299,6 @@ bool Game::canPlaceTower(sf::Vector2f pos) const {
     char tile = map->getTile(tx, ty);
     return tile == '.';
 }
+
+
 
