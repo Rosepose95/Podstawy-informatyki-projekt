@@ -1,8 +1,8 @@
+#ifndef MENU_H
+#define MENU_H
 #include <SFML/Graphics.hpp>
 
 class Menu {
-
-
 private:
 
 	sf::Text title;
@@ -18,3 +18,4 @@ public:
 	void handleHover(sf::Vector2i mousepos);	//podswietlanie jak sie najedzie
 
 };
+#endif
