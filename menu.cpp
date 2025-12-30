@@ -5,13 +5,15 @@
 Menu::Menu(float width, float height, sf::Font& arial)
 	: title(arial)
 	, startText(arial)
+	, exitText(arial)
 	, backgroundSpirite(backgroundTexture)
 { 
 	if (!backgroundTexture.loadFromFile("assets/menugraf.png")) {
 		std::cout << "Nie zaladowalo tla" <<std::endl;
 	}
+
 	//tlo
-	backgroundSpirite.setTexture(backgroundTexture);
+	backgroundSpirite.setTexture(backgroundTexture, true);
 	sf::Vector2u texturesize = backgroundTexture.getSize();
 	float scalex = width / (float)texturesize.x;
 	float scaley = height / (float)texturesize.y;
@@ -29,28 +31,48 @@ Menu::Menu(float width, float height, sf::Font& arial)
 		title.setOrigin({ b.position.x + b.size.x / 2.f, b.position.y + b.size.y / 2.f });
 		title.setPosition({ width / 2.f, height* 0.25f });
 
-		startButton.setSize({ 250.f, 70.f });	//wielokosc przycisku
+		//przycisk startButton
+		startButton.setSize({ 250.f, 70.f });	
 		startButton.setOutlineThickness(3.f);
 		startButton.setOutlineColor(sf::Color::Black);
 
-		//wysrodkowanie guzika
+		//przycisk exitButton
+		exitButton.setSize({ 250.f, 70.f });	
+		exitButton.setOutlineThickness(3.f);
+		exitButton.setOutlineColor(sf::Color::Black);
+
+		//wysrodkowanie guzika startButton
 		auto c = startButton.getLocalBounds();
 		startButton.setOrigin({ c.position.x + c.size.x / 2.f, c.position.y + c.size.y / 2.f });
 		startButton.setPosition({ width / 2.f, height / 2.f });
 
+		//wysrodkowanie guzika exitButton
+		auto d = exitButton.getLocalBounds();
+		exitButton.setOrigin({ d.position.x + d.size.x / 2.f, d.position.y + d.size.y / 2.f });
+		exitButton.setPosition({ width / 2.f, height * 0.65f });
 
-	//tekst na przycisku
+
+	//tekst na przycisku startButton
 	startText.setString("START");
 	startText.setCharacterSize(40);
 	startText.setFillColor(sf::Color::White);
 	startText.setStyle(sf::Text::Bold);
 
+	//tekst na przycisku exitButton
+	exitText.setString("EXIT");
+	exitText.setCharacterSize(40);
+	exitText.setFillColor(sf::Color::White);
+	exitText.setStyle(sf::Text::Bold);
 
-
-	//wysrodkowanie napisu na guziku
-	auto d = startText.getLocalBounds();
-	startText.setOrigin({ d.position.x + d.size.x / 2.f, d.position.y + d.size.y / 2.f });
+	//wysrodkowanie napisu na guziku startButton
+	auto e = startText.getLocalBounds();
+	startText.setOrigin({ e.position.x + e.size.x / 2.f, e.position.y + e.size.y / 2.f });
 	startText.setPosition({ width / 2.f, height / 2.f });
+
+	//wysrodkowanie napisu na guziku exitButton
+	auto f = exitText.getLocalBounds();
+	exitText.setOrigin({ f.position.x + f.size.x / 2.f, f.position.y + f.size.y / 2.f });
+	exitText.setPosition({ width / 2.f, height * 0.65f });
 
 }
 void Menu::draw(sf::RenderWindow& window) {
@@ -58,20 +80,34 @@ void Menu::draw(sf::RenderWindow& window) {
 	window.draw(startButton);
 	window.draw(startText);
 	window.draw(title);
+	window.draw(exitButton);
+	window.draw(exitText);
 }
 void Menu::handleHover(sf::Vector2i mousepos){
 	sf::Vector2f mousePosF((int)mousepos.x, (int)mousepos.y);
 	
-	//zmiana koloru po najechaniu
+	//zmiana koloru po najechaniu startButton
 	if (startButton.getGlobalBounds().contains(mousePosF)) {
 		startButton.setFillColor(sf::Color::Cyan);
 	}
 	else {//jesli myszka nie jest na nim podstawowy kolor
 		startButton.setFillColor(sf::Color::Blue);
 	}
+
+	if (exitButton.getGlobalBounds().contains(mousePosF)) {
+		exitButton.setFillColor(sf::Color::Cyan);
+	}
+	else {
+		exitButton.setFillColor(sf::Color::Blue);
+	}
 }
 bool Menu::isStartClicked(sf::Vector2i mousepos) {
 	sf::Vector2f mousePosF((int)mousepos.x, (int)mousepos.y);
 
 	return startButton.getGlobalBounds().contains(mousePosF) && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left);
+}
+bool Menu::isExitClicked(sf::Vector2i mousepos) {
+	sf::Vector2f mousePosF((int)mousepos.x, (int)mousepos.y);
+
+	return exitButton.getGlobalBounds().contains(mousePosF) && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left);
 }
