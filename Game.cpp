@@ -46,6 +46,30 @@ void Game::addEnemy(Enemy enemy) {
     enemy.setMap(map);   // bardzo ważne by nam się poruszał po mapie
     enemies.push_back(enemy);
 }
+void Game::startGame() {
+    // reset przeciwników i pocisków
+    enemies.clear();
+    bullets.clear();
+    towers.clear();
+
+    // reset fal
+    currentWave = 0;
+    enemiesToSpawn = 0;
+    waveInProgress = false;
+    isBossWave = false;
+
+    // reset stanu gracza
+    playerLives = 20;
+    gameOver = false;
+
+    // reset timerów
+    spawnTimer = 0.f;
+    waveBreakTimer = 0.f;
+
+    // ustawienie slidera fali poza ekranem
+    NextWaveText.setPosition({ -600.f, 420.f });
+}
+
 
 void Game::addTower(Tower tower) {
     towers.push_back(tower);
@@ -108,11 +132,12 @@ void Game::update(float dt) {   //bardzo dużo zmian, od fali po przeciwników i
         waveInProgress = false;
         waveBreakTimer = 0.f;
     }
-
+    // jeżeli fala się skończyła i nie ma przeciwników
     if (!waveInProgress && enemies.empty() && enemiesToSpawn == 0) {
 
+        // ustawiamy slider tylko RAZ na początku przerwy
         if (waveBreakTimer == 0.f) {
-            NextWaveText.setPosition(sf::Vector2f{ -600.f, 420.f }); // start poza ekranem
+            NextWaveText.setPosition(sf::Vector2f{ -600.f, 420.f });
             NextWaveText.setString(
                 "Get ready for wave " + std::to_string(currentWave + 1)
             );
@@ -120,13 +145,17 @@ void Game::update(float dt) {   //bardzo dużo zmian, od fali po przeciwników i
 
         waveBreakTimer += dt;
 
-        //SLIDER
-		NextWaveText.move(sf::Vector2f(600.f * dt, 0.f));  //poprawiłem przesuwanie tekstu
+        // animacja przesuwania tekstu
+        NextWaveText.move(sf::Vector2f(600.f * dt, 0.f));
+
+        // po przerwie start nowej fali
         if (waveBreakTimer >= breakDuration) {
             startNextWave();
             waveBreakTimer = 0.f;
         }
     }
+
+    
 
     // spawn
     if (enemiesToSpawn > 0) {
@@ -299,6 +328,4 @@ bool Game::canPlaceTower(sf::Vector2f pos) const {
     char tile = map->getTile(tx, ty);
     return tile == '.';
 }
-
-
 
