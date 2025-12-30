@@ -53,7 +53,7 @@ public:
     void addEnemy(Enemy enemy);
     void startNextWave();
     void updateUI();
-
+    void startGame();
     void addTower(Tower tower);
     void placeTower(sf::Vector2f position);
     bool canPlaceTower(sf::Vector2f pos) const;
@@ -67,3 +67,4 @@ public:
 };
 
 #endif
+
