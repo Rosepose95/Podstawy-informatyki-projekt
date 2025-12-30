@@ -17,9 +17,11 @@ Bullet::Bullet(sf::Vector2f start, sf::Vector2f target, int dmg) //dodatek do ko
         direction = { 0.f, 0.f };
 }
 
-void Bullet::update(float dt) {
-    shape.move(direction * speed * dt); //zmiana zmiennych
-    lifetime -= dt;
+
+void Bullet::update(float dt) { //by uniknąć jakiś dziwnych błędów pocisków
+    if (dead) return;
+    shape.move(direction * speed * dt);
+    lifetime -= dt;  
 }
 
 void Bullet::draw(sf::RenderWindow& window) const {
@@ -41,6 +43,7 @@ sf::Vector2f Bullet::getPosition() const {
 int Bullet::getDamage() const {
     return damage;
 }
+
 
 
 
