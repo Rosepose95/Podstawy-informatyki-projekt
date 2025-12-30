@@ -43,9 +43,6 @@ int main() {
                         game.startNextWave();
                         int ts = map.tileSize;
 
-                        game.addEnemy(
-                            Enemy(200, 0 * ts + ts / 2.f, 2 * ts + ts / 2.f));
-
                         //TOWER (na trawie) 
                         game.addTower(
                             Tower(20, 14 * ts + ts / 2.f, 11 * ts + ts / 2.f));
@@ -94,4 +91,5 @@ int main() {
 
     return 0;
 }
+
 
