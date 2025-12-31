@@ -13,7 +13,6 @@ enum class GameState {
     PAUSED
 };
 
-
 int main() {
     sf::RenderWindow window(
         sf::VideoMode({ 1240,840 }),
@@ -32,9 +31,12 @@ int main() {
     // aktualny stan gry
     GameState state = GameState::MENU;
 
+    // stan, na który przejdziemy po animacji
+    GameState nextState = GameState::PLAYING;
+
     sf::Clock clock;
 
-    // ===== zmienne do animacji przycisku pauzy =====
+    // zmienne do animacji przycisku pauzy 
     bool pauseClicked = false;
     sf::Clock clickClock;
     float clickDuration = 0.1f; // czas trwania animacji w sekundach
@@ -44,11 +46,23 @@ int main() {
     pauseButton.setFillColor(sf::Color(200, 200, 200));
     pauseButton.setPosition({ 1240.f - 50.f, 10.f });
 
-    sf::Text pauseText(font);
-    pauseText.setString("||");
-    pauseText.setCharacterSize(24);
-    pauseText.setFillColor(sf::Color::Black);
-    pauseText.setPosition({ 1240.f - 40.f, 12.f });
+    sf::Texture pauseTexture;
+    pauseTexture.loadFromFile("assets/pauseButton.png");  //pamiętajcie pobrać zdjęcia trzeba
+
+    sf::Sprite pauseIcon(pauseTexture);
+    pauseIcon.setScale({ 0.8f, 0.8f });
+    pauseIcon.setPosition({ 1240.f - 46.f, 14.f });
+
+    sf::Texture playTexture;
+    playTexture.loadFromFile("assets/playButton.png");
+
+    sf::Sprite playIcon(playTexture);
+    playIcon.setScale({ 0.8f, 0.8f });
+    playIcon.setPosition({ 1240.f - 46.f, 14.f });
+
+    sf::RectangleShape pauseOverlay({ 1240.f, 840.f });
+    pauseOverlay.setFillColor(sf::Color(0, 0, 0, 150)); // półprzezroczyste
+
     sf::Color pauseNormal(200, 200, 200);
     sf::Color pauseHover(170, 170, 170);
 
@@ -62,19 +76,28 @@ int main() {
                 window.close();
             }
 
-            // ===== kliknięcie przycisku pauzy =====
-            if (state == GameState::PLAYING) {
+            // kliknięcie przycisku pauzy
+            if (state != GameState::MENU) {
                 if (const auto* mousePressed = ev->getIf<sf::Event::MouseButtonPressed>()) {
                     if (mousePressed->button == sf::Mouse::Button::Left) {
-                        sf::Vector2f clickPos = window.mapPixelToCoords(mousePressed->position);
+
+                        sf::Vector2f clickPos =
+                            window.mapPixelToCoords(mousePressed->position);
+
                         if (pauseButton.getGlobalBounds().contains(clickPos)) {
+
                             pauseClicked = true;
                             clickClock.restart();
+
+                            // zapamiętujemy co ma się stać po animacji
+                            if (state == GameState::PLAYING)
+                                nextState = GameState::PAUSED;
+                            else
+                                nextState = GameState::PLAYING;
                         }
                     }
                 }
             }
-
 
             // MENU GŁÓWNE
             if (state == GameState::MENU) {
@@ -82,7 +105,6 @@ int main() {
                     if (menu.isStartClicked(mousepos)) {
                         state = GameState::PLAYING;
                         game.startGame();
-                        game.startNextWave();
                         int ts = map.tileSize;
 
                         // STARTOWA WIEŻA
@@ -100,19 +122,21 @@ int main() {
 
             else if (state == GameState::PLAYING) {
 
-                /*// PAUZA - ESC
-                if (ev->is<sf::Event::KeyPressed>()) {
-                    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) {
-                        state = GameState::PAUSED;
-                    }
-                }*/
-
                 // STAWIANIE WIEŻ
                 if (const auto* mouse =
                     ev->getIf<sf::Event::MouseButtonPressed>()) {
 
                     if (mouse->button == sf::Mouse::Button::Left) {
 
+                        sf::Vector2f clickPos =
+                            window.mapPixelToCoords(mouse->position);
+
+                        // jeżeli kliknęliśmy przycisk pauzy – NIE stawiamy wieży
+                        if (pauseButton.getGlobalBounds().contains(clickPos)) {
+                            continue;
+                        }
+
+                        // normalne stawianie wieży
                         sf::Vector2f worldPos =
                             window.mapPixelToCoords(mouse->position);
 
@@ -137,15 +161,14 @@ int main() {
                         state = GameState::PLAYING;
                     }
                     else if (pauseMenu.restartClicked(mousepos)) {
-                        game.startGame();
-                        game.startNextWave();
-
+                        game.startGame();        // zresetuj grę
                         int ts = map.tileSize;
-                        game.addTower(Tower(20, 14 * ts + ts / 2.f, 11 * ts + ts / 2.f));
+                        game.addTower(
+                            Tower(20, 14 * ts + ts / 2.f, 11 * ts + ts / 2.f)
+                        );
 
                         state = GameState::PLAYING;
                     }
-
                     else if (pauseMenu.menuClicked(mousepos)) {
                         state = GameState::MENU;
                     }
@@ -163,7 +186,10 @@ int main() {
         if (!pauseClicked) {
             pauseButton.setFillColor(
                 pauseButton.getGlobalBounds().contains(
-                    sf::Vector2f{ static_cast<float>(mousepos.x), static_cast<float>(mousepos.y) }
+                    sf::Vector2f{
+                        static_cast<float>(mousepos.x),
+                        static_cast<float>(mousepos.y)
+                    }
                 ) ? pauseHover : pauseNormal
             );
         }
@@ -176,36 +202,48 @@ int main() {
             menu.draw(window);
         }
         else {
-            // przycisk pauzy
             map.draw(window);
             game.draw(window);
             game.drawUI(window);
 
             if (state == GameState::PAUSED) {
+                window.draw(pauseOverlay);
                 pauseMenu.handleHover(mousepos);
                 pauseMenu.draw(window);
             }
 
-            // ===== animacja kliknięcia przycisku pauzy =====
+            //animacja kliknięcia przycisku pauzy 
             if (pauseClicked) {
+
                 float elapsed = clickClock.getElapsedTime().asSeconds();
                 if (elapsed < clickDuration) {
+
                     // animacja wciśnięcia – zmniejszamy przycisk i zmieniamy kolor
-                    pauseButton.setScale(sf::Vector2f(0.9f, 0.9f));
+                    pauseButton.setScale({ 0.9f, 0.9f });
                     pauseButton.setFillColor(sf::Color(150, 150, 150));
+                    pauseIcon.setScale({ 0.72f, 0.72f });
+                    playIcon.setScale({ 0.72f, 0.72f });
+
                 }
                 else {
                     pauseClicked = false;
-                    pauseButton.setScale(sf::Vector2f(1.f, 1.f));
-                    pauseButton.setFillColor(pauseNormal);
 
-                    // po animacji zmieniamy stan gry na pauzę
-                    state = GameState::PAUSED;
+                    pauseButton.setScale({ 1.f, 1.f });
+                    pauseButton.setFillColor(pauseNormal);
+                    pauseIcon.setScale({ 0.8f, 0.8f });
+                    playIcon.setScale({ 0.8f, 0.8f });
+
+                    // po animacji zmieniamy stan gry
+                    state = nextState;
                 }
             }
 
             window.draw(pauseButton);
-            window.draw(pauseText);
+
+            if (state == GameState::PLAYING)
+                window.draw(pauseIcon);
+            else
+                window.draw(playIcon);
         }
 
         window.display();
@@ -213,4 +251,5 @@ int main() {
 
     return 0;
 }
+
 
