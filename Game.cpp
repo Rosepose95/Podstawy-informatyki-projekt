@@ -47,28 +47,26 @@ void Game::addEnemy(Enemy enemy) {
     enemies.push_back(enemy);
 }
 void Game::startGame() {
-    // reset przeciwników i pocisków
     enemies.clear();
     bullets.clear();
     towers.clear();
 
-    // reset fal
     currentWave = 0;
     enemiesToSpawn = 0;
     waveInProgress = false;
     isBossWave = false;
 
-    // reset stanu gracza
     playerLives = 20;
     gameOver = false;
 
-    // reset timerów
     spawnTimer = 0.f;
     waveBreakTimer = 0.f;
 
     // ustawienie slidera fali poza ekranem
+    NextWaveText.setString("Get ready for wave 1");
     NextWaveText.setPosition({ -600.f, 420.f });
 }
+
 
 
 void Game::addTower(Tower tower) {
@@ -114,7 +112,7 @@ void Game::startNextWave() {   //nowe fale
     // co 5 fala = boss
     isBossWave = (currentWave % 5 == 0);
 
-    currentWaveConfig.count = isBossWave ? 1 : (6 + currentWave);
+    currentWaveConfig.count = isBossWave ? 1 : (3 + currentWave);
     currentWaveConfig.enemyHP = isBossWave ? 600 : (30 + currentWave * 30);
     currentWaveConfig.speed = isBossWave ? 60.f : (100.f + currentWave * 2.f);
 
