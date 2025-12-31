@@ -48,14 +48,16 @@ int main() {
 
     sf::Texture pauseTexture;
     pauseTexture.loadFromFile("assets/pauseButton.png");  //pamiętajcie pobrać zdjęcia trzeba
-
+    // pauseTexture.loadFromFile("assets/pause.png");  //które wolicie, moje dodane czy z internetu
+    
     sf::Sprite pauseIcon(pauseTexture);
     pauseIcon.setScale({ 0.8f, 0.8f });
     pauseIcon.setPosition({ 1240.f - 46.f, 14.f });
 
     sf::Texture playTexture;
     playTexture.loadFromFile("assets/playButton.png");
-
+    //playTexture.loadFromFile("assets/play.png");
+    
     sf::Sprite playIcon(playTexture);
     playIcon.setScale({ 0.8f, 0.8f });
     playIcon.setPosition({ 1240.f - 46.f, 14.f });
@@ -251,5 +253,6 @@ int main() {
 
     return 0;
 }
+
 
 
