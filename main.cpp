@@ -10,7 +10,8 @@
 enum class GameState {
     MENU,
     PLAYING,
-    PAUSED
+    PAUSED,
+    EDITOR
 };
 
 int main() {
@@ -70,6 +71,20 @@ int main() {
 
     pauseButton.setFillColor(pauseNormal);
 
+    sf::Text editorHUD(font);
+    editorHUD.setString("Esc - powrot do MENU\n"
+        "ENTER - start gry na stworzonej mapie\n"
+        "1 - Trawa\n"
+        "2 - Droga\n"
+        "3 - Meta\n"
+        "LPM - Wstawianie"
+        );
+    editorHUD.setCharacterSize(20);
+    editorHUD.setPosition(sf::Vector2f(20.f, 20.f));
+    editorHUD.setFillColor(sf::Color::Black);
+    bool canPaint = false;
+    char currentBrush = '#';
+
     while (window.isOpen()) {
 
         sf::Vector2i mousepos = sf::Mouse::getPosition(window);
@@ -111,7 +126,34 @@ int main() {
                     else if (menu.isExitClicked(mousepos)) {
                         window.close();
                     }
+                    else if (menu.isEditClicked(mousepos)) {
+                        state = GameState::EDITOR;
+                        map.clearMap();
+                        canPaint = false;
+                    }
                 }
+            }
+            //Rysowanie mapy
+            else if (state == GameState::EDITOR) {
+                if (const auto* key = ev->getIf<sf::Event::KeyPressed>()) {
+
+                    if (key->code == sf::Keyboard::Key::Num1) currentBrush = '.';   //trawa
+                    if (key->code == sf::Keyboard::Key::Num2) currentBrush = '#';   //droga
+                    if (key->code == sf::Keyboard::Key::Num3) currentBrush = '*';   //meta
+
+                    //zapisanie mapy i start gry
+                    if (key->code == sf::Keyboard::Key::Enter) {
+                        game.isCustomMap = true;
+                        map.refreshLogic();
+                        state = GameState::PLAYING;
+                        game.startGame();
+                    }
+                    //przy kliknieciu ESC powrot do menu
+                    if (key->code == sf::Keyboard::Key::Escape) {
+                        state = GameState::MENU;
+                    }
+                }
+                
             }
 
             else if (state == GameState::PLAYING) {
@@ -190,6 +232,20 @@ int main() {
                 ) ? pauseHover : pauseNormal
             );
         }
+        if (state == GameState::EDITOR) {
+           // if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+
+                if (!sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) { //aby nie rysowalo po kliknieciu w menu
+                    canPaint = true;
+                }
+                if (canPaint && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+                    sf::Vector2f worldPos = window.mapPixelToCoords(mousepos);
+                    int gridx = (int)worldPos.x / map.tileSize;
+                    int gridy = (int)worldPos.y / map.tileSize;
+
+                    map.setTile(gridx, gridy, currentBrush);
+                }
+        }
 
         // RYSOWANIE
         window.clear(sf::Color::White);
@@ -197,6 +253,10 @@ int main() {
         if (state == GameState::MENU) {
             menu.handleHover(mousepos);
             menu.draw(window);
+        }
+        else if (state == GameState::EDITOR) {
+            map.draw(window);
+            window.draw(editorHUD);
         }
         else {
             map.draw(window);
@@ -249,6 +309,7 @@ int main() {
 
     return 0;
 }
+
 
 
 
