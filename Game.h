@@ -46,6 +46,12 @@ private:
     bool isBossWave = false;
     bool waveInProgress = false;
 
+    sf::RectangleShape GameOverScreen;//
+    sf::RectangleShape RestartButton;//
+    sf::RectangleShape ExitButton;
+    sf::Text Restart;//
+    sf::Text Exit;
+
 
 public:
     Game();
@@ -61,6 +67,10 @@ public:
     void update(float dt);
     void draw(sf::RenderWindow& window) const;
     void drawUI(sf::RenderWindow& window) const;  //do ui
+
+    void tryRestart(sf::Vector2f mousePos); //
+    void HandleHover(sf::Vector2i mousePos);//
+    bool tryExit(sf::Vector2f mousePos);//
 
     int getBaseHP() const;
     bool isGameOver() const;
