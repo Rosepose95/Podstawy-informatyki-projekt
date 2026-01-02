@@ -74,6 +74,8 @@ public:
 
     int getBaseHP() const;
     bool isGameOver() const;
+
+    bool isCustomMap = false;
 };
 
 #endif
