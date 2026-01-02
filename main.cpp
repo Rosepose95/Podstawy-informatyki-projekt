@@ -107,14 +107,6 @@ int main() {
                     if (menu.isStartClicked(mousepos)) {
                         state = GameState::PLAYING;
                         game.startGame();
-                        int ts = map.tileSize;
-
-                        // STARTOWA WIEŻA
-                        game.addTower(
-                            Tower(20,
-                                14 * ts + ts / 2.f,
-                                11 * ts + ts / 2.f)
-                        );
                     }
                     else if (menu.isExitClicked(mousepos)) {
                         window.close();
@@ -137,19 +129,26 @@ int main() {
                         if (pauseButton.getGlobalBounds().contains(clickPos)) {
                             continue;
                         }
+                        if (game.isGameOver()) {    
+                            game.tryRestart(clickPos);
+                            if (game.tryExit(clickPos)) {
+                                window.close();
+                            }
+                        }
+                        else {
+                            // normalne stawianie wieży
+                            sf::Vector2f worldPos =
+                                window.mapPixelToCoords(mouse->position);
 
-                        // normalne stawianie wieży
-                        sf::Vector2f worldPos =
-                            window.mapPixelToCoords(mouse->position);
+                            int tileSize = map.tileSize;
+                            int tileX = static_cast<int>(worldPos.x) / tileSize;
+                            int tileY = static_cast<int>(worldPos.y) / tileSize;
 
-                        int tileSize = map.tileSize;
-                        int tileX = static_cast<int>(worldPos.x) / tileSize;
-                        int tileY = static_cast<int>(worldPos.y) / tileSize;
+                            float centerX = tileX * tileSize + tileSize / 2.f;
+                            float centerY = tileY * tileSize + tileSize / 2.f;
 
-                        float centerX = tileX * tileSize + tileSize / 2.f;
-                        float centerY = tileY * tileSize + tileSize / 2.f;
-
-                        game.placeTower({ centerX, centerY });
+                            game.placeTower({ centerX, centerY });
+                        }
                     }
                 }
             }
@@ -164,11 +163,6 @@ int main() {
                     }
                     else if (pauseMenu.restartClicked(mousepos)) {
                         game.startGame();        // zresetuj grę
-                        int ts = map.tileSize;
-                        game.addTower(
-                            Tower(20, 14 * ts + ts / 2.f, 11 * ts + ts / 2.f)
-                        );
-
                         state = GameState::PLAYING;
                     }
                     else if (pauseMenu.menuClicked(mousepos)) {
@@ -182,6 +176,7 @@ int main() {
 
         if (state == GameState::PLAYING) {
             game.update(dt);
+            game.HandleHover(mousepos);
         }
 
         // hover tylko jeśli nie kliknięto
@@ -239,15 +234,16 @@ int main() {
                     state = nextState;
                 }
             }
+            //dodalem aby nie pokazywalo sie przy game over
+            if (!game.isGameOver()) {
+                window.draw(pauseButton);
 
-            window.draw(pauseButton);
-
-            if (state == GameState::PLAYING)
-                window.draw(pauseIcon);
-            else
-                window.draw(playIcon);
+                if (state == GameState::PLAYING)
+                    window.draw(pauseIcon);
+                else
+                    window.draw(playIcon);
+            }
         }
-
         window.display();
     }
 
