@@ -77,5 +77,35 @@ void Map::draw(sf::RenderWindow& window) {
         }
     }
 }
+//rysowanie mnapy
+void Map::setTile(int x, int y, char type) {
+    if (y >= 0 && y < grid.size() && x >= 0 && x < grid[0].size()) {
+        grid[y][x] = type;
+    }
+}
+//wypelnienie nowej mapy trawa
+void Map::clearMap() {
+    for (int i = 0; i < grid.size(); i++) {
+        for (int j = 0; j < grid[i].size(); j++)
+            grid[i][j] = '.';
+    }
+}
+//sprawdzanie mapy gdzie i co gracz postawil 
+void Map::refreshLogic() {
+    spawnPoints.clear();
+
+    for (int i = 0; i < grid.size(); i++) {
+        for (int j = 0; j < grid[i].size(); j++) {
+
+            if (grid[i][j] == '#' && (j == 0 || i == 0 || i == grid.size() - 1 || j == grid[i].size() - 1)) {
+                spawnPoints.push_back({ j, i });
+            }
+            if (grid[i][j] == '*') {
+                baseTile = { j, i };
+            }
+        }
+    }
+}
+
 
 
