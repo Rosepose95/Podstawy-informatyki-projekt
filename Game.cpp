@@ -121,7 +121,7 @@ void Game::startGame() {
     NextWaveText.setString("Get ready for wave 1");
     NextWaveText.setPosition({ -600.f, 420.f });
 
-    if (map) {  //dodanie wiezy po kliknieciu restart
+    if (!isCustomMap && map) {  //dodanie wiezy po kliknieciu restart
         int ts = map->tileSize;
         addTower(Tower(20, 14 * ts + ts / 2.f, 11 * ts + ts / 2.f));
     }
