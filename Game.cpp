@@ -14,6 +14,8 @@ Game::Game()               //duże zmiany w konstruktorze, pamiętajcie o pobran
     , playerLives(20)
     , baseHP(100)
     , gameOver(false)
+    , Restart(font)//
+    , Exit(font)//
 {
     if (!font.openFromFile("assets/ArialMT.ttf")) {
         throw std::runtime_error("Nie można wczytać czcionki");
@@ -22,26 +24,79 @@ Game::Game()               //duże zmiany w konstruktorze, pamiętajcie o pobran
     waveText.setCharacterSize(20);
     enemiesText.setCharacterSize(20);
     livesText.setCharacterSize(20);
-    GameOverText.setCharacterSize(60);
+    GameOverText.setCharacterSize(80);
     NextWaveText.setCharacterSize(60);
+    Restart.setCharacterSize(30);//
+    Exit.setCharacterSize(30);
 
     waveText.setFillColor(sf::Color::Black);
     enemiesText.setFillColor(sf::Color::Black);
     livesText.setFillColor(sf::Color::Black);
     GameOverText.setFillColor(sf::Color::Red);
     NextWaveText.setFillColor(sf::Color::Green);
+    Restart.setFillColor(sf::Color::White);//
+    Exit.setFillColor(sf::Color::White);
+
 
     waveText.setPosition(sf::Vector2f{ 10.f, 20.f });
     enemiesText.setPosition(sf::Vector2f{ 10.f, 40.f });
     livesText.setPosition(sf::Vector2f{ 10.f, 55.f });
-    GameOverText.setPosition(sf::Vector2f{ 280.f, 420.f });
     NextWaveText.setPosition(sf::Vector2f{ 280.f, 420.f });
 
     GameOverText.setStyle(sf::Text::Bold | sf::Text::Italic);
     NextWaveText.setStyle(sf::Text::Bold | sf::Text::Italic);
+    Restart.setStyle(sf::Text::Bold); //
+    Exit.setStyle(sf::Text::Bold); //
+
+
 
     GameOverText.setString("GAME OVER");
+    Restart.setString("Restart");//
+    Exit.setString("Exit");
+
+    //ekran do game over
+    GameOverScreen.setSize(sf::Vector2f(1240.f, 840.f));
+    GameOverScreen.setFillColor(sf::Color(0,0,0,200));  //ciemne przezroczyste tlo do game over
+
+    //guzik do resetowania
+    RestartButton.setSize(sf::Vector2f(200.f, 60.f));
+    RestartButton.setFillColor(sf::Color::Blue);
+    RestartButton.setOutlineThickness(3.f);
+    RestartButton.setOutlineColor(sf::Color::Black);
+
+    //guzik do exit
+    ExitButton.setSize(sf::Vector2f(200.f, 60.f));
+    ExitButton.setFillColor(sf::Color::Blue);
+    ExitButton.setOutlineThickness(3.f);
+    ExitButton.setOutlineColor(sf::Color::Black);
+   
+    //Wysrodkowanie przycisku restart
+    auto a = RestartButton.getLocalBounds();
+    RestartButton.setOrigin({ a.position.x + a.size.x / 2.f, a.position.y + a.size.y / 2.f });
+    RestartButton.setPosition({ 1240.f / 2.f, 840.f / 2.f });
+
+    //Wysrodkowanie przycisku exit
+    auto d= ExitButton.getLocalBounds();
+    ExitButton.setOrigin({ d.position.x + d.size.x / 2.f, d.position.y + d.size.y / 2.f });
+    ExitButton.setPosition({ 1240.f / 2.f, 840.f * 0.65f});
+
+    //Wysrodkowanie napisu na przycisku restart
+    auto e = Restart.getLocalBounds();
+    Restart.setOrigin({ e.position.x + e.size.x / 2.f, e.position.y + e.size.y / 2.f });
+    Restart.setPosition({ 1240.f / 2.f, 840.f / 2.f });
+
+    //Wysrodkowanie napisu na przycisku exit
+    auto b = Exit.getLocalBounds();
+    Exit.setOrigin({ b.position.x + b.size.x / 2.f, b.position.y + b.size.y / 2.f });
+    Exit.setPosition({ 1240.f / 2.f, 840.f * 0.65f});
+
+    //Wysrodkowanie napisu Game Over
+    auto c = GameOverText.getLocalBounds();
+    GameOverText.setOrigin({ c.position.x + c.size.x / 2.f, c.position.y + c.size.y / 2.f });
+    GameOverText.setPosition({ 1240.f / 2.f, 840.f * 0.25f });
 }
+
+
 void Game::addEnemy(Enemy enemy) {
     enemy.setMap(map);   // bardzo ważne by nam się poruszał po mapie
     enemies.push_back(enemy);
@@ -65,6 +120,11 @@ void Game::startGame() {
     // ustawienie slidera fali poza ekranem
     NextWaveText.setString("Get ready for wave 1");
     NextWaveText.setPosition({ -600.f, 420.f });
+
+    if (map) {  //dodanie wiezy po kliknieciu restart
+        int ts = map->tileSize;
+        addTower(Tower(20, 14 * ts + ts / 2.f, 11 * ts + ts / 2.f));
+    }
 }
 
 
@@ -280,7 +340,12 @@ void Game::draw(sf::RenderWindow& window) const {
     }
 
     if (gameOver) {
+        window.draw(GameOverScreen);
         window.draw(GameOverText);
+        window.draw(RestartButton);
+        window.draw(Restart);
+        window.draw(ExitButton);
+        window.draw(Exit);
     }
 }
 
@@ -326,4 +391,35 @@ bool Game::canPlaceTower(sf::Vector2f pos) const {
     char tile = map->getTile(tx, ty);
     return tile == '.';
 }
+//oblsuga guzika restart
+void Game::tryRestart(sf::Vector2f mousePos) {
+    if (!gameOver) return;
+    else if (RestartButton.getGlobalBounds().contains(mousePos)) {
+        startGame();
+    }
+}
+bool Game::tryExit(sf::Vector2f mousePos) {
+    if (!gameOver) return false;
+    else if (ExitButton.getGlobalBounds().contains(mousePos)) {
+        return true;
+    }
+    return false;
+}
+//zmiana koloru po najechaniu
+void Game::HandleHover(sf::Vector2i mousepos) {
+    sf::Vector2f mousePosF((int)mousepos.x, (int)mousepos.y);
 
+    if (!gameOver) return;
+
+    if (RestartButton.getGlobalBounds().contains(mousePosF)) {
+        RestartButton.setFillColor(sf::Color::Cyan);
+    }else {
+        RestartButton.setFillColor(sf::Color::Blue);
+    }
+
+    if (ExitButton.getGlobalBounds().contains(mousePosF)) {
+        ExitButton.setFillColor(sf::Color::Cyan);
+    }else {
+        ExitButton.setFillColor(sf::Color::Blue);
+    }
+}
