@@ -16,6 +16,10 @@ public:
 	std::vector<sf::Vector2i> spawnPoints; //do spawnów
     int tileSize = 40; // Rozmiar kafelka (800/20 = 40, 640/16 = 40)
 
+    void setTile(int x, int y, char type);  //malowanie mapy
+    void clearMap();
+    void refreshLogic();
+
 private:
     std::vector<std::vector<char>> grid;
 };
