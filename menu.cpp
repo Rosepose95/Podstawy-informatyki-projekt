@@ -1,148 +1,267 @@
-#include "menu.h"
+#include "Menu.h"
 #include <vector>
 #include <iostream>
+#include "PauseMenu.h"
 
+// Konstruktor Menu
 Menu::Menu(float width, float height, sf::Font& arial)
-	: title(arial)
-	, startText(arial)
-	, exitText(arial)
-	, editText(arial)
-	, backgroundSpirite(backgroundTexture)
-{ 
-	if (!backgroundTexture.loadFromFile("assets/menugraf.png")) {
-		std::cout << "Nie zaladowalo tla" <<std::endl;
-	}
+    : title(arial)
+    , startText(arial)
+    , loadText(arial)
+    , exitText(arial)
+    , editText(arial)
+    , backText(arial)
+    , backgroundSpirite(backgroundTexture)
+    , slotButtons()
+    , slotTexts()
+    , autoSaveText(arial)
+    , width(width)
+    , height(height)
+{
+    // --- ŁADOWANIE TŁA ---
+    if (!backgroundTexture.loadFromFile("assets/menugraf.png")) {
+        std::cout << "Nie zaladowalo tla" << std::endl;
+    }
+    backgroundSpirite.setTexture(backgroundTexture, true);
+    sf::Vector2u texturesize = backgroundTexture.getSize();
+    backgroundSpirite.setScale({ width / (float)texturesize.x, height / (float)texturesize.y });
 
-	//tlo
-	backgroundSpirite.setTexture(backgroundTexture, true);
-	sf::Vector2u texturesize = backgroundTexture.getSize();
-	float scalex = width / (float)texturesize.x;
-	float scaley = height / (float)texturesize.y;
-	backgroundSpirite.setScale({scalex, scaley});
+    // --- TYTUŁ ---
+    title.setString("TOWER DEFFENCE");
+    title.setCharacterSize(80);
+    title.setFillColor(sf::Color(0, 0, 128));
+    title.setStyle(sf::Text::Bold | sf::Text::Italic);
+    auto b = title.getLocalBounds();
+    title.setOrigin({ b.position.x + b.size.x / 2.f, b.position.y + b.size.y / 2.f });
+    title.setPosition({ width / 2.f, height * 0.25f });
 
+    // --- PRZYCISKI MENU ---
+    float buttonSpacing = 100.f; // odstęp między przyciskami
+    float startY = height / 2.f;  // Y pierwszego przycisku (START)
 
-	//tytul
-	title.setString("TOWER DEFFENCE");
-	title.setCharacterSize(80);
-	title.setFillColor(sf::Color(0,0,128));
-	title.setStyle(sf::Text::Bold | sf::Text::Italic);
+    // --- PRZYCISK START ---
+    startButton.setSize({ 250.f, 70.f });
+    startButton.setOutlineThickness(3.f);
+    startButton.setOutlineColor(sf::Color::Black);
+    auto sb = startButton.getLocalBounds();
+    startButton.setOrigin({ sb.position.x + sb.size.x / 2.f, sb.position.y + sb.size.y / 2.f });
+    startButton.setPosition({ width / 2.f, startY });
 
-		//wysrodkowanie dla title
-		auto b = title.getLocalBounds();
-		title.setOrigin({ b.position.x + b.size.x / 2.f, b.position.y + b.size.y / 2.f });
-		title.setPosition({ width / 2.f, height* 0.25f });
+    startText.setString("START");
+    startText.setCharacterSize(40);
+    startText.setFillColor(sf::Color::White);
+    startText.setStyle(sf::Text::Bold);
+    auto st = startText.getLocalBounds();
+    startText.setOrigin({ st.position.x + st.size.x / 2.f, st.position.y + st.size.y / 2.f });
+    startText.setPosition(startButton.getPosition());
 
-		//przycisk startButton
-		startButton.setSize({ 250.f, 70.f });	
-		startButton.setOutlineThickness(3.f);
-		startButton.setOutlineColor(sf::Color::Black);
+    // --- PRZYCISK LOAD GAME ---
+    loadButton.setSize({ 250.f, 70.f });
+    loadButton.setOutlineThickness(3.f);
+    loadButton.setOutlineColor(sf::Color::Black);
+    auto lb = loadButton.getLocalBounds();
+    loadButton.setOrigin({ lb.position.x + lb.size.x / 2.f, lb.position.y + lb.size.y / 2.f });
+    loadButton.setPosition({ width / 2.f, startY + buttonSpacing });
 
-		//przycisk exitButton
-		exitButton.setSize({ 250.f, 70.f });	
-		exitButton.setOutlineThickness(3.f);
-		exitButton.setOutlineColor(sf::Color::Black);
+    loadText.setString("LOAD GAME");
+    loadText.setCharacterSize(40);
+    loadText.setFillColor(sf::Color::White);
+    loadText.setStyle(sf::Text::Bold);
+    auto lt = loadText.getLocalBounds();
+    loadText.setOrigin({ lt.position.x + lt.size.x / 2.f, lt.position.y + lt.size.y / 2.f });
+    loadText.setPosition(loadButton.getPosition());
 
-		//przycisk editButton
-		editButton.setSize({ 250.f, 70.f });
-		editButton.setOutlineThickness(3.f);
-		editButton.setOutlineColor(sf::Color::Black);
+    // --- PRZYCISK MAKE YOUR MAP ---
+    editButton.setSize({ 250.f, 70.f });
+    editButton.setOutlineThickness(3.f);
+    editButton.setOutlineColor(sf::Color::Black);
+    auto gb = editButton.getLocalBounds();
+    editButton.setOrigin({ gb.position.x + gb.size.x / 2.f, gb.position.y + gb.size.y / 2.f });
+    editButton.setPosition({ width / 2.f, startY + buttonSpacing * 2 });
 
-		//wysrodkowanie guzika startButton
-		auto c = startButton.getLocalBounds();
-		startButton.setOrigin({ c.position.x + c.size.x / 2.f, c.position.y + c.size.y / 2.f });
-		startButton.setPosition({ width / 2.f, height / 2.f });
+    editText.setString("MAP MAKER");
+    editText.setCharacterSize(30);
+    editText.setFillColor(sf::Color::White);
+    editText.setStyle(sf::Text::Bold);
+    auto gt = editText.getLocalBounds();
+    editText.setOrigin({ gt.position.x + gt.size.x / 2.f, gt.position.y + gt.size.y / 2.f });
+    editText.setPosition(editButton.getPosition());
 
-		//wysrodkowanie guzika exitButton
-		auto d = exitButton.getLocalBounds();
-		exitButton.setOrigin({ d.position.x + d.size.x / 2.f, d.position.y + d.size.y / 2.f });
-		exitButton.setPosition({ width / 2.f, height * 0.85f });
+    // --- PRZYCISK EXIT ---
+    exitButton.setSize({ 250.f, 70.f });
+    exitButton.setOutlineThickness(3.f);
+    exitButton.setOutlineColor(sf::Color::Black);
+    auto eb = exitButton.getLocalBounds();
+    exitButton.setOrigin({ eb.position.x + eb.size.x / 2.f, eb.position.y + eb.size.y / 2.f });
+    exitButton.setPosition({ width / 2.f, startY + buttonSpacing * 3 });
 
-		//wysrodkowanie guzika editButton
-		auto g = editButton.getLocalBounds();
-		editButton.setOrigin({ g.position.x + g.size.x / 2.f, g.position.y + g.size.y / 2.f });
-		editButton.setPosition({ width / 2.f, height * 0.65f });
+    exitText.setString("EXIT");
+    exitText.setCharacterSize(40);
+    exitText.setFillColor(sf::Color::White);
+    exitText.setStyle(sf::Text::Bold);
+    auto et = exitText.getLocalBounds();
+    exitText.setOrigin({ et.position.x + et.size.x / 2.f, et.position.y + et.size.y / 2.f });
+    exitText.setPosition(exitButton.getPosition());
 
-	//tekst na przycisku startButton
-	startText.setString("START");
-	startText.setCharacterSize(40);
-	startText.setFillColor(sf::Color::White);
-	startText.setStyle(sf::Text::Bold);
+    // --- PRZYCISK BACK (LOAD SCREEN) ---
+    backButton.setSize({ 250.f, 70.f });
+    backButton.setOutlineThickness(3.f);
+    backButton.setOutlineColor(sf::Color::Black);
 
-	//tekst na przycisku exitButton
-	exitText.setString("EXIT");
-	exitText.setCharacterSize(40);
-	exitText.setFillColor(sf::Color::White);
-	exitText.setStyle(sf::Text::Bold);
+    backText.setString("BACK");
+    backText.setCharacterSize(40);
+    backText.setFillColor(sf::Color::White);
+    backText.setStyle(sf::Text::Bold);
 
-	//tekst na przycisku editButton
-	editText.setString("Make your map");
-	editText.setCharacterSize(30);
-	editText.setFillColor(sf::Color::White);
-	editText.setStyle(sf::Text::Bold);
-
-	//wysrodkowanie napisu na guziku startButton
-	auto e = startText.getLocalBounds();
-	startText.setOrigin({ e.position.x + e.size.x / 2.f, e.position.y + e.size.y / 2.f });
-	startText.setPosition({ width / 2.f, height / 2.f });
-
-	//wysrodkowanie napisu na guziku exitButton
-	auto f = exitText.getLocalBounds();
-	exitText.setOrigin({ f.position.x + f.size.x / 2.f, f.position.y + f.size.y / 2.f });
-	exitText.setPosition({ width / 2.f, height * 0.85f });
-
-	//wysrodkowanie napisu na guziku exitButton
-	auto h = editText.getLocalBounds();
-	editText.setOrigin({ h.position.x + h.size.x / 2.f, h.position.y + h.size.y / 2.f });
-	editText.setPosition({ width / 2.f, height * 0.65f });
-
+    initSlots(arial); // inicjalizacja slotów
+    autoSaveText.setString("LOAD AUTOSAVE");
 }
-void Menu::draw(sf::RenderWindow& window) {
-	window.draw(backgroundSpirite);
-	window.draw(startButton);
-	window.draw(startText);
-	window.draw(title);
-	window.draw(exitButton);
-	window.draw(exitText);
-	window.draw(editButton);
-	window.draw(editText);
-}
-void Menu::handleHover(sf::Vector2i mousepos){
-	sf::Vector2f mousePosF((int)mousepos.x, (int)mousepos.y);
-	
-	//zmiana koloru po najechaniu startButton
-	if (startButton.getGlobalBounds().contains(mousePosF)) {
-		startButton.setFillColor(sf::Color::Cyan);
-	}
-	else {//jesli myszka nie jest na nim podstawowy kolor
-		startButton.setFillColor(sf::Color::Blue);
-	}
 
-	if (exitButton.getGlobalBounds().contains(mousePosF)) {
-		exitButton.setFillColor(sf::Color::Cyan);
-	}
-	else {
-		exitButton.setFillColor(sf::Color::Blue);
-	}
 
-	if (editButton.getGlobalBounds().contains(mousePosF)) {
-		editButton.setFillColor(sf::Color::Cyan);
-	}
-	else {
-		editButton.setFillColor(sf::Color::Blue);
-	}
-}
-bool Menu::isStartClicked(sf::Vector2i mousepos) {
-	sf::Vector2f mousePosF((int)mousepos.x, (int)mousepos.y);
+// --- RYSOWANIE ---
+void Menu::draw(sf::RenderWindow& window)
+{
+    window.draw(backgroundSpirite);
+    window.draw(title);
 
-	return startButton.getGlobalBounds().contains(mousePosF) && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left);
+    if (!inLoadScreen) {
+        window.draw(startButton);
+        window.draw(startText);
+        window.draw(loadButton);
+        window.draw(loadText);
+        window.draw(exitButton);
+        window.draw(exitText);
+        window.draw(editButton);
+        window.draw(editText);
+    }
+    else {
+        for (int i = 0; i < slotButtons.size(); ++i) {
+            window.draw(slotButtons[i]);
+            window.draw(slotTexts[i]);
+        }
+        window.draw(backButton);
+        window.draw(backText);
+    }
 }
-bool Menu::isExitClicked(sf::Vector2i mousepos) {
-	sf::Vector2f mousePosF((int)mousepos.x, (int)mousepos.y);
 
-	return exitButton.getGlobalBounds().contains(mousePosF) && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left);
-}
-bool Menu::isEditClicked(sf::Vector2i mousepos) {
-	sf::Vector2f mousePosF((int)mousepos.x, (int)mousepos.y);
+// --- HOVER ---
+void Menu::handleHover(sf::Vector2i mousepos)
+{
+    sf::Vector2f m((float)mousepos.x, (float)mousepos.y);
 
-	return editButton.getGlobalBounds().contains(mousePosF) && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left);
+    if (!inLoadScreen) {
+        startButton.setFillColor(startButton.getGlobalBounds().contains(m) ? sf::Color::Cyan : sf::Color::Blue);
+        loadButton.setFillColor(loadButton.getGlobalBounds().contains(m) ? sf::Color::Cyan : sf::Color::Blue);
+        exitButton.setFillColor(exitButton.getGlobalBounds().contains(m) ? sf::Color::Cyan : sf::Color::Blue);
+        editButton.setFillColor(editButton.getGlobalBounds().contains(m) ? sf::Color::Cyan : sf::Color::Blue);
+    }
+    else {
+        for (int i = 0; i < slotButtons.size(); ++i) {
+            slotButtons[i].setFillColor(slotButtons[i].getGlobalBounds().contains(m) ? sf::Color::Cyan : sf::Color::White);
+        }
+        backButton.setFillColor(backButton.getGlobalBounds().contains(m) ? sf::Color::Cyan : sf::Color::Blue);
+    }
 }
+
+// --- KLIKNIĘCIA PRZYCISKÓW ---
+bool Menu::isStartClicked(sf::Vector2i mousepos)
+{
+    sf::Vector2f m((float)mousepos.x, (float)mousepos.y);
+    return startButton.getGlobalBounds().contains(m) && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left);
+}
+bool Menu::isLoadClicked(sf::Vector2i mousepos)
+{
+    sf::Vector2f m((float)mousepos.x, (float)mousepos.y);
+    return !inLoadScreen && loadButton.getGlobalBounds().contains(m) && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left);
+}
+bool Menu::isExitClicked(sf::Vector2i mousepos)
+{
+    sf::Vector2f m((float)mousepos.x, (float)mousepos.y);
+    return exitButton.getGlobalBounds().contains(m) && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left);
+}
+bool Menu::isEditClicked(sf::Vector2i mousepos)
+{
+    sf::Vector2f m((float)mousepos.x, (float)mousepos.y);
+    return editButton.getGlobalBounds().contains(m) && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left);
+}
+bool Menu::isBackClicked(sf::Vector2i mousePos)
+{
+    sf::Vector2f m((float)mousePos.x, (float)mousePos.y);
+    backButton.setOrigin({ backButton.getSize().x / 2.f, backButton.getSize().y / 2.f });
+    for (auto& slot : slotButtons)
+        slot.setOrigin({ slot.getSize().x / 2.f, slot.getSize().y / 2.f });
+
+    return inLoadScreen && backButton.getGlobalBounds().contains(m) && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left);
+}
+
+// --- OBSŁUGA SLOTÓW ---
+int Menu::slotClicked(sf::Vector2i mousePos)
+{
+    if (!inLoadScreen) return 0;
+    sf::Vector2f m((float)mousePos.x, (float)mousePos.y);
+    for (int i = 0; i < slotButtons.size(); ++i) {
+        if (slotButtons[i].getGlobalBounds().contains(m)) return i + 1;
+        if (slotButtons[i].getGlobalBounds().contains(m)
+            && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left))
+        {
+            return i + 1;
+        }
+    }
+    backButton.setOrigin({ backButton.getSize().x / 2.f, backButton.getSize().y / 2.f });
+    for (auto& slot : slotButtons)
+        slot.setOrigin({ slot.getSize().x / 2.f, slot.getSize().y / 2.f });
+
+    return 0;
+}
+
+// --- INICJALIZACJA SLOTÓW ---
+void Menu::initSlots(sf::Font& font)
+{
+    slotButtons.clear();
+    slotTexts.clear();
+    float totalHeight = 3 * SLOT_HEIGHT + 2 * SLOT_SPACING;
+    float startY = height / 2.f - totalHeight / 2.f;
+
+    for (int i = 0; i < 3; ++i) {
+        sf::RectangleShape slot({ SLOT_WIDTH, SLOT_HEIGHT });
+        slot.setOrigin({ SLOT_WIDTH / 2.f, SLOT_HEIGHT / 2.f });
+        slot.setPosition({ width / 2.f, startY + i * (SLOT_HEIGHT + SLOT_SPACING) + SLOT_HEIGHT / 2.f });
+        slot.setFillColor(sf::Color(220, 220, 220));
+        slot.setOutlineColor(sf::Color::Black);
+        slot.setOutlineThickness(2.f);
+        slotButtons.push_back(slot);
+
+        sf::Text text(font);
+        text.setString("Slot " + std::to_string(i + 1));
+        text.setCharacterSize(30);
+        text.setFillColor(sf::Color::Black);
+        auto bounds = text.getLocalBounds();
+        text.setOrigin({ bounds.position.x + bounds.size.x / 2.f, bounds.position.y + bounds.size.y / 2.f });
+        text.setPosition(slot.getPosition());
+        slotTexts.push_back(text);
+    }
+
+    // ustawienie BACK poniżej slotów
+    float backY = startY + 3 * (SLOT_HEIGHT + SLOT_SPACING) + 50.f;
+    backButton.setOrigin({ backButton.getSize().x / 2.f, backButton.getSize().y / 2.f });
+    backButton.setPosition({ width / 2.f, backY });
+    auto bb = backText.getLocalBounds();
+    backText.setOrigin({ bb.position.x + bb.size.x / 2.f, bb.position.y + bb.size.y / 2.f });
+    backText.setPosition({ width / 2.f, backY });
+}
+
+// --- OBSŁUGA LOAD SCREEN ---
+void Menu::enterLoadScreen() {
+    inLoadScreen = true;
+    currentScreen = MenuScreen::LOAD_SLOTS;
+}
+void Menu::exitLoadScreen() {
+    inLoadScreen = false;
+    currentScreen = MenuScreen::MAIN;
+}
+bool Menu::backClicked(sf::Vector2i mousePos)
+{
+    return isBackClicked(mousePos);
+}
+
+
