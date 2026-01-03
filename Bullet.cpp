@@ -17,12 +17,12 @@ Bullet::Bullet(sf::Vector2f start, sf::Vector2f target, int dmg) //dodatek do ko
         direction = { 0.f, 0.f };
 }
 
-
-void Bullet::update(float dt) { //by uniknąć jakiś dziwnych błędów pocisków
+void Bullet::update(float dt) {
     if (dead) return;
     shape.move(direction * speed * dt);
-    lifetime -= dt;  
+    lifetime -= dt;
 }
+
 
 void Bullet::draw(sf::RenderWindow& window) const {
     window.draw(shape);
