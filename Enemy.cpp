@@ -173,5 +173,11 @@ void Enemy::draw(sf::RenderWindow& window) const {
     window.draw(back);
     window.draw(hp);
 }
+int Enemy::getLifeDamage() const {
+    if (type == EnemyType::Boss)
+        return 5;   // boss zabiera 5 żyć
+    return 1;       // normalny wróg
+}
+
 
 
