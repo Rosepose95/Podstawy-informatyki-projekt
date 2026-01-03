@@ -43,6 +43,10 @@ public:
     void setSpeed(float s) { speed = s; }
 
     void draw(sf::RenderWindow& window) const;
+    int getHP() const { return health; }
+    EnemyType getType() const { return type; }
+    int getLifeDamage() const;
+
 };
 
 #endif
