@@ -42,7 +42,7 @@ Map::Map() {
             if (layout[i][j] == '*') { // meta
                 baseTile = { j, i };
             }
-            if (layout[i][j] == '#') {  //można to w sumie w jedneym ifie zrobić 
+            if (layout[i][j] == '#') {//można to w sumie w jedneym ifie zrobić 
                 if (j == 0 || i == 0 || i == rows - 1) {
                     spawnPoints.push_back({ j, i });
                 }
@@ -106,6 +106,8 @@ void Map::refreshLogic() {
         }
     }
 }
+
+
 
 
 
