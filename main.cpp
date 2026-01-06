@@ -83,6 +83,7 @@ int main() {
     bool canPaint = false;
     char currentBrush = '#';
 
+
     while (window.isOpen()) {
         sf::Vector2i mousepos = sf::Mouse::getPosition(window);
 
@@ -95,12 +96,13 @@ int main() {
                 if (const auto* mouse = ev->getIf<sf::Event::MouseButtonPressed>()) {
                     if (mouse->button == sf::Mouse::Button::Left) {
                         sf::Vector2f clickPos = window.mapPixelToCoords(mouse->position);
-                        game.tryRestart(clickPos);   // restart gry
+                        game.tryRestart(clickPos);//restart gry
                         if (game.tryExit(clickPos))  // wyjście z gry
                             window.close();
                     }
                 }
             }
+
 
             // --- obsługa przycisku pauzy ---
             if (state != GameState::MENU) {
@@ -172,10 +174,9 @@ int main() {
                     if (key->code == sf::Keyboard::Key::Enter) {
 
                         game.isCustomMap = true;
-                        state = GameState::PLAYING;
-                        game.startGame();
 
                         int ts = map.tileSize;
+                        bool TowerFound = false;
 
                         for (int i = 0; i < map.getHeight(); i++) {
                             for (int j = 0; j < map.getWidth(); j++) {
@@ -184,13 +185,20 @@ int main() {
                                     float centerx = j * ts + ts / 2.f;
                                     float centery = i * ts + ts / 2.f;
 
-                                    game.addTower(Tower(20, centerx, centery));
+                                    game.setStartTPos({ centerx, centery });
+
+                                    TowerFound = true;
 
                                     map.setTile(j, i, '.');
                                 }
                             }
                         }
+                        if (!TowerFound) {
+                            game.setStartTPos({ 14 * ts + ts / 2.f, 11 * ts + ts / 2.f });
+                        }
                         map.refreshLogic();
+                        game.startGame();
+                        state = GameState::PLAYING;
 
                     }
                     if (key->code == sf::Keyboard::Key::Escape) {
@@ -247,8 +255,6 @@ int main() {
                         if (pauseMenu.resumeClicked(mousepos)) state = GameState::PLAYING;
                         else if (pauseMenu.restartClicked(mousepos)) {
                             game.startGame();
-                            int ts = map.tileSize;
-                            game.addTower(Tower(20, 14 * ts + ts / 2.f, 11 * ts + ts / 2.f));
                             state = GameState::PLAYING;
                         }
                         else if (pauseMenu.menuClicked(mousepos)) state = GameState::MENU;
@@ -290,6 +296,7 @@ int main() {
 
                 int tilex = (int)wordlpos.x / ts;
                 int tiley = (int)wordlpos.y / ts;
+
                 //sprawdzamy czy nie wychdzi poza nasza mape
                 if (tilex >= 0 && tilex <= 30 && tiley >= 0 && tiley <= 20) {
 
