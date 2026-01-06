@@ -98,7 +98,6 @@ Game::Game()
     Exit.setOrigin({ eBounds.position.x + eBounds.size.x / 2.f,
                      eBounds.position.y + eBounds.size.y / 2.f });
     Exit.setPosition(ExitButton.getPosition());
-
 }
 
 // --- Dodawanie przeciwników ---
@@ -136,6 +135,11 @@ void Game::placeTower(sf::Vector2f position) {
     towers.emplace_back(20, gridX * tsF + tsF / 2.f, gridY * tsF + tsF / 2.f);
 }
 
+//dla stawiania wiezy
+void Game::setStartTPos(sf::Vector2f pos) {
+    startTPos = pos;
+}
+
 // --- Start gry ---
 void Game::startGame() {
     enemies.clear();
@@ -161,6 +165,9 @@ void Game::startGame() {
     if (!isCustomMap && map) {
         int ts = map->tileSize;
         addTower(Tower(20, 14 * ts + ts / 2.f, 11 * ts + ts / 2.f));
+    }
+    else{
+        addTower(Tower(20, startTPos.x, startTPos.y));
     }
 }
 
@@ -336,8 +343,9 @@ bool Game::canPlaceTower(sf::Vector2f pos) const {
 
 // --- Obsługa przycisków ---
 void Game::tryRestart(sf::Vector2f mousePos) {
-    if (gameOver && RestartButton.getGlobalBounds().contains(mousePos))
+    if (gameOver && RestartButton.getGlobalBounds().contains(mousePos)) {
         startGame();
+    }
 }
 bool Game::tryExit(sf::Vector2f mousePos) {
     return gameOver && ExitButton.getGlobalBounds().contains(mousePos);
@@ -499,4 +507,3 @@ void Game::HandleHover(sf::Vector2i mousepos) {
         : sf::Color::Blue
     );
 }
-
