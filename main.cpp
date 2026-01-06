@@ -66,11 +66,19 @@ int main() {
         "1 - Trawa\n"
         "2 - Droga\n"
         "3 - Meta\n"
+        "4 - Wieza Startowa\n"
         "LPM - Wstawianie"
     );
     editorHUD.setCharacterSize(20);
     editorHUD.setPosition({ 20.f, 20.f });
     editorHUD.setFillColor(sf::Color::Black);
+    editorHUD.setStyle(sf::Text::Bold);
+
+    sf::RectangleShape hudBG;
+    hudBG.setSize(sf::Vector2f(80.f, 80.f));
+    hudBG.setPosition({ 1100.f, 10.f });
+    hudBG.setOutlineThickness(5.f);
+    hudBG.setOutlineColor(sf::Color::Black);
 
     bool canPaint = false;
     char currentBrush = '#';
@@ -151,7 +159,7 @@ int main() {
             }
 
 
-            
+
 
             // --- TRYB EDITORA ---
             else if (state == GameState::EDITOR) {
@@ -159,16 +167,55 @@ int main() {
                     if (key->code == sf::Keyboard::Key::Num1) currentBrush = '.';
                     if (key->code == sf::Keyboard::Key::Num2) currentBrush = '#';
                     if (key->code == sf::Keyboard::Key::Num3) currentBrush = '*';
+                    if (key->code == sf::Keyboard::Key::Num4) currentBrush = 'T';
 
                     if (key->code == sf::Keyboard::Key::Enter) {
+
                         game.isCustomMap = true;
-                        map.refreshLogic();
                         state = GameState::PLAYING;
                         game.startGame();
+
+                        int ts = map.tileSize;
+
+                        for (int i = 0; i < map.getHeight(); i++) {
+                            for (int j = 0; j < map.getWidth(); j++) {
+
+                                if (map.getTile(j, i) == 'T') {
+                                    float centerx = j * ts + ts / 2.f;
+                                    float centery = i * ts + ts / 2.f;
+
+                                    game.addTower(Tower(20, centerx, centery));
+
+                                    map.setTile(j, i, '.');
+                                }
+                            }
+                        }
+                        map.refreshLogic();
+
                     }
                     if (key->code == sf::Keyboard::Key::Escape) {
                         state = GameState::MENU;
                     }
+                }
+                if (const auto* mouse = ev->getIf<sf::Event::MouseButtonPressed>()) {   //kiedy klikamy guzik zamalowuje kratke
+                    if (mouse->button == sf::Mouse::Button::Left)
+                        canPaint = true;
+                }
+                if (const auto* mouse = ev->getIf<sf::Event::MouseButtonReleased>()) {  //kiedy guzik odpusczamy nie maluje
+                    if (mouse->button == sf::Mouse::Button::Left)
+                        canPaint = false;
+                }
+                if (currentBrush == '.') {
+                    hudBG.setFillColor(sf::Color::Green);
+                }
+                else if (currentBrush == '#') {
+                    hudBG.setFillColor(sf::Color(150, 150, 150));
+                }
+                else if (currentBrush == '*') {
+                    hudBG.setFillColor(sf::Color(255, 100, 0));
+                }
+                else {
+                    hudBG.setFillColor(sf::Color::Blue);
                 }
             }
 
@@ -234,6 +281,31 @@ int main() {
                     }
                 }
             }
+            //rysowanie w editorze
+            if (state == GameState::EDITOR && canPaint) {
+
+                sf::Vector2f wordlpos = window.mapPixelToCoords(mousepos);
+
+                int ts = map.tileSize;
+
+                int tilex = (int)wordlpos.x / ts;
+                int tiley = (int)wordlpos.y / ts;
+                //sprawdzamy czy nie wychdzi poza nasza mape
+                if (tilex >= 0 && tilex <= 30 && tiley >= 0 && tiley <= 20) {
+
+                    //jesli ktos bedzie chcial postawic kolejna wieze to ta 1 sie skasuje
+                    if (currentBrush == 'T') {
+                        for (int i = 0; i < map.getHeight(); i++) {
+                            for (int j = 0; j < map.getWidth(); j++) {
+                                if (map.getTile(j, i) == 'T') {
+                                    map.setTile(j, i, '.');
+                                }
+                            }
+                        }
+                    }
+                    map.setTile(tilex, tiley, currentBrush);
+                }
+            }
         }
 
         float dt = clock.restart().asSeconds();
@@ -255,6 +327,7 @@ int main() {
         else if (state == GameState::EDITOR) {
             map.draw(window);
             window.draw(editorHUD);
+            window.draw(hudBG);
         }
         else {
             map.draw(window);
