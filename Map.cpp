@@ -65,9 +65,13 @@ void Map::draw(sf::RenderWindow& window) {
             else if (grid[i][j] == '.') {
                 tile.setFillColor(sf::Color(34, 139, 34));  // Trawa (zielony)
             }
-            else {
+            else if(grid[i][j] == '*'){
                 tile.setFillColor(sf::Color(255, 100, 0));  // meta (pomaranczowy)
             }
+            else if (grid[i][j] == 'T') {
+                tile.setFillColor(sf::Color::Blue); // dla editora wieza
+            }
+
 
             // Siatka pomocnicza
             tile.setOutlineThickness(1.f);
