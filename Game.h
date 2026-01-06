@@ -70,6 +70,7 @@ private:
     sf::Text Restart;
     sf::Text Exit;
 
+    sf::Vector2f startTPos;
 public:
     Game();
 
@@ -98,7 +99,6 @@ public:
 
     // --- Aktualizacja gry ---
     void update(float dt);
-
     // --- Gettery ---
     int getBaseHP() const;
     bool isGameOver() const;
@@ -115,7 +115,10 @@ public:
 
     // --- Flagi dodatkowe ---
     bool isCustomMap = false; // czy mapa niestandardowa
+
+    void setStartTPos(sf::Vector2f pos);
 };
 
 #endif
+
 
