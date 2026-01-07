@@ -97,6 +97,10 @@ int main() {
                     if (mouse->button == sf::Mouse::Button::Left) {
                         sf::Vector2f clickPos = window.mapPixelToCoords(mouse->position);
                         game.tryRestart(clickPos);//restart gry
+                        //aby nie stawialo wiezy podczas klikniecia restart
+                        if (!game.isGameOver()) {
+                            continue;
+                        }
                         if (game.tryExit(clickPos))  // wyjście z gry
                             window.close();
                     }
@@ -141,6 +145,9 @@ int main() {
                         }
                         else { // MENU GŁÓWNE
                             if (menu.isStartClicked(mousepos)) {
+                                game.isCustomMap = false;
+                                map.loadMap();
+                                map.refreshLogic();
                                 state = GameState::PLAYING;
                                 game.startGame();
                             }
@@ -396,7 +403,5 @@ int main() {
 
     return 0;
 }
-
-
 
 
