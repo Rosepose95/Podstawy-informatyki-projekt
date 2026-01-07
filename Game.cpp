@@ -1,4 +1,4 @@
-#include "Game.h"
+﻿#include "Game.h"
 #include "Enemy.h"
 #include "Tower.h"
 #include "Map.h"
@@ -6,6 +6,8 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <sstream>
+#include <limits>
 
 Game::Game()
     : font()
@@ -32,8 +34,7 @@ Game::Game()
     livesText.setCharacterSize(20);
     GameOverText.setCharacterSize(80); // duży tekst Game Over
     NextWaveText.setCharacterSize(60);
-    Restart.setCharacterSize(30); //
-    Exit.setCharacterSize(30);
+    Restart.setCharacterSize(30);
     infoText.setCharacterSize(24); // infoText z drugiego kodu
 
     waveText.setFillColor(sf::Color::Black);
@@ -43,7 +44,7 @@ Game::Game()
     NextWaveText.setFillColor(sf::Color::Green);
     Restart.setFillColor(sf::Color::White);
     Exit.setFillColor(sf::Color::White);
-    infoText.setFillColor(sf::Color::Green); // infoText kolor
+    infoText.setFillColor(sf::Color::Green);
 
     // --- Pozycje tekstów na ekranie ---
     waveText.setPosition({ 10.f, 20.f });
@@ -85,24 +86,21 @@ Game::Game()
 
     // --- Teksty ---
     auto goBounds = GameOverText.getLocalBounds();
-    GameOverText.setOrigin({ goBounds.position.x + goBounds.size.x / 2.f,
-                             goBounds.position.y + goBounds.size.y / 2.f });
+    GameOverText.setOrigin({ goBounds.position.x + goBounds.size.x / 2.f, goBounds.position.y + goBounds.size.y / 2.f });
     GameOverText.setPosition({ 1240.f / 2.f, 840.f * 0.25f });
 
     auto rBounds = Restart.getLocalBounds();
-    Restart.setOrigin({ rBounds.position.x + rBounds.size.x / 2.f,
-                        rBounds.position.y + rBounds.size.y / 2.f });
+    Restart.setOrigin({ rBounds.position.x + rBounds.size.x / 2.f, rBounds.position.y + rBounds.size.y / 2.f });
     Restart.setPosition(RestartButton.getPosition());
 
     auto eBounds = Exit.getLocalBounds();
-    Exit.setOrigin({ eBounds.position.x + eBounds.size.x / 2.f,
-                     eBounds.position.y + eBounds.size.y / 2.f });
+    Exit.setOrigin({ eBounds.position.x + eBounds.size.x / 2.f, eBounds.position.y + eBounds.size.y / 2.f });
     Exit.setPosition(ExitButton.getPosition());
 }
 
 // --- Dodawanie przeciwników ---
 void Game::addEnemy(Enemy enemy) {
-    enemy.setMap(map);   // bardzo ważne by się poruszał po mapie
+    enemy.setMap(map); // bardzo ważne by się poruszał po mapie
     enemies.push_back(enemy);
 }
 
@@ -117,12 +115,8 @@ void Game::placeTower(sf::Vector2f position) {
 
     int gridX = static_cast<int>(position.x / map->tileSize);
     int gridY = static_cast<int>(position.y / map->tileSize);
-
-    if (gridX < 0 || gridY < 0 || gridX >= map->getWidth() || gridY >= map->getHeight())
-        return;
-
-    if (map->getTile(gridX, gridY) != '.')
-        return;
+    if (gridX < 0 || gridY < 0 || gridX >= map->getWidth() || gridY >= map->getHeight()) return;
+    if (map->getTile(gridX, gridY) != '.') return;
 
     for (const auto& t : towers) {
         sf::Vector2f pos = t.getPosition();
@@ -134,26 +128,21 @@ void Game::placeTower(sf::Vector2f position) {
     float tsF = static_cast<float>(map->tileSize);
     towers.emplace_back(20, gridX * tsF + tsF / 2.f, gridY * tsF + tsF / 2.f);
 }
-
 //dla stawiania wiezy
 void Game::setStartTPos(sf::Vector2f pos) {
     startTPos = pos;
 }
-
 // --- Start gry ---
 void Game::startGame() {
     enemies.clear();
     bullets.clear();
     towers.clear();
-
     currentWave = 0;
     enemiesToSpawn = 0;
     waveInProgress = false;
     isBossWave = false;
-
     playerLives = 20;
     gameOver = false;
-
     spawnTimer = 0.f;
     waveBreakTimer = 0.f;
 
@@ -166,7 +155,7 @@ void Game::startGame() {
         int ts = map->tileSize;
         addTower(Tower(20, 14 * ts + ts / 2.f, 11 * ts + ts / 2.f));
     }
-    else{
+    else {
         addTower(Tower(20, startTPos.x, startTPos.y));
     }
 }
@@ -178,7 +167,7 @@ void Game::startNextWave() {
 
     // co 5 fala = boss
     isBossWave = (currentWave % 5 == 0);
-    if (isBossWave) autoSave(); // autosave co 5 falę
+    if (isBossWave) autoSave();
 
     currentWaveConfig.count = isBossWave ? 1 : (3 + currentWave);
     currentWaveConfig.enemyHP = isBossWave ? 600 : (30 + currentWave * 30);
@@ -187,18 +176,23 @@ void Game::startNextWave() {
     enemiesToSpawn = currentWaveConfig.count;
     spawnDelay = isBossWave ? 1.2f : std::max(0.25f, 0.7f - currentWave * 0.03f);
     spawnTimer = 0.f;
-
-    autoSave(); // autosave na początku każdej fali
 }
 
 // --- Aktualizacja gry ---
 void Game::update(float dt) {
     if (gameOver) return;
+    
+
+    if (waveJustLoaded) {
+        waveJustLoaded = false;
+        return;
+    }
 
     // zakończenie fali
     if (waveInProgress && enemies.empty() && enemiesToSpawn == 0) {
         waveInProgress = false;
         waveBreakTimer = 0.f;
+        autoSave();
     }
 
     // przerwa między falami
@@ -208,26 +202,21 @@ void Game::update(float dt) {
             NextWaveText.setString("Get ready for wave " + std::to_string(currentWave + 1));
         }
         waveBreakTimer += dt;
-
-        // animacja przesuwania tekstu
         NextWaveText.move({ 600.f * dt, 0.f });
-
-        // start nowej fali po przerwie
         if (waveBreakTimer >= breakDuration) {
             startNextWave();
             waveBreakTimer = 0.f;
         }
     }
+    
 
     // --- Spawn przeciwników ---
-    if (enemiesToSpawn > 0) {
+    if (enemiesToSpawn > 0 && !waveJustLoaded) {
         spawnTimer += dt;
         if (spawnTimer >= spawnDelay) {
             spawnTimer = 0.f;
-
             int ts = map->tileSize;
             EnemyType type = EnemyType::Normal;
-
             if (isBossWave) type = EnemyType::Boss;
             else {
                 if (currentWave >= 3 && rand() % 3 == 0) type = EnemyType::Fast;
@@ -235,15 +224,14 @@ void Game::update(float dt) {
             }
 
             auto& spawns = map->spawnPoints;
+            if (spawns.empty()) return;
             sf::Vector2i spawnTile = spawns[rand() % spawns.size()];
-
             float spawnX = static_cast<float>(spawnTile.x * ts + ts / 2);
             float spawnY = static_cast<float>(spawnTile.y * ts + ts / 2);
 
             enemies.emplace_back(currentWaveConfig.enemyHP, spawnX, spawnY, type);
             enemies.back().setMap(map);
             enemies.back().setSpeed(currentWaveConfig.speed);
-
             enemiesToSpawn--;
         }
     }
@@ -252,7 +240,7 @@ void Game::update(float dt) {
     if (playerLives <= 0) gameOver = true;
 
     // --- Ruch przeciwników ---
-    for (auto it = enemies.begin(); it != enemies.end(); ) {
+    for (auto it = enemies.begin(); it != enemies.end();) {
         it->update(dt);
         if (it->reachedGoal()) {
             playerLives -= it->getLifeDamage();
@@ -285,8 +273,7 @@ void Game::update(float dt) {
     }
 
     // --- Usuwanie martwych pocisków ---
-    bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
-        [](const Bullet& b) { return b.isDead(); }), bullets.end());
+    bullets.erase(std::remove_if(bullets.begin(), bullets.end(), [](const Bullet& b) { return b.isDead(); }), bullets.end());
 
     updateUI();
 }
@@ -314,9 +301,8 @@ void Game::draw(sf::RenderWindow& window) const {
 void Game::drawUI(sf::RenderWindow& window) const {
     window.draw(waveText);
     window.draw(enemiesText);
-
     if (showInfo && infoClock.getElapsedTime().asSeconds() < 2.f)
-        window.draw(infoText); // wyświetlanie komunikatu z drugiego kodu
+        window.draw(infoText);
 
     for (int i = 0; i < playerLives; ++i) {
         sf::CircleShape life(6.f);
@@ -334,6 +320,7 @@ void Game::updateUI() {
 
 // --- Map ---
 void Game::setMap(Map* m) { map = m; }
+
 bool Game::canPlaceTower(sf::Vector2f pos) const {
     if (!map) return false;
     int tx = pos.x / map->tileSize;
@@ -343,167 +330,290 @@ bool Game::canPlaceTower(sf::Vector2f pos) const {
 
 // --- Obsługa przycisków ---
 void Game::tryRestart(sf::Vector2f mousePos) {
-    if (gameOver && RestartButton.getGlobalBounds().contains(mousePos)) {
+    if (gameOver && RestartButton.getGlobalBounds().contains(mousePos))
         startGame();
-    }
 }
+
 bool Game::tryExit(sf::Vector2f mousePos) {
     return gameOver && ExitButton.getGlobalBounds().contains(mousePos);
 }
+
 // --- Gettery ---
 int Game::getBaseHP() const { return baseHP; }
 bool Game::isGameOver() const { return gameOver; }
 
-// --- Zapis / ładowanie gry ---
+// --- ZAPIS GRY ---
 void Game::saveGame(int slot) {
+    if (!map) return;
+
     std::ofstream file("save" + std::to_string(slot) + ".txt");
     if (!file.is_open()) return;
+    file << "TD_SAVE_V1\n";
 
-    // --- Podstawowe dane ---
-    file << "wave " << currentWave << "\n";
-    file << "lives " << playerLives << "\n";
+    file << (slot == 0) << "\n"; // isAuto
+    file << map->mapId << "\n";
+    // --- MAPA ---
+    file << map->getWidth() << " " << map->getHeight() << "\n";
 
-    // --- Wieże ---
-    file << "towers " << towers.size() << "\n";
-    for (auto& t : towers) {
-        sf::Vector2f pos = t.getPosition();
-        file << pos.x << " " << pos.y << "\n";
+    for (int y = 0; y < map->getHeight(); ++y) {
+        for (int x = 0; x < map->getWidth(); ++x) {
+            file << map->getTile(x, y);
+        }
+        file << "\n";
     }
 
-    // --- Przeciwnicy ---
-    file << "enemies " << enemies.size() << "\n";
-    for (auto& e : enemies) {
-        sf::Vector2f pos = e.getPosition();
-        file << static_cast<int>(e.getType()) << " " << e.getHP() << " " << pos.x << " " << pos.y << "\n";
-    }
+    
 
-    // --- Spawn i stan fali ---
-    file << "toSpawn " << enemiesToSpawn << "\n";
-    file << "waveInProgress " << waveInProgress << "\n";
-    file << "spawnTimer " << spawnTimer << "\n";
-    file << "waveBreakTimer " << waveBreakTimer << "\n";
+    // --- PODSTAWOWY STAN ---
+    file << currentWave << "\n";
+    file << playerLives << "\n";
+    file << gold << "\n";
+    file << baseHP << "\n";
+    file << enemiesToSpawn << "\n";
+    file << spawnTimer << "\n";
+    file << waveInProgress << "\n";
+    file << waveBreakTimer << "\n";
 
-    // --- InfoText ---
-    infoText.setString("Game Saved");
-    infoClock.restart();
-    showInfo = true;
-}
+    // --- KONFIGURACJA FALI ---
+    file << currentWaveConfig.enemyHP << "\n";
+    file << currentWaveConfig.speed << "\n";
+    file << spawnDelay << "\n";
+    file << isBossWave << "\n";
 
-void Game::loadGame(int slot) {
-    enemies.clear();
-    bullets.clear();
-    towers.clear();
-
-    std::ifstream file("save" + std::to_string(slot) + ".txt");
-    if (!file.is_open()) return;
-
-    std::string label;
-    int towerCount = 0, enemyCount = 0;
-
-    // --- Podstawowe dane ---
-    file >> label >> currentWave;
-    file >> label >> playerLives;
-
-    // --- Wieże ---
-    file >> label >> towerCount;
-    for (int i = 0; i < towerCount; ++i) {
-        float x, y;
-        file >> x >> y;
-        towers.emplace_back(20, x, y);
-    }
-
-    isBossWave = (currentWave % 5 == 0);
-    currentWaveConfig.count = isBossWave ? 1 : (3 + currentWave);
-    currentWaveConfig.enemyHP = isBossWave ? 600 : (30 + currentWave * 30);
-    currentWaveConfig.speed = isBossWave ? 60.f : (100.f + currentWave * 2.f);
-    spawnDelay = isBossWave ? 1.2f : std::max(0.25f, 0.7f - currentWave * 0.03f);
-
-    // --- Przeciwnicy ---
-    file >> label >> enemyCount;
-    for (int i = 0; i < enemyCount; ++i) {
-        int typeInt, hp; float x, y;
-        file >> typeInt >> hp >> x >> y;
-        EnemyType type = static_cast<EnemyType>(typeInt);
-        enemies.emplace_back(hp, x, y, type);
-        enemies.back().setMap(map);
-        enemies.back().setSpeed(currentWaveConfig.speed);
-    }
-
-    // --- Spawn i stan fali ---
-    file >> label >> enemiesToSpawn;
-    file >> label >> waveInProgress;
-    file >> label >> spawnTimer;
-    file >> label >> waveBreakTimer;
-
-    // --- InfoText ---
-    infoText.setString("Game Loaded");
-    infoClock.restart();
-    showInfo = true;
-    waveInProgress = true;
-    spawnTimer = 0.f;
-    waveBreakTimer = 0.f;
-
-    file.close();
-}
-
-// --- Autosave ---
-void Game::autoSave() {
-    std::ofstream file("autosave.txt");
-    if (!file.is_open()) return;
-
-    file << currentWave << "\n" << playerLives << "\n";
+    // --- WIEŻE (tylko pozycje) ---
     file << towers.size() << "\n";
     for (auto& t : towers)
         file << t.getPosition().x << " " << t.getPosition().y << "\n";
 
-    file.close();
+    // --- WROGOWIE ---
+    file << enemies.size() << "\n";
+    for (auto& e : enemies) {
+        file << e.getHP() << " "
+            << e.getMaxHP() << " "
+            << e.getTilePos().x << " "
+            << e.getTilePos().y << " "
+            << e.getPrevTile().x << " "
+            << e.getPrevTile().y << " "
+            << static_cast<int>(e.getType()) << "\n";
+    }
 }
-bool Game::loadAutoSave() {
-    std::ifstream file("autosave.txt");
-    if (!file.is_open()) return false;
 
+
+
+// --- WCZYTYWANIE GRY ---
+void Game::loadGame(int slot) {
+    if (!map) {
+        std::cout << "Nie mozna wczytac gry, brak mapy!\n";
+        return;
+    }
+    map->refreshLogic();
+    std::ifstream file("save" + std::to_string(slot) + ".txt");
+    if (!file.is_open()) {
+        std::cout << "Nie mogę otworzyć pliku: save" << slot << ".txt\n";
+        return;
+    }
+    else {
+        std::cout << "Otworzono plik save" << slot << ".txt\n";
+    }
+
+
+    std::cout << "Reading wave, lives, gold, baseHP...\n";
+    std::cout << "File pos: " << file.tellg() << "\n";
+
+    std::string header;
+    file >> header;
+    if (header != "TD_SAVE_V1") {
+        std::cout << "Corrupted save\n";
+        return;
+    }
+
+    bool isAuto;
+    file >> isAuto;
+
+    std::string mapId;
+    file >> mapId;
+    int w, h;
+    file >> w >> h;
+    file.ignore(); // usuwa '\n'
+
+    // czyścimy mapę
+    map->clearMap();
+   
+
+    for (int y = 0; y < h; ++y) {
+        std::string line;
+        std::getline(file, line);
+        for (int x = 0; x < w; ++x) {
+            map->setTile(x, y, line[x]);
+        }
+    }
+
+    
+
+    map->refreshLogic();
     enemies.clear();
-    bullets.clear();
     towers.clear();
+    bullets.clear();
 
-    file >> currentWave >> playerLives;
-    int towerCount; file >> towerCount;
-    for (int i = 0; i < towerCount; ++i) {
-        float x, y; file >> x >> y;
+    gameOver = false;
+    showInfo = false;
+    waveJustLoaded = true;
+
+    int waveFlag, bossFlag;
+
+    // --- PODSTAWOWY STAN ---
+    if (!(file >> currentWave >> playerLives >> gold >> baseHP >> enemiesToSpawn >> spawnTimer >> waveFlag >> waveBreakTimer)) {
+        std::cout << "Błąd wczytywania podstawowego stanu\n";
+        return;
+    }
+    waveInProgress = (waveFlag != 0);
+
+    // --- KONFIGURACJA FALI ---
+    if (!(file >> currentWaveConfig.enemyHP >> currentWaveConfig.speed >> spawnDelay >> bossFlag)) {
+        std::cout << "Błąd wczytywania konfiguracji fali\n";
+        return;
+    }
+    isBossWave = (bossFlag != 0);
+
+    // --- WIEŻE ---
+    size_t towerCount;
+    if (!(file >> towerCount)) { std::cout << "Błąd wczytywania liczby wież\n"; return; }
+    file.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // usuwa \n po liczbie
+
+    for (size_t i = 0; i < towerCount; ++i) {
+        std::string line;
+        if (!std::getline(file, line)) {
+            std::cout << "Blad wczytywania wiezy nr " << i << "\n";
+            continue;
+        }
+        std::istringstream iss(line);
+        float x, y;
+        if (!(iss >> x >> y)) {
+            std::cout << "Blad wczytywania wiezy nr " << i << "\n";
+            continue;
+        }
         towers.emplace_back(20, x, y);
     }
 
-    updateUI();
-    return true;
+
+
+    // --- WROGOWIE ---
+    size_t enemyCount;
+    if (!(file >> enemyCount)) { std::cout << "Błąd wczytywania liczby wrogów\n"; return; }
+    file.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // usuwa \n po liczbie
+
+    for (size_t i = 0; i < enemyCount; ++i) {
+        std::string line;
+        if (!std::getline(file, line)) {
+            std::cout << "Blad wczytywania wroga nr " << i << "\n";
+            continue;
+        }
+        std::istringstream iss(line);
+
+        int hp, maxHp, typeInt, tx, ty, ptx, pty;
+        if (!(iss >> hp >> maxHp >> tx >> ty >> ptx >> pty >> typeInt)) {
+            std::cout << "Blad wczytywania wroga nr " << i << "\n";
+            continue;
+        }
+
+        Enemy e(maxHp, 0, 0, static_cast<EnemyType>(typeInt));
+        e.setMap(map);
+        e.setMaxHP(maxHp);
+        e.setHP(hp);
+        e.restorePath({ tx, ty }, { ptx, pty });
+        e.setSpeed(currentWaveConfig.speed);
+
+
+        enemies.push_back(e);
+    }
+
+
+    std::cout << "Loaded wave: " << currentWave << "\n";
+    std::cout << "Enemies loaded: " << enemies.size() << "\n";
+    std::cout << "Wave in progress: " << waveInProgress << "\n";
 }
+
 
 // --- Sprawdzenie istniejącego save ---
 bool Game::saveExists(int slot) const {
     std::ifstream file("save" + std::to_string(slot) + ".txt");
     return file.good();
 }
-SaveInfo Game::getSaveInfo(int slot) {
-    SaveInfo info{ 0,0,0 };
-    std::ifstream file("save" + std::to_string(slot) + ".txt");
-    if (!file.is_open()) return info;
-    std::string label;
-    file >> label >> info.wave;
-    file >> label >> info.health;
-    return info;
-}
+
+
+
 void Game::HandleHover(sf::Vector2i mousepos) {
     sf::Vector2f mousePosF((float)mousepos.x, (float)mousepos.y);
     if (!gameOver) return;
 
-    RestartButton.setFillColor(
-        RestartButton.getGlobalBounds().contains(mousePosF)
-        ? sf::Color::Cyan
-        : sf::Color::Blue
-    );
+    RestartButton.setFillColor(RestartButton.getGlobalBounds().contains(mousePosF) ? sf::Color::Cyan : sf::Color::Blue);
+    ExitButton.setFillColor(ExitButton.getGlobalBounds().contains(mousePosF) ? sf::Color::Cyan : sf::Color::Blue);
+}
 
-    ExitButton.setFillColor(
-        ExitButton.getGlobalBounds().contains(mousePosF)
-        ? sf::Color::Cyan
-        : sf::Color::Blue
-    );
+
+std::string Game::getSaveDescription(int slot) const {
+    std::ifstream file("save" + std::to_string(slot) + ".txt");
+    if (!file.is_open()) return "EMPTY SLOT";
+    std::cout << "Reading wave, lives, gold, baseHP...\n";
+    std::cout << "File pos: " << file.tellg() << "\n";
+
+    // --- NAGŁÓWEK ---
+    std::string header;
+    file >> header;
+    if (header != "TD_SAVE_V1")
+        return "CORRUPTED SAVE";
+
+    bool isAuto;
+    std::string mapId;
+    int w, h;
+
+    file >> isAuto;
+    file >> mapId;
+    file >> w >> h;
+    file.ignore();
+
+    // --- POMIJAMY MAPĘ ---
+    for (int y = 0; y < h; ++y) {
+        std::string dummy;
+        std::getline(file, dummy);
+    }
+
+    // --- STAN GRY ---
+    int wave = 0, lives = 0, gold = 0, baseHP = 0;
+    int enemiesToSpawn = 0;
+    float spawnTimer = 0.f;
+    bool waveInProgress = false;
+    float waveBreakTimer = 0.f;
+
+    if (!(file >> wave >> lives >> gold >> baseHP
+        >> enemiesToSpawn >> spawnTimer
+        >> waveInProgress >> waveBreakTimer)) {
+        return "CORRUPTED SAVE";
+    }
+
+    if (slot == 0)
+        return "[AUTO] Wave " + std::to_string(wave) +
+        " | Gold " + std::to_string(gold);
+
+    return "Wave " + std::to_string(wave) +
+        " | Gold " + std::to_string(gold) +
+        " | Lives " + std::to_string(lives);
+}
+
+
+
+void Game::autoSave() { saveGame(0); } // slot 0 = autosave
+bool Game::autoSaveExists() const { std::ifstream f("save0.txt"); return f.good(); }
+std::string Game::getAutoSaveDescription() const {
+    return getSaveDescription(0);  
+}
+void Game::skipMap(std::ifstream& file) {
+    int w, h;
+    file >> w >> h;
+    file.ignore();
+
+    for (int i = 0; i < h; ++i) {
+        std::string dummy;
+        std::getline(file, dummy);
+    }
 }

@@ -12,7 +12,7 @@ enum class EnemyType {  //typy enemy
 
 class Enemy {
 private:
-    int health;  //Å¼ycie
+    int health;  //¿ycie
     int maxHealth;
 
     sf::CircleShape shape;
@@ -30,7 +30,7 @@ private:
 
 
 public:
-    Enemy(int h, float startX, float startY, EnemyType t = EnemyType::Normal); //zmiana metod, wektorÃ³w i typÃ³w
+    Enemy(int h, float startX, float startY, EnemyType t = EnemyType::Normal); //zmiana metod, wektorów i typów
     bool reachedGoal() const;
     void setMap(const Map* m);
     void update(float dt);
@@ -41,15 +41,29 @@ public:
     sf::Vector2f getPosition() const;
     float getRadius() const;
     void setSpeed(float s) { speed = s; }
+    void recalculatePath();
+
+    // Ustawienie pozycji kafelka i s¹siednich kafelków po wczytaniu
 
     void draw(sf::RenderWindow& window) const;
     int getHP() const { return health; }
     EnemyType getType() const { return type; }
     int getLifeDamage() const;
+    int getMaxHP() const { return maxHealth; }
+    void setHP(int hp) { health = hp; }
+    void setMaxHP(int hp) { maxHealth = hp; }
+    sf::Vector2i getTilePos() const { return tilePos; }
+    sf::Vector2i getPrevTile() const { return prevTile; }
+    sf::Vector2i getNextTile() const { return nextTile; }
+
+    void restorePath(sf::Vector2i tile, sf::Vector2i prev) {
+        tilePos = tile;
+        prevTile = prev;
+        nextTile = findNextTile(); 
+        shape.setPosition(tileCenter(tile));
+    }
+
 
 };
 
 #endif
-
-
-

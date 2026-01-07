@@ -1,4 +1,4 @@
-#ifndef GAME_H
+﻿#ifndef GAME_H
 #define GAME_H
 
 #include <SFML/Graphics.hpp>
@@ -21,6 +21,7 @@ struct SaveInfo {
     int wave;   // numer fali
     int health; // liczba żyć gracza
     int gold;   // złoto (jeśli planowane)
+    bool isAuto;
 };
 
 class Game {
@@ -43,6 +44,8 @@ private:
     WaveConfig currentWaveConfig;
     float spawnTimer = 0.f;
     float spawnDelay = 0.6f; // co ile sekund spawn
+    bool waveJustLoaded = false;
+
 
     bool isBossWave = false;     // flaga boss wave
     bool waveInProgress = false; // czy fala w toku
@@ -69,7 +72,6 @@ private:
     sf::RectangleShape ExitButton;
     sf::Text Restart;
     sf::Text Exit;
-
     sf::Vector2f startTPos;
 public:
     Game();
@@ -99,6 +101,7 @@ public:
 
     // --- Aktualizacja gry ---
     void update(float dt);
+
     // --- Gettery ---
     int getBaseHP() const;
     bool isGameOver() const;
@@ -107,18 +110,21 @@ public:
     void saveGame(int slot);
     void loadGame(int slot);
     bool saveExists(int slot) const;
-    SaveInfo getSaveInfo(int slot);
+    std::string getSaveDescription(int slot) const ;
+    
+	void loadWaveFromFile(const std::string& filename);
 
     // --- Autosave ---
     void autoSave();
-    bool loadAutoSave();
+    bool autoSaveExists() const;
+    std::string getAutoSaveDescription() const;
+
 
     // --- Flagi dodatkowe ---
     bool isCustomMap = false; // czy mapa niestandardowa
-
     void setStartTPos(sf::Vector2f pos);
+    void loadMapById(const std::string& id);
+    void skipMap(std::ifstream& file);
 };
 
 #endif
-
-

@@ -1,4 +1,4 @@
-#include "PauseMenu.h"
+﻿#include "PauseMenu.h"
 #include "Menu.h"
 
 PauseMenu::PauseMenu(float width, float height, sf::Font& font)
@@ -59,23 +59,44 @@ PauseMenu::PauseMenu(float width, float height, sf::Font& font)
     menuText.setOrigin({ me.position.x + me.size.x / 2.f, me.position.y + me.size.y / 2.f });
     menuText.setPosition({ width / 2.f, height * 0.75f });
 
-    // SLOTY – wyrównane do tego samego X co przyciski pauzy
-    for (int i = 0; i < 3; ++i)
-    {
-        sf::Text slot(font);
-        slot.setString("Slot " + std::to_string(i + 1));
-        slot.setCharacterSize(35);
-        slot.setFillColor(sf::Color::White);
+    // --- SLOTY SAVE / LOAD ---
+    float slotWidth = 480.f;  // szerszy slot
+    float slotHeight = 70.f;
+    float slotSpacing = 90.f;
+    float slotStartY = height * 0.4f;
 
-        slot.setPosition({ width / 2.f, height * 0.4f + i * 70.f });
-
+    for (int i = 0; i < 3; ++i) {
+        sf::RectangleShape slot({ slotWidth, slotHeight });
+        slot.setFillColor(sf::Color(50, 50, 50));
+        slot.setOutlineThickness(3.f);
+        slot.setOutlineColor(sf::Color::White);
+        slot.setOrigin({ slotWidth / 2.f, slotHeight / 2.f });
+        slot.setPosition({ width / 2.f, slotStartY + i * slotSpacing });
         slotButtons.push_back(slot);
-    }
 
-    // tekst BACK – ta sama pozycja co prostokąt
+
+        sf::Text txt(font);
+        txt.setCharacterSize(24);
+        txt.setFillColor(sf::Color::White);
+        txt.setString("Slot " + std::to_string(i + 1));
+        auto b = txt.getLocalBounds();
+        txt.setOrigin({
+            b.position.x + b.size.x / 2.f,
+            b.position.y + b.size.y / 2.f
+            });
+        txt.setPosition(slot.getPosition());
+        slotTexts.push_back(txt);
+    }
+    backButton.setSize({ 360.f, 60.f });
+    backButton.setFillColor(sf::Color(50, 50, 50));
+    backButton.setOutlineThickness(3.f);
+    backButton.setOutlineColor(sf::Color::White);
+    backButton.setOrigin({ 180.f, 30.f });
+    backButton.setPosition({ width / 2.f, height * 0.75f });
+
     backText.setFont(font);
     backText.setString("BACK");
-    backText.setCharacterSize(40);
+    backText.setCharacterSize(32);
     backText.setFillColor(sf::Color::White);
 
     auto bb = backText.getLocalBounds();
@@ -83,9 +104,8 @@ PauseMenu::PauseMenu(float width, float height, sf::Font& font)
         bb.position.x + bb.size.x / 2.f,
         bb.position.y + bb.size.y / 2.f
         });
+    backText.setPosition(backButton.getPosition());
 
-    // pod slotami
-    backText.setPosition({ width / 2.f, height * 0.75f });
 
 
 
@@ -105,15 +125,14 @@ void PauseMenu::draw(sf::RenderWindow& window) {
     else {
         // ekran slotów
         window.draw(title);
-        for (auto& s : slotButtons)
-            window.draw(s);
-
-        if (currentScreen != PauseScreen::MAIN) {
-            for (auto& s : slotButtons)
-                window.draw(s);
-
-            window.draw(backText);
+        for (int i = 0; i < slotButtons.size(); ++i) {
+            window.draw(slotButtons[i]);
+            window.draw(slotTexts[i]);
         }
+
+        window.draw(backButton);
+        window.draw(backText);
+
 
     }
 }
@@ -130,8 +149,20 @@ void PauseMenu::handleHover(sf::Vector2i mousePos) {
 
     }
     else {
-        for (auto& s : slotButtons)
-            s.setFillColor(s.getGlobalBounds().contains(m) ? sf::Color::Yellow : sf::Color::White);
+        for (int i = 0; i < slotButtons.size(); ++i) {
+            slotButtons[i].setFillColor(
+                slotButtons[i].getGlobalBounds().contains(m)
+                ? sf::Color(80, 80, 80)
+                : sf::Color(50, 50, 50)
+            );
+        }
+
+        backButton.setFillColor(
+            backButton.getGlobalBounds().contains(m)
+            ? sf::Color(80, 80, 80)
+            : sf::Color(50, 50, 50)
+        );
+
     }
 }
 
@@ -158,31 +189,32 @@ bool PauseMenu::loadClicked(sf::Vector2i mousePos) {
 
 // przyciski slotów
 int PauseMenu::slotClicked(sf::Vector2i mousePos) {
+    sf::Vector2f m((float)mousePos.x, (float)mousePos.y);
     for (int i = 0; i < slotButtons.size(); ++i) {
-        if (slotButtons[i].getGlobalBounds().contains(sf::Vector2f((float)mousePos.x, (float)mousePos.y))) {
+        if (slotButtons[i].getGlobalBounds().contains(m))
             return i + 1;
-        }
     }
     return 0;
 }
+
 void PauseMenu::setSlotText(int index, const std::string& text) {
-    if (index < 1 || index > slotButtons.size()) return;
+    if (index < 1 || index > slotTexts.size()) return;
 
-    auto& s = slotButtons[index - 1];
-    s.setString(text);
+    auto& t = slotTexts[index - 1];
+    t.setString(text);
 
-    auto b = s.getLocalBounds();
-    s.setOrigin({
+    auto b = t.getLocalBounds();
+    t.setOrigin({
         b.position.x + b.size.x / 2.f,
         b.position.y + b.size.y / 2.f
         });
 }
+
 
 bool PauseMenu::backClicked(sf::Vector2i mousePos) {
     return backText.getGlobalBounds().contains(
         sf::Vector2f((float)mousePos.x, (float)mousePos.y)
     );
 }
-
 
 

@@ -10,7 +10,7 @@ int Map::getHeight() const { return grid.size(); }
 Map::Map() {
     loadMap();
 }
-void Map::loadMap(){
+void Map::loadMap() {
     std::vector<std::string> layout = {
         "..........#...............#....", // 0  
         "..........#...............#....", // 1
@@ -45,7 +45,7 @@ void Map::loadMap(){
             if (layout[i][j] == '*') { // meta
                 baseTile = { j, i };
             }
-            if (layout[i][j] == '#') {//moÅ¼na to w sumie w jedneym ifie zrobiÄ‡ 
+            if (layout[i][j] == '#') {//mo¿na to w sumie w jedneym ifie zrobiæ 
                 if (j == 0 || i == 0 || i == rows - 1) {
                     spawnPoints.push_back({ j, i });
                 }
@@ -61,14 +61,14 @@ void Map::draw(sf::RenderWindow& window) {
             sf::RectangleShape tile(sf::Vector2f(static_cast<float>(tileSize), static_cast<float>(tileSize)));
             tile.setPosition({ static_cast<float>(j * tileSize), static_cast<float>(i * tileSize) });
 
-            // DobÃ³r koloru
+            // Dobór koloru
             if (grid[i][j] == '#') {
                 tile.setFillColor(sf::Color(100, 100, 100)); // Droga (szary)
             }
             else if (grid[i][j] == '.') {
                 tile.setFillColor(sf::Color(34, 139, 34));  // Trawa (zielony)
             }
-            else if(grid[i][j] == '*'){
+            else if (grid[i][j] == '*') {
                 tile.setFillColor(sf::Color(255, 100, 0));  // meta (pomaranczowy)
             }
             else if (grid[i][j] == 'T') {

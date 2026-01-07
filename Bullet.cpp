@@ -28,7 +28,7 @@ void Bullet::draw(sf::RenderWindow& window) const {
     window.draw(shape);
 }
 
-bool Bullet::isDead() const { //doda≈Çam parƒô metod, by pociski dzia≈Ça≈Çy poprawnie
+bool Bullet::isDead() const { //doda≥am parÍ metod, by pociski dzia≥a≥y poprawnie
     return dead || lifetime <= 0.f;
 }
 
@@ -43,10 +43,3 @@ sf::Vector2f Bullet::getPosition() const {
 int Bullet::getDamage() const {
     return damage;
 }
-
-
-
-
-
-
-

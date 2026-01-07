@@ -1,4 +1,4 @@
-#include <SFML/Graphics.hpp>
+﻿#include <SFML/Graphics.hpp>
 #include "Game.h"
 #include "Enemy.h"
 #include "Tower.h"
@@ -20,6 +20,7 @@ int main() {
     Game game;
     Map map;
     game.setMap(&map);
+    
 
     sf::Font font;
     font.openFromFile("assets/ArialMT.ttf");
@@ -83,7 +84,6 @@ int main() {
     bool canPaint = false;
     char currentBrush = '#';
 
-
     while (window.isOpen()) {
         sf::Vector2i mousepos = sf::Mouse::getPosition(window);
 
@@ -133,19 +133,25 @@ int main() {
 
                         // --- EKRAN LOAD ---
                         if (menu.isInLoadScreen()) {
+
+                            if (menu.backClicked(mousepos)) {
+                                menu.exitLoadScreen();
+                                break; // 
+                            }
+
                             int slot = menu.slotClicked(mousepos);
                             if (slot > 0 && game.saveExists(slot)) {
                                 game.loadGame(slot);
                                 state = GameState::PLAYING;
                                 menu.exitLoadScreen();
-                            }
-                            else if (menu.backClicked(mousepos)) {
-                                menu.exitLoadScreen();
+                                break;
                             }
                         }
+
                         else { // MENU GŁÓWNE
                             if (menu.isStartClicked(mousepos)) {
                                 game.isCustomMap = false;
+                                map.mapId = "default";
                                 map.loadMap();
                                 map.refreshLogic();
                                 state = GameState::PLAYING;
@@ -168,7 +174,7 @@ int main() {
             }
 
 
-
+            
 
             // --- TRYB EDITORA ---
             else if (state == GameState::EDITOR) {
@@ -181,7 +187,7 @@ int main() {
                     if (key->code == sf::Keyboard::Key::Enter) {
 
                         game.isCustomMap = true;
-
+                        map.mapId = "custom";
                         int ts = map.tileSize;
                         bool TowerFound = false;
 
@@ -234,6 +240,7 @@ int main() {
                 }
             }
 
+
             // --- ROZGRYWKA ---
             else if (state == GameState::PLAYING && !game.isGameOver()) {
 
@@ -259,9 +266,15 @@ int main() {
             else if (state == GameState::PAUSED) {
                 if (ev->is<sf::Event::MouseButtonPressed>()) {
                     if (pauseMenu.currentScreen == PauseScreen::MAIN) {
-                        if (pauseMenu.resumeClicked(mousepos)) state = GameState::PLAYING;
+                        if (pauseMenu.resumeClicked(mousepos)) {
+                            game.autoSave();   
+                            state = GameState::PLAYING;
+                        }
+
                         else if (pauseMenu.restartClicked(mousepos)) {
                             game.startGame();
+                            int ts = map.tileSize;
+                            game.addTower(Tower(20, 14 * ts + ts / 2.f, 11 * ts + ts / 2.f));
                             state = GameState::PLAYING;
                         }
                         else if (pauseMenu.menuClicked(mousepos)) state = GameState::MENU;
@@ -294,34 +307,34 @@ int main() {
                     }
                 }
             }
-            //rysowanie w editorze
-            if (state == GameState::EDITOR && canPaint) {
+        }
+        //rysowanie w editorze
+        if (state == GameState::EDITOR && canPaint) {
 
-                sf::Vector2f wordlpos = window.mapPixelToCoords(mousepos);
+            sf::Vector2f wordlpos = window.mapPixelToCoords(mousepos);
 
-                int ts = map.tileSize;
+            int ts = map.tileSize;
 
-                int tilex = (int)wordlpos.x / ts;
-                int tiley = (int)wordlpos.y / ts;
+            int tilex = (int)wordlpos.x / ts;
+            int tiley = (int)wordlpos.y / ts;
 
-                //sprawdzamy czy nie wychdzi poza nasza mape
-                if (tilex >= 0 && tilex <= 30 && tiley >= 0 && tiley <= 20) {
+            //sprawdzamy czy nie wychdzi poza nasza mape
+            if (tilex >= 0 && tilex <= 30 && tiley >= 0 && tiley <= 20) {
 
-                    //jesli ktos bedzie chcial postawic kolejna wieze to ta 1 sie skasuje
-                    if (currentBrush == 'T') {
-                        for (int i = 0; i < map.getHeight(); i++) {
-                            for (int j = 0; j < map.getWidth(); j++) {
-                                if (map.getTile(j, i) == 'T') {
-                                    map.setTile(j, i, '.');
-                                }
+                //jesli ktos bedzie chcial postawic kolejna wieze to ta 1 sie skasuje
+                if (currentBrush == 'T') {
+                    for (int i = 0; i < map.getHeight(); i++) {
+                        for (int j = 0; j < map.getWidth(); j++) {
+                            if (map.getTile(j, i) == 'T') {
+                                map.setTile(j, i, '.');
                             }
                         }
                     }
-                    map.setTile(tilex, tiley, currentBrush);
                 }
+                map.setTile(tilex, tiley, currentBrush);
             }
         }
-
+        
         float dt = clock.restart().asSeconds();
         if (state == GameState::PLAYING) game.update(dt);
         if (!pauseClicked) {
@@ -333,11 +346,25 @@ int main() {
 
         // --- RYSOWANIE ---
         window.clear(sf::Color::White);
-
         if (state == GameState::MENU) {
+
+            if (menu.isInLoadScreen()) {
+                for (int i = 1; i <= 3; ++i) {
+                    if (game.saveExists(i)) {
+                 
+                        menu.setSlotText(i, game.getSaveDescription(i));
+                    }
+                    else
+                        menu.setSlotText(i, "Slot " + std::to_string(i) + " | EMPTY");
+
+                }
+
+            }
+
             menu.handleHover(mousepos);
             menu.draw(window);
         }
+
         else if (state == GameState::EDITOR) {
             map.draw(window);
             window.draw(editorHUD);
@@ -353,22 +380,15 @@ int main() {
                 pauseMenu.handleHover(mousepos);
                 pauseMenu.draw(window);
 
-                if (pauseMenu.currentScreen != PauseScreen::MAIN) {
+                if (state == GameState::PAUSED &&
+                    pauseMenu.currentScreen != PauseScreen::MAIN) {
+
                     for (int i = 1; i <= 3; ++i) {
-                        if (game.saveExists(i)) {
-                            auto info = game.getSaveInfo(i);
-                            pauseMenu.setSlotText(i,
-                                "Slot " + std::to_string(i) +
-                                " | Wave " + std::to_string(info.wave) +
-                                " | HP " + std::to_string(info.health) +
-                                " | Gold " + std::to_string(info.gold)
-                            );
-                        }
-                        else {
-                            pauseMenu.setSlotText(i, "Slot " + std::to_string(i) + " | EMPTY");
-                        }
+                        
+                        pauseMenu.setSlotText(i, game.getSaveDescription(i));
                     }
                 }
+
             }
 
             // --- ANIMACJA PRZYCISKU PAUZY ---
@@ -403,5 +423,3 @@ int main() {
 
     return 0;
 }
-
-

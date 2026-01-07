@@ -1,4 +1,4 @@
-#include "Enemy.h"
+﻿#include "Enemy.h"
 #include <cmath>
 #include <algorithm>
 
@@ -25,7 +25,8 @@ Enemy::Enemy(int h, float startX, float startY, EnemyType t)
         break;
     case EnemyType::Boss:
         speed = 40.f;
-        maxHealth = health = h * 5;
+        maxHealth = h * 5;
+        health = maxHealth;
         shape.setRadius(28.f);
         shape.setOrigin({ 28.f, 28.f });
         shape.setFillColor(sf::Color(80, 0, 120));
@@ -108,6 +109,8 @@ sf::Vector2f Enemy::tileCenter(sf::Vector2i tile) const {
 void Enemy::update(float dt) {
     if (!map) return;
     if (reachedGoal()) return;
+    if (nextTile == tilePos)
+        nextTile = findNextTile();
 
 
     sf::Vector2f target = tileCenter(nextTile);
@@ -178,6 +181,16 @@ int Enemy::getLifeDamage() const {
         return 5;   // boss zabiera 5 żyć
     return 1;       // normalny wróg
 }
+void Enemy::recalculatePath() {
+    if (!map) return;
 
+    int ts = map->tileSize;
 
+    // przelicz kafelek na podstawie aktualnej pozycji
+    tilePos.x = static_cast<int>(shape.getPosition().x) / ts;
+    tilePos.y = static_cast<int>(shape.getPosition().y) / ts;
+
+    prevTile = tilePos;
+    nextTile = findNextTile();
+}
 
