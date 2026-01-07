@@ -19,11 +19,11 @@ public:
     void setTile(int x, int y, char type);  //malowanie mapy
     void clearMap();
     void refreshLogic();
+    void loadMap();
 
 private:
     std::vector<std::vector<char>> grid;
 };
 
 #endif
-
 
