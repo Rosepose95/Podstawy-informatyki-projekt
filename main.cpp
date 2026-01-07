@@ -16,7 +16,7 @@ enum class GameState {
 
 int main() {
     sf::RenderWindow window(sf::VideoMode({ 1240, 840 }), "Tower Defense SFML 3");
-
+    Enemy::loadTextures();
     Game game;
     Map map;
     game.setMap(&map);
