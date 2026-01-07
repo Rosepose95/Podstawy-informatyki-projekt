@@ -1,4 +1,4 @@
-﻿#include "Game.h"
+#include "Game.h"
 #include "Enemy.h"
 #include "Tower.h"
 #include "Map.h"
@@ -416,22 +416,22 @@ void Game::loadGame(int slot) {
         std::cout << "Otworzono plik save" << slot << ".txt\n";
     }
 
-
-    std::cout << "Reading wave, lives, gold, baseHP...\n";
-    std::cout << "File pos: " << file.tellg() << "\n";
-
     std::string header;
     file >> header;
     if (header != "TD_SAVE_V1") {
         std::cout << "Corrupted save\n";
         return;
     }
-
+    
     bool isAuto;
     file >> isAuto;
 
     std::string mapId;
-    file >> mapId;
+    if (!(file >> mapId)) {
+        mapId = "default"; // jeśli nie ma mapId w pliku, ustawiamy domyślną
+    }
+    map->mapId = mapId;
+
     int w, h;
     file >> w >> h;
     file.ignore(); // usuwa '\n'
@@ -554,8 +554,7 @@ void Game::HandleHover(sf::Vector2i mousepos) {
 std::string Game::getSaveDescription(int slot) const {
     std::ifstream file("save" + std::to_string(slot) + ".txt");
     if (!file.is_open()) return "EMPTY SLOT";
-    std::cout << "Reading wave, lives, gold, baseHP...\n";
-    std::cout << "File pos: " << file.tellg() << "\n";
+   
 
     // --- NAGŁÓWEK ---
     std::string header;
@@ -568,9 +567,14 @@ std::string Game::getSaveDescription(int slot) const {
     int w, h;
 
     file >> isAuto;
-    file >> mapId;
+
+    // jeśli mapId jest w pliku – wczytaj, jeśli nie – default
+    if (!(file >> mapId)) {
+        mapId = "default";
+    }
     file >> w >> h;
     file.ignore();
+
 
     // --- POMIJAMY MAPĘ ---
     for (int y = 0; y < h; ++y) {
@@ -617,3 +621,4 @@ void Game::skipMap(std::ifstream& file) {
         std::getline(file, dummy);
     }
 }
+
