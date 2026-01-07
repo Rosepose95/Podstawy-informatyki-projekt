@@ -8,6 +8,9 @@ int Map::getWidth() const { return grid[0].size(); }
 int Map::getHeight() const { return grid.size(); }
 
 Map::Map() {
+    loadMap();
+}
+void Map::loadMap(){
     std::vector<std::string> layout = {
         "..........#...............#....", // 0  
         "..........#...............#....", // 1
@@ -110,8 +113,3 @@ void Map::refreshLogic() {
         }
     }
 }
-
-
-
-
-
