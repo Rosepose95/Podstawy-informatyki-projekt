@@ -19,17 +19,12 @@ public:
     void draw(sf::RenderWindow& window) const;
 
     bool isDead() const;
-    void kill(); //usuwanie u≈ºytych pocisk√≥w i ich pozycja
+    void kill(); //usuwanie uøytych pociskÛw i ich pozycja
 
     sf::Vector2f getPosition() const;
     int getDamage() const;
 };
 
 #endif
-
-
-
-
-
 
 

@@ -1,6 +1,9 @@
-#include "Enemy.h"
+﻿#include "Enemy.h"
+#include "Game.h"
+#include "Tower.h"
 #include <cmath>
 #include <algorithm>
+#include <iostream>
 
 Enemy::Enemy(int h, float startX, float startY, EnemyType t)
 	: health(h), maxHealth(h), type(t) { //dodatek typu enemy i życia dla bossa
@@ -10,28 +13,30 @@ Enemy::Enemy(int h, float startX, float startY, EnemyType t)
 
     switch (type) {
     case EnemyType::Normal:
-        speed = 100.f;
+        baseSpeed = 100.f;
         shape.setFillColor(sf::Color::Red);
         break;
 
     case EnemyType::Fast:
-        speed = 160.f;
+        baseSpeed = 140.f;
         shape.setFillColor(sf::Color::Yellow);
         break;
 
     case EnemyType::Tank:
-        speed = 60.f;
+        baseSpeed = 60.f;
         shape.setFillColor(sf::Color(150, 0, 0));
         break;
     case EnemyType::Boss:
-        speed = 40.f;
-        maxHealth = health = h * 5;
+        isBossEnemy = true; // <<< BRAKOWAŁO
+        baseSpeed = 40.f;
+        maxHealth = h * 5;
+        health = maxHealth;
         shape.setRadius(28.f);
         shape.setOrigin({ 28.f, 28.f });
         shape.setFillColor(sf::Color(80, 0, 120));
         break;
     }
-
+    speed = baseSpeed;
     shape.setPosition({ startX, startY });
 
     tilePos = {
@@ -52,6 +57,7 @@ void Enemy::setMap(const Map* m) { //nowe fukcja do pathing
 
     prevTile = tilePos;
     nextTile = findNextTile();
+
 
 }
 
@@ -106,8 +112,18 @@ sf::Vector2f Enemy::tileCenter(sf::Vector2i tile) const {
 }
 
 void Enemy::update(float dt) {
+    if (isBossEnemy && !rage && health <= maxHealth * 0.5f) {
+        rage = true;
+        speed *= 1.8f;          // rage speed
+    }
+    if (isBossEnemy && rage) {
+        shape.setFillColor(sf::Color(160, 0, 200)); // rage color
+    }
+
     if (!map) return;
     if (reachedGoal()) return;
+    if (nextTile == tilePos)
+        nextTile = findNextTile();
 
 
     sf::Vector2f target = tileCenter(nextTile);
@@ -132,6 +148,21 @@ void Enemy::update(float dt) {
     // NORMALNY RUCH
     sf::Vector2f dir = toTarget / dist;
     shape.move(dir * moveDist);
+    if (type == EnemyType::Tank) {
+        infestationTimer += dt;
+        if (infestationTimer >= 1.0f) {
+            infestationTimer = 0.f;
+
+            if (infestCallback) {
+                infestCallback(getPosition(), 40.f, 1);
+            }
+        }
+    }
+
+
+
+
+
 }
 
 
@@ -161,8 +192,9 @@ void Enemy::draw(sf::RenderWindow& window) const {
     ratio = std::clamp(ratio, 0.f, 1.f);
 
     sf::Vector2f pos = shape.getPosition();
+    float barWidth = isBossEnemy ? 50.f : 36.f;
 
-    sf::RectangleShape back({ 36.f, 5.f });
+    sf::RectangleShape back({barWidth , 5.f });
     back.setFillColor(sf::Color::Red);
     back.setPosition({ pos.x - 18.f, pos.y - 30.f });
 
@@ -178,6 +210,31 @@ int Enemy::getLifeDamage() const {
         return 5;   // boss zabiera 5 żyć
     return 1;       // normalny wróg
 }
+void Enemy::forceWorldPosition(sf::Vector2f pos) {
+    shape.setPosition(pos);
+}
+void Enemy::recalculatePath() {
+    if (!map) return;
 
+    int ts = map->tileSize;
 
+    // przelicz kafelek na podstawie aktualnej pozycji
+    tilePos.x = static_cast<int>(shape.getPosition().x) / ts;
+    tilePos.y = static_cast<int>(shape.getPosition().y) / ts;
 
+    prevTile = tilePos;
+    nextTile = findNextTile();
+}
+void Enemy::applyWaveSpeed(float multiplier) {
+    speed = baseSpeed * multiplier;
+}
+bool Enemy::shouldInfest() const {
+    return type == EnemyType::Tank && infestationTimer >= 1.0f;
+}
+
+void Enemy::resetInfestTimer() {
+    infestationTimer = 0.f;
+}
+void Enemy::setInfestCallback(InfestCallback cb) {
+    infestCallback = cb;
+}

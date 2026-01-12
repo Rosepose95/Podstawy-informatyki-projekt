@@ -1,17 +1,20 @@
-#include <SFML/Graphics.hpp>
+﻿#include <SFML/Graphics.hpp>
 #include "Game.h"
 #include "Enemy.h"
 #include "Tower.h"
 #include "Map.h"
 #include "Menu.h"
 #include "PauseMenu.h"
+#include "SaveSystem.h"
+#include "AdventureMode.h"
+#include "WorldMap.h"
 
 // --- stany gry ---
 enum class GameState {
     MENU,
     PLAYING,
     PAUSED,
-    EDITOR // dodany z pierwszego kodu
+    EDITOR 
 };
 
 int main() {
@@ -20,6 +23,8 @@ int main() {
     Game game;
     Map map;
     game.setMap(&map);
+    
+
 
     sf::Font font;
     font.openFromFile("assets/ArialMT.ttf");
@@ -82,19 +87,37 @@ int main() {
 
     bool canPaint = false;
     char currentBrush = '#';
-
-
+    
     while (window.isOpen()) {
         sf::Vector2i mousepos = sf::Mouse::getPosition(window);
 
-        while (auto ev = window.pollEvent()) {
+        while (const std::optional<sf::Event> ev = window.pollEvent())
+        {
             if (ev->is<sf::Event::Closed>()) {
                 window.close();
+                continue;
             }
+            // --- klik myszą (GLOBALNY) ---
+            if (const sf::Event::MouseButtonPressed* mouse =
+                ev->getIf<sf::Event::MouseButtonPressed>())
+            {
+                if (mouse->button == sf::Mouse::Button::Left)
+                {
+                    sf::Vector2f worldPos =
+                        window.mapPixelToCoords(mouse->position);
+
+                    // klik na world mapie (Adventure)
+                    game.handleWorldMapClick(worldPos);
+                }
+            }
+
+            
             // --- KLIKNIĘCIA GAME OVER ---
-            if (game.isGameOver()) {
+            else if (game.isGameOver()) {
                 if (const auto* mouse = ev->getIf<sf::Event::MouseButtonPressed>()) {
                     if (mouse->button == sf::Mouse::Button::Left) {
+                        game.autoSave();
+
                         sf::Vector2f clickPos = window.mapPixelToCoords(mouse->position);
                         game.tryRestart(clickPos);//restart gry
                         //aby nie stawialo wiezy podczas klikniecia restart
@@ -106,8 +129,7 @@ int main() {
                     }
                 }
             }
-
-
+             
             // --- obsługa przycisku pauzy ---
             if (state != GameState::MENU) {
                 if (const auto* mousePressed = ev->getIf<sf::Event::MouseButtonPressed>()) {
@@ -133,19 +155,39 @@ int main() {
 
                         // --- EKRAN LOAD ---
                         if (menu.isInLoadScreen()) {
+
+                            if (menu.backClicked(mousepos)) {
+                                menu.exitLoadScreen();
+                                break;
+                            }
+
                             int slot = menu.slotClicked(mousepos);
-                            if (slot > 0 && game.saveExists(slot)) {
-                                game.loadGame(slot);
-                                state = GameState::PLAYING;
-                                menu.exitLoadScreen();
+                            if (slot == -1) { /* nic */ }
+                            else if (slot == 0) {
+                                if (SaveSystem::exists(0)) {
+                                    SaveSystem::load(game, 0);
+
+                                    state = GameState::PLAYING;
+                                    menu.exitLoadScreen();
+                                    break;
+                                }
                             }
-                            else if (menu.backClicked(mousepos)) {
-                                menu.exitLoadScreen();
+                            else if (slot > 0) {
+                                if (SaveSystem::exists(slot)) {
+                                    SaveSystem::load(game, slot);
+                                    state = GameState::PLAYING;
+                                    menu.exitLoadScreen();
+                                    break;
+                                }
                             }
+
                         }
+
+
                         else { // MENU GŁÓWNE
                             if (menu.isStartClicked(mousepos)) {
                                 game.isCustomMap = false;
+                                map.mapId = "default";
                                 map.loadMap();
                                 map.refreshLogic();
                                 state = GameState::PLAYING;
@@ -181,7 +223,7 @@ int main() {
                     if (key->code == sf::Keyboard::Key::Enter) {
 
                         game.isCustomMap = true;
-
+                        map.mapId = "custom";
                         int ts = map.tileSize;
                         bool TowerFound = false;
 
@@ -234,8 +276,10 @@ int main() {
                 }
             }
 
+
             // --- ROZGRYWKA ---
             else if (state == GameState::PLAYING && !game.isGameOver()) {
+               
 
                 // stawianie wież
                 if (const auto* mouse = ev->getIf<sf::Event::MouseButtonPressed>()) {
@@ -259,17 +303,23 @@ int main() {
             else if (state == GameState::PAUSED) {
                 if (ev->is<sf::Event::MouseButtonPressed>()) {
                     if (pauseMenu.currentScreen == PauseScreen::MAIN) {
-                        if (pauseMenu.resumeClicked(mousepos)) state = GameState::PLAYING;
+                        game.autoSave();
+                        if (pauseMenu.resumeClicked(mousepos)) {
+                            state = GameState::PLAYING;
+                        }
+
                         else if (pauseMenu.restartClicked(mousepos)) {
                             game.startGame();
+                            int ts = map.tileSize;
+                            game.addTower(Tower(20, 14 * ts + ts / 2.f, 11 * ts + ts / 2.f));
                             state = GameState::PLAYING;
                         }
                         else if (pauseMenu.menuClicked(mousepos)) state = GameState::MENU;
                         else if (pauseMenu.saveClicked(mousepos)) {
                             pauseMenu.currentScreen = PauseScreen::SAVE_SLOTS;
                             for (int i = 1; i <= 3; ++i) {
-                                if (!game.saveExists(i)) {
-                                    game.saveGame(i);
+                                if (!SaveSystem::exists(i)) {
+                                    SaveSystem::save(game, i);
                                     pauseMenu.currentScreen = PauseScreen::MAIN;
                                     break;
                                 }
@@ -279,46 +329,59 @@ int main() {
                     }
                     else { // ekran slotów
                         int slot = pauseMenu.slotClicked(mousepos);
+
                         if (pauseMenu.currentScreen == PauseScreen::SAVE_SLOTS && slot > 0) {
-                            game.saveGame(slot);
+                            SaveSystem::save(game, slot);
                             pauseMenu.currentScreen = PauseScreen::MAIN;
                         }
-                        else if (pauseMenu.currentScreen == PauseScreen::LOAD_SLOTS && slot > 0) {
-                            if (game.saveExists(slot)) {
-                                game.loadGame(slot);
-                                state = GameState::PLAYING;
-                                pauseMenu.currentScreen = PauseScreen::MAIN;
+                        else if (pauseMenu.currentScreen == PauseScreen::LOAD_SLOTS) {
+                            if (slot == 0) { // AUTOSAVE
+                                if (SaveSystem::exists(0)) {
+                                    SaveSystem::load(game, 0);
+                                    state = GameState::PLAYING;
+                                    pauseMenu.currentScreen = PauseScreen::MAIN;
+                                }
                             }
-                        }
-                        if (pauseMenu.backClicked(mousepos)) pauseMenu.currentScreen = PauseScreen::MAIN;
-                    }
-                }
-            }
-            //rysowanie w editorze
-            if (state == GameState::EDITOR && canPaint) {
-
-                sf::Vector2f wordlpos = window.mapPixelToCoords(mousepos);
-
-                int ts = map.tileSize;
-
-                int tilex = (int)wordlpos.x / ts;
-                int tiley = (int)wordlpos.y / ts;
-
-                //sprawdzamy czy nie wychdzi poza nasza mape
-                if (tilex >= 0 && tilex <= 30 && tiley >= 0 && tiley <= 20) {
-
-                    //jesli ktos bedzie chcial postawic kolejna wieze to ta 1 sie skasuje
-                    if (currentBrush == 'T') {
-                        for (int i = 0; i < map.getHeight(); i++) {
-                            for (int j = 0; j < map.getWidth(); j++) {
-                                if (map.getTile(j, i) == 'T') {
-                                    map.setTile(j, i, '.');
+                            else if (slot > 0) { // SLOTY 1–3
+                                if (SaveSystem::exists(slot)) {
+                                    SaveSystem::load(game, slot);
+                                    state = GameState::PLAYING;
+                                    pauseMenu.currentScreen = PauseScreen::MAIN;
                                 }
                             }
                         }
+
+                        if (pauseMenu.backClicked(mousepos)) pauseMenu.currentScreen = PauseScreen::MAIN;
                     }
-                    map.setTile(tilex, tiley, currentBrush);
+
+     
                 }
+            }
+        }
+        //rysowanie w editorze
+        if (state == GameState::EDITOR && canPaint) {
+
+            sf::Vector2f wordlpos = window.mapPixelToCoords(mousepos);
+
+            int ts = map.tileSize;
+
+            int tilex = (int)wordlpos.x / ts;
+            int tiley = (int)wordlpos.y / ts;
+
+            //sprawdzamy czy nie wychdzi poza nasza mape
+            if (tilex >= 0 && tilex <= 30 && tiley >= 0 && tiley <= 20) {
+
+                //jesli ktos bedzie chcial postawic kolejna wieze to ta 1 sie skasuje
+                if (currentBrush == 'T') {
+                    for (int i = 0; i < map.getHeight(); i++) {
+                        for (int j = 0; j < map.getWidth(); j++) {
+                            if (map.getTile(j, i) == 'T') {
+                                map.setTile(j, i, '.');
+                            }
+                        }
+                    }
+                }
+                map.setTile(tilex, tiley, currentBrush);
             }
         }
 
@@ -333,11 +396,30 @@ int main() {
 
         // --- RYSOWANIE ---
         window.clear(sf::Color::White);
-
         if (state == GameState::MENU) {
+
+            if (menu.isInLoadScreen()) {
+
+                // AUTOSAVE
+                if (SaveSystem::exists(0))
+                    menu.setAutoSlotText(SaveSystem::getDescription(0));
+                else
+                    menu.setAutoSlotText("[AUTO] EMPTY");
+                // SLOTY 1–3
+                for (int i = 1; i <= 3; ++i) {
+                    if (SaveSystem::exists(i))
+                        menu.setSlotText(i, SaveSystem::getDescription(i));
+                    else
+                        menu.setSlotText(i, "Slot " + std::to_string(i) + " | EMPTY");
+
+                }
+            }
+
+
             menu.handleHover(mousepos);
             menu.draw(window);
         }
+
         else if (state == GameState::EDITOR) {
             map.draw(window);
             window.draw(editorHUD);
@@ -353,22 +435,15 @@ int main() {
                 pauseMenu.handleHover(mousepos);
                 pauseMenu.draw(window);
 
-                if (pauseMenu.currentScreen != PauseScreen::MAIN) {
+                if (state == GameState::PAUSED &&
+                    pauseMenu.currentScreen != PauseScreen::MAIN) {
+
                     for (int i = 1; i <= 3; ++i) {
-                        if (game.saveExists(i)) {
-                            auto info = game.getSaveInfo(i);
-                            pauseMenu.setSlotText(i,
-                                "Slot " + std::to_string(i) +
-                                " | Wave " + std::to_string(info.wave) +
-                                " | HP " + std::to_string(info.health) +
-                                " | Gold " + std::to_string(info.gold)
-                            );
-                        }
-                        else {
-                            pauseMenu.setSlotText(i, "Slot " + std::to_string(i) + " | EMPTY");
-                        }
+
+                        pauseMenu.setSlotText(i, SaveSystem::getDescription(i));
                     }
                 }
+
             }
 
             // --- ANIMACJA PRZYCISKU PAUZY ---
@@ -403,5 +478,4 @@ int main() {
 
     return 0;
 }
-
 

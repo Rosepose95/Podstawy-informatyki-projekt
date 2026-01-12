@@ -21,8 +21,14 @@ private:
     sf::Text menuText;
     sf::Text saveText;
     sf::Text loadText;   // ? TO JEST OK
-    std::vector<sf::Text> slotButtons;
+    std::vector<sf::RectangleShape> slotButtons;
+    std::vector<sf::Text> slotTexts;
+    sf::Text autoSlotText;
+    sf::RectangleShape autoSlotButton; // przycisk autosave
+
+    sf::RectangleShape backButton;
     sf::Text backText;
+
 
 
 public:
