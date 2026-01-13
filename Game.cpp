@@ -811,7 +811,7 @@ EnemyType Game::pickEnemyForBiome(Biomes biome, bool isBossWave) {
 
     switch (biome) {
     case Biomes::Fire: {
-        int r = rand() % 4;
+        int r = rand() % 5;
         if (r == 0) return EnemyType::Fast;
         if (r == 1) return EnemyType::Flame;
         if (r == 2) return EnemyType::Crusher;
@@ -827,4 +827,5 @@ EnemyType Game::pickEnemyForBiome(Biomes biome, bool isBossWave) {
         return EnemyType::Normal;
     }
 }
+
 
