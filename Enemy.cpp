@@ -164,9 +164,10 @@ void Enemy::update(float dt) {
    		if (bossAbilityTimer >= 5.f) {
         	bossAbilityTimer = 0.f;
 
-        	if (eventCallback) {
-            	eventCallback(getPosition(), type);
-        	}
+        	if (bossCallback) {
+   				 bossCallback(getPosition());
+				}
+
     	}
 	}
 
@@ -235,15 +236,9 @@ void Enemy::recalculatePath() {
 void Enemy::applyWaveSpeed(float multiplier) {
     speed = baseSpeed * multiplier;
 }
-bool Enemy::shouldInfest() const {
-    return type == EnemyType::Tank && infestationTimer >= 1.0f;
-}
-
-void Enemy::resetInfestTimer() {
-    infestationTimer = 0.f;
-}
 void Enemy::setInfestCallback(InfestCallback cb) {
     infestCallback = cb;
 }
+
 
 
