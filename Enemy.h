@@ -16,7 +16,7 @@ enum class EnemyType {  //typy enemy
 
 class Enemy {
 public:
-    Enemy(int h, float startX, float startY, EnemyType t = EnemyType::Normal); //zmiana metod, wektorów i typów
+    Enemy(int h, float startX, float startY, EnemyType t = EnemyType::Normal); //zmiana metod, wektorÃ³w i typÃ³w
     bool reachedGoal() const;
     void setMap(const Map* m);
     void update(float dt);
@@ -33,7 +33,7 @@ public:
     void setSpeed(float s) { speed = s; }
     void recalculatePath();
 
-    // Ustawienie pozycji kafelka i s¹siednich kafelków po wczytaniu
+    // Ustawienie pozycji kafelka i sÂ¹siednich kafelkÃ³w po wczytaniu
     void forceWorldPosition(sf::Vector2f pos);
 
     void draw(sf::RenderWindow& window) const;
@@ -57,8 +57,9 @@ public:
     bool isBoss() const { return isBossEnemy; }
     bool isRaging() const { return rage; }
 private:
-    int health;  //¿ycie
+    int health;  //Â¿ycie
     int maxHealth;
+    float bossAbilityTimer = 0.f;
 
     sf::CircleShape shape;
     float infestationTimer = 0.f;
@@ -84,5 +85,6 @@ private:
 
 
 };
+
 
 #endif
