@@ -233,14 +233,7 @@ void Game::startNextWave()
 
     enemiesToSpawn = isBossWave ? 1 : 5 + currentWave;
     waveInProgress = true;
-	enemies.back().setInfestCallback(
-		[this](sf::Vector2f pos, float radius, int type)
-		{	
-			if (type == 0) {
-				pushTowersNear(pos);
-			}
-		}
-	};
+	
 	
 }
 // --- Aktualizacja gry ---
@@ -263,11 +256,6 @@ void Game::update(float dt) {
 
         waveInProgress = false;
         waveBreakTimer = 0.f;
-
-        if (mode == GameMode::Adventure && isBossWave) {
-            onMapCompleted();
-            return; // ⬅️ SUPER WAŻNE
-        }
 
         autoSave();
     }
@@ -750,5 +738,6 @@ void Game::pushTowersNear(sf::Vector2f bossPos)
         }
     }
 }
+
 
 
