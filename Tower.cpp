@@ -84,21 +84,21 @@ void Tower::upgrade() {
 
 void Tower::draw(sf::RenderWindow& window) const {
     window.draw(shape);
-    
+
     if (infestationStacks > 0) {
         sf::RectangleShape barBack({ 30.f, 4.f });
         barBack.setFillColor(sf::Color(50, 50, 50));
         barBack.setPosition({ shape.getPosition().x - 15.f,
             shape.getPosition().y - 28.f });
 
-       
+
 
         float ratio = 1.f - infestationStacks / float(MAX_INFESTATION);
         ratio = std::clamp(ratio, 0.f, 1.f);
 
 
         sf::RectangleShape bar({ 30.f * ratio, 4.f });
-        
+
 
         sf::CircleShape infestIcon(5.f);
         infestIcon.setFillColor(sf::Color(60, 200, 60));
@@ -130,10 +130,10 @@ void Tower::draw(sf::RenderWindow& window) const {
             shape.getPosition().y - 42.f
             });
         window.draw(burnIcon);
-        
+
 
     }
-   
+
 
 
 
@@ -176,4 +176,20 @@ void Tower::setPosition(sf::Vector2f pos) {
     shape.setPosition(pos);
 }
 
+TowerStatus Tower::getStatus() const {
+    TowerStatus s;
+    s.infestation = infestationStacks;
+    s.burn = burnStacks;
+    s.destroyed = destroyed;
+    return s;
+}
 
+void Tower::setStatus(const TowerStatus& s) {
+    infestationStacks = s.infestation;
+    burnStacks = s.burn;
+    destroyed = s.destroyed;
+}
+
+void Tower::setInfestationStacks(int v) { infestationStacks = v; }
+void Tower::setBurnStacks(int v) { burnStacks = v; }
+void Tower::setDestroyed(bool v) { destroyed = v; }
