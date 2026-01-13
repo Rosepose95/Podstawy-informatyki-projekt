@@ -5,7 +5,13 @@ struct AdventureNode {
     std::string id;
     bool unlocked = false;
     bool completed = false;
-    bool boss = false;   // ?? DODAJEMY
+    bool boss = false;   
+enum class Biomes {
+    Meadow,
+    Fire,
+    Forest,
+    Water,
+    Ice
 };
 
 
@@ -21,7 +27,8 @@ public:
     std::string getNextNode(const std::string& id) const;
     int getRewardGold(const std::string& nodeId) const;
     bool isBossNode(const std::string& id) const;
-    
+    Biomes getBiomeForNode(const std::string& nodeId);
+
 
 private:
     std::unordered_map<std::string, AdventureNode> nodes;
