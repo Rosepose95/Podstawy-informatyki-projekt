@@ -38,9 +38,14 @@ Enemy::Enemy(int h, float startX, float startY, EnemyType t)
         break;
 
     case EnemyType::Fireball:
-        baseSpeed = 160.f;
-        shape.setFillColor(sf::Color(255, 120, 0));
-        break;
+    baseSpeed = 165.f;
+    maxHealth = h * 0.6f;
+    health = maxHealth;
+    shape.setRadius(12.f);
+    shape.setOrigin({ 12.f, 12.f });
+    shape.setFillColor(sf::Color(255, 140, 40));
+    break;
+
     case EnemyType::Flame:
         baseSpeed = 55.f;
         maxHealth = h * 0.8f;
@@ -258,11 +263,16 @@ if (burnCallback) {
         interval = 4.5f;
         radius = 90.f;
         break;
+case EnemyType::Crusher:
+    baseSpeed = 45.f;
+    maxHealth = h * 3;
+    health = maxHealth;
+    shape.setRadius(22.f);
+    shape.setOrigin({ 22.f, 22.f });
+    shape.setFillColor(sf::Color(140, 50, 30));
+    break;
 
-    case EnemyType::Crusher:
-        interval = 2.5f;
-        radius = 60.f;
-        break;
+    
 
     case EnemyType::FireBoss:
         interval = 2.0f;
@@ -416,6 +426,7 @@ void Enemy::setStatus(const EnemyStatus& s) {
     if (rage)
         speed = baseSpeed * 1.8f;
 }
+
 
 
 
