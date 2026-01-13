@@ -303,20 +303,29 @@ void Game::update(float dt) {
 
             enemies.back().setMap(map);
 			if (type == EnemyType::Boss) {
-    enemies.back().setBossCallback(
-        [this](sf::Vector2f pos) {
-            // infestation
-            infestTowers(pos, 40.f, 1);
-
-            // przesuwanie
-            pushTowersNear(pos);
+    			enemies.back().setBossCallback(
+      			  [this](sf::Vector2f pos) {
+           		 // infestation
+           			 infestTowers(pos, 40.f, 1);
+	
+           		 // przesuwanie
+           		 pushTowersNear(pos);
         }
     );
+}
+			if (type == EnemyType::Fireball || type == EnemyType::Flame) {
+ 			   burnTimer += dt;
+   				 if (burnTimer >= 5.f) {
+       				 burnTimer = 0.f;
+      			     if (burnCallback) {
+           				 burnCallback(getPosition(), 1);
+        }
+    }
 }
 
             enemies.back().applyWaveSpeed(currentWaveConfig.speed);
 
-            // TU:
+            
             enemies.back().setInfestCallback(
                 [this](sf::Vector2f pos, float radius, int stacks) {
                     infestTowers(pos, radius, stacks);
@@ -748,6 +757,13 @@ void Game::pushTowersNear(sf::Vector2f bossPos)
                 return;
             }
         }
+    }
+}
+
+void Game::burnTowers(sf::Vector2f pos, float radius, int stacks) {
+    for (auto& t : towers) {
+        if (distance(t.getPosition(), pos) <= radius)
+            t.addBurn(stacks);
     }
 }
 
