@@ -133,6 +133,28 @@ void Tower::draw(sf::RenderWindow& window) const {
 
 
     }
+    sf::Vector2f p = shape.getPosition();
+
+    if (infestationStacks > 0) {
+        sf::CircleShape icon(6.f);
+        icon.setFillColor(sf::Color(100, 200, 100));
+        icon.setPosition(p + sf::Vector2f(-10, -30));
+        window.draw(icon);
+    }
+
+    if (burnStacks > 0) {
+        sf::CircleShape icon(6.f);
+        icon.setFillColor(sf::Color(255, 100, 0));
+        icon.setPosition(p + sf::Vector2f(0, -30));
+        window.draw(icon);
+    }
+
+    if (frozenTimer > 0.f) {
+        sf::CircleShape icon(6.f);
+        icon.setFillColor(sf::Color(100, 200, 255));
+        icon.setPosition(p + sf::Vector2f(10, -30));
+        window.draw(icon);
+    }
 
 
 
