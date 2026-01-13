@@ -31,6 +31,10 @@ public:
     using EnemyEventCallback = std::function<void(sf::Vector2f pos, EnemyType type)>;
     EnemyEventCallback eventCallback;
 
+    using BossAbilityCallback = std::function<void(sf::Vector2f)>;
+
+    BossAbilityCallback bossCallback;
+
     sf::Vector2f getPosition() const;
     float getRadius() const;
     void setSpeed(float s) { speed = s; }
@@ -61,7 +65,6 @@ public:
     bool isRaging() const { return rage; }
     void setEventCallback(EnemyEventCallback cb) {
     eventCallback = cb;}
-
 private:
     int health;  //życie
     int maxHealth;
@@ -94,4 +97,5 @@ private:
 
 
 #endif
+
 
