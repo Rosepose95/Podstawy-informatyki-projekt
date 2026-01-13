@@ -302,6 +302,18 @@ void Game::update(float dt) {
             enemies.emplace_back(currentWaveConfig.enemyHP, spawnX, spawnY, type);
 
             enemies.back().setMap(map);
+			if (type == EnemyType::Boss) {
+    enemies.back().setBossCallback(
+        [this](sf::Vector2f pos) {
+            // infestation
+            infestTowers(pos, 40.f, 1);
+
+            // przesuwanie
+            pushTowersNear(pos);
+        }
+    );
+}
+
             enemies.back().applyWaveSpeed(currentWaveConfig.speed);
 
             // TU:
@@ -738,6 +750,7 @@ void Game::pushTowersNear(sf::Vector2f bossPos)
         }
     }
 }
+
 
 
 
