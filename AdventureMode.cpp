@@ -58,3 +58,26 @@ int AdventureMode::getRewardGold(const std::string& nodeId) const
     return 25; // fallback
 }
 
+
+
+Biomes AdventureMode::getBiomeForNode(const std::string& nodeId)
+{
+    // PROSTA LOGIKA – na start
+    if (nodeId.find("fire") != std::string::npos)
+        return Biomes::Fire;
+
+    if (nodeId.find("meadow") != std::string::npos)
+        return Biomes::Meadow;
+
+    if (nodeId.find("forest") != std::string::npos)
+        return Biomes::Forest;
+
+    if (nodeId.find("water") != std::string::npos)
+        return Biomes::Water;
+
+    if (nodeId.find("ice") != std::string::npos)
+        return Biomes::Ice;
+
+    // fallback
+    return Biomes::Meadow;
+}
