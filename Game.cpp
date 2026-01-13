@@ -185,9 +185,10 @@ void Game::startGame() {
     gameOver = false;
     spawnTimer = 0.f;
     waveBreakTimer = 0.f;
+	
     waveJustLoaded = false;
     inWorldMap = false;
-
+	bossDefeatedThisFrame = false;
 
     // ustawienie slidera fali poza ekranem
     NextWaveText.setString("Get ready for wave 1");
@@ -218,14 +219,12 @@ void Game::startNextWave()
 // ustaw multiplikator (dobierz skalowanie do testów)
     currentWaveConfig.speed = 1.0f + currentWave * 0.03f;
     // np. wave 1 -> 1.03, wave 10 -> 1.3, wave 30 -> 1.9
-
-
     spawnDelay = 0.8f;
     spawnTimer = 0.f;
 
     if (mode == GameMode::Adventure) {
         adventureBiome = (currentWave - 1) / 10;
-        isBossWave = (currentWave % 10 == 0);
+        //isBossWave = (currentWave % 10 == 0);
         isBossWave = adventure.isBossNode(currentNodeId);
     }
     else {
@@ -234,6 +233,15 @@ void Game::startNextWave()
 
     enemiesToSpawn = isBossWave ? 1 : 5 + currentWave;
     waveInProgress = true;
+	enemies.back().setInfestCallback(
+		[this](sf::Vector2f pos, float radius, int type)
+		{	
+			if (type == 0) {
+				pushTowersNear(pos);
+			}
+		}
+	};
+	
 }
 // --- Aktualizacja gry ---
 void Game::update(float dt) {
@@ -241,9 +249,9 @@ void Game::update(float dt) {
     totalPlayTime += dt;
 
    
-    if (inWorldMap)
+    if (inWorldMap) {
         return;
-
+	}
 
     if (waveJustLoaded) {
         waveJustLoaded = false;
@@ -583,6 +591,7 @@ void Game::onLoadedFromSave()
 {
     waveJustLoaded = true;
     gameOver = false;
+	inWorldMap = false;
     
 
 }
@@ -697,6 +706,32 @@ void Game::infestTowers(sf::Vector2f pos, float radius, int stacks) {
 
         if (dist2 <= r2) {
             t.addInfestation(stacks);
+        }
+    }
+}
+
+void Game::pushTowersNear(sf::Vector2f bossPos)
+{
+    int ts = map->tileSize;
+
+    for (auto& t : towers) {
+        sf::Vector2f tp = t.getPosition();
+        if (std::abs(tp.y - bossPos.y) < ts * 0.5f) {
+
+            int tx = tp.x / ts;
+            int ty = tp.y / ts;
+
+            // przesuwanie w prawo
+            if (map->getTile(tx + 1, ty) == '.') {
+                t.setPosition({ (tx + 1) * ts + ts / 2.f, ty * ts + ts / 2.f });
+                break;
+            }
+
+            // przesuwanie w lewo
+            if (map->getTile(tx - 1, ty) == '.') {
+                t.setPosition({ (tx - 1) * ts + ts / 2.f, ty * ts + ts / 2.f });
+                break;
+            }
         }
     }
 }
