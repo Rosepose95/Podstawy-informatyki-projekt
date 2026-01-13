@@ -9,12 +9,11 @@
 enum class EnemyType {
     Normal,
     Fast,
+    MeadowBoss,
+    Infestor,// stary "tank" z infestation
 
-    Infestor,     // stary "tank" z infestation
     Crusher,     // FIRE tank – push wież
-
     Flame,
-    Boss,
     FireBoss,
 	Fireball
 };
@@ -91,6 +90,8 @@ private:
     sf::Vector2i tilePos;
     sf::Vector2i nextTile;
     sf::Vector2i prevTile;
+    int bossPhase = 0; // 0–3
+
 
     float speed;
 
@@ -98,6 +99,9 @@ private:
     sf::Vector2f tileCenter(sf::Vector2i tile) const;
     EnemyType type;
 
+    bool warningActive = false;
+    sf::Clock warningClock;
+    sf::Vector2f warningPos;
 
     bool isBossEnemy = false;
     bool rage = false;
