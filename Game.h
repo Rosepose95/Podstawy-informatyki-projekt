@@ -203,7 +203,10 @@ public:
     void handleWorldMapClick(sf::Vector2f mouseWorldPos);
     void infestTowers(sf::Vector2f pos, float radius, int stacks);
     std::vector<Tower*> getTowersNear(sf::Vector2f pos, float radius);
+	void pushTowersNear(sf::Vector2f bossPos);
+
 
 };
 
 #endif
+
