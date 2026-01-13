@@ -710,28 +710,45 @@ void Game::infestTowers(sf::Vector2f pos, float radius, int stacks) {
     }
 }
 
+    
 void Game::pushTowersNear(sf::Vector2f bossPos)
 {
     int ts = map->tileSize;
 
     for (auto& t : towers) {
         sf::Vector2f tp = t.getPosition();
-        if (std::abs(tp.y - bossPos.y) < ts * 0.5f) {
+
+        float dx = std::abs(tp.x - bossPos.x);
+        float dy = std::abs(tp.y - bossPos.y);
+
+        if (dx <= ts * 1.2f && dy <= ts * 0.5f) {
 
             int tx = tp.x / ts;
             int ty = tp.y / ts;
 
-            // przesuwanie w prawo
-            if (map->getTile(tx + 1, ty) == '.') {
-                t.setPosition({ (tx + 1) * ts + ts / 2.f, ty * ts + ts / 2.f });
-                break;
+            // najpierw prawo
+            if (tx + 1 < map->getWidth() &&
+                map->getTile(tx + 1, ty) == '.') {
+
+                t.setPosition({
+                    (tx + 1) * ts + ts / 2.f,
+                    ty * ts + ts / 2.f
+                });
+                return;
             }
 
-            // przesuwanie w lewo
-            if (map->getTile(tx - 1, ty) == '.') {
-                t.setPosition({ (tx - 1) * ts + ts / 2.f, ty * ts + ts / 2.f });
-                break;
+            // potem lewo
+            if (tx - 1 >= 0 &&
+                map->getTile(tx - 1, ty) == '.') {
+
+                t.setPosition({
+                    (tx - 1) * ts + ts / 2.f,
+                    ty * ts + ts / 2.f
+                });
+                return;
             }
         }
     }
 }
+
+
