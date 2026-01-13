@@ -240,5 +240,9 @@ void Enemy::setInfestCallback(InfestCallback cb) {
     infestCallback = cb;
 }
 
+void Enemy::setBossCallback(BossAbilityCallback cb) {
+    bossCallback = cb;
+}
+
 
 
