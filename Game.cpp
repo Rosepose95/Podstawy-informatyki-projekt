@@ -285,7 +285,8 @@ void Game::update(float dt) {
             if (isBossWave) type = EnemyType::Boss;
             else {
                 if (currentWave >= 3 && rand() % 3 == 0) type = EnemyType::Fast;
-                if (currentWave >= 5 && rand() % 5 == 0) type = EnemyType::Tank;
+                if (currentWave >= 5 && rand() % 5 == 0) type = EnemyType::Infestor;
+				if (currentWave >= 10 && rand() % 7 == 0) type = EnemyType::Crusher;
             }
 
             auto& spawns = map->spawnPoints;
@@ -745,20 +746,19 @@ void Game::infestTowers(sf::Vector2f pos, float radius, int stacks) {
 
 void Game::pushTowersNear(sf::Vector2f bossPos)
 {
-    std::cout << "Push";
     int ts = map->tileSize;
 
     for (auto& t : towers) {
-        sf::Vector2f diff = t.getPosition() - bossPos;
+        sf::Vector2f tp = t.getPosition();
+        sf::Vector2f diff = tp - bossPos;
         float dist2 = diff.x * diff.x + diff.y * diff.y;
 
         if (dist2 <= (ts * 2.5f) * (ts * 2.5f)) {
 
+            int tx = static_cast<int>(tp.x) / ts;
+            int ty = static_cast<int>(tp.y) / ts;
 
-            int tx = diff.x / ts;
-            int ty =diff.y / ts;
-
-            // najpierw prawo
+            // prawo
             if (tx + 1 < map->getWidth() &&
                 map->getTile(tx + 1, ty) == '.') {
 
@@ -766,11 +766,10 @@ void Game::pushTowersNear(sf::Vector2f bossPos)
                     (tx + 1) * ts + ts / 2.f,
                     ty * ts + ts / 2.f
                     });
-                //std::cout << "Push";
                 return;
             }
 
-            // potem lewo
+            // lewo
             if (tx - 1 >= 0 &&
                 map->getTile(tx - 1, ty) == '.') {
 
@@ -783,6 +782,7 @@ void Game::pushTowersNear(sf::Vector2f bossPos)
         }
     }
 }
+
 
 void Game::burnTowers(sf::Vector2f pos, float radius, int stacks) {
     float r2 = radius * radius;
