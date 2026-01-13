@@ -7,13 +7,16 @@
 #include <string>
 
 class Map;
-enum class EnemyType {  //typy enemy
+enum class EnemyType {
     Normal,
     Fast,
     Tank,
     Boss,
+
     Fireball,
-    Flame
+    Flame,
+    FireTank,
+    FireBoss
 };
 
 class Enemy {
@@ -29,8 +32,8 @@ public:
     void setInfestCallback(InfestCallback cb);
 
     using BossAbilityCallback = std::function<void(sf::Vector2f)>;
-
     BossAbilityCallback bossCallback;
+    void setBossCallback(BossAbilityCallback cb);
 
     sf::Vector2f getPosition() const;
     float getRadius() const;
@@ -54,12 +57,18 @@ public:
     void restorePath(sf::Vector2i tile, sf::Vector2i prev) {
         tilePos = tile;
         prevTile = prev;
-        nextTile = findNextTile(); 
+        nextTile = findNextTile();
         shape.setPosition(tileCenter(tile));
     }
 
     bool isBoss() const { return isBossEnemy; }
     bool isRaging() const { return rage; }
+    using BurnCallback = std::function<void(sf::Vector2f, float, int)>;
+    void setBurnCallback(BurnCallback cb);
+
+    float burnTimer = 0.f;
+    BurnCallback burnCallback;
+
 private:
     int health;  //życie
     int maxHealth;
@@ -92,7 +101,6 @@ private:
 
 
 #endif
-
 
 
 
