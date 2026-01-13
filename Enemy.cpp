@@ -1,4 +1,4 @@
-﻿#include "Enemy.h"
+#include "Enemy.h"
 #include "Game.h"
 #include "Tower.h"
 #include <cmath>
@@ -6,7 +6,7 @@
 #include <iostream>
 
 Enemy::Enemy(int h, float startX, float startY, EnemyType t)
-	: health(h), maxHealth(h), type(t) { //dodatek typu enemy i życia dla bossa
+    : health(h), maxHealth(h), type(t) { //dodatek typu enemy i życia dla bossa
 
     shape.setRadius(15.f);
     shape.setOrigin({ 15.f, 15.f });
@@ -24,6 +24,7 @@ Enemy::Enemy(int h, float startX, float startY, EnemyType t)
 
     case EnemyType::Tank:
         baseSpeed = 60.f;
+        health = h * 2;
         shape.setFillColor(sf::Color(150, 0, 0));
         break;
     case EnemyType::Boss:
@@ -34,6 +35,16 @@ Enemy::Enemy(int h, float startX, float startY, EnemyType t)
         shape.setRadius(28.f);
         shape.setOrigin({ 28.f, 28.f });
         shape.setFillColor(sf::Color(80, 0, 120));
+        break;
+
+    case EnemyType::Fireball:
+        baseSpeed = 160.f;
+        shape.setFillColor(sf::Color(255, 120, 0));
+        break;
+
+    case EnemyType::Flame:
+        baseSpeed = 60.f;
+        shape.setFillColor(sf::Color(200, 60, 20));
         break;
     }
     speed = baseSpeed;
@@ -120,8 +131,7 @@ void Enemy::update(float dt) {
         shape.setFillColor(sf::Color(160, 0, 200)); // rage color
     }
 
-    if (!map) return;
-    if (reachedGoal()) return;
+    
     if (nextTile == tilePos)
         nextTile = findNextTile();
 
@@ -154,23 +164,71 @@ void Enemy::update(float dt) {
             infestationTimer = 0.f;
 
             if (infestCallback) {
-                infestCallback(getPosition(), 40.f, 1);
+                infestCallback(getPosition(), map->tileSize * 2.f, 1);
+
+            }
+        }
+    }
+    if (isBossEnemy) {
+        infestationTimer += dt;
+        if (infestationTimer >= 2.0f) {
+            infestationTimer = 0.f;
+
+            if (infestCallback) {
+                infestCallback(getPosition(), map->tileSize * 2.f, 1);
+
             }
         }
     }
 
-	if (type == EnemyType::Boss) {
-   		bossAbilityTimer += dt;
-   		if (bossAbilityTimer >= 5.f) {
-        	bossAbilityTimer = 0.f;
+    if (type == EnemyType::Boss) {
+        bossAbilityTimer += dt;
+        if (bossAbilityTimer >= 5.f) {
+            bossAbilityTimer = 0.f;
 
-        	if (bossCallback) {
-   				 bossCallback(getPosition());
-				}
+            if (bossCallback) {
+                bossCallback(getPosition());
+            }
 
-    	}
-	}
+        }
+    }
+    if (type == EnemyType::Fireball) {
+        burnTimer += dt;
+        if (burnTimer >= 5.f) {
+            burnTimer = 0.f;
+            if (burnCallback)
+                burnCallback(getPosition(), 80.f, 1);
+        }
+    }
+    
+    if (type == EnemyType::Fireball || type == EnemyType::Flame) {
+        burnTimer += dt;
+        if (burnTimer >= 3.f) {
+            burnTimer = 0.f;
+            if (burnCallback)
+                burnCallback(getPosition(), 120.f, 1);
+        }
+    }
 
+    if (type == EnemyType::FireTank) {
+        burnTimer += dt;
+        if (burnTimer >= 2.f) {
+            burnTimer = 0.f;
+            if (burnCallback)
+                burnCallback(getPosition(), 60.f, 1);
+        }
+    }
+    if (type == EnemyType::FireBoss) {
+        bossAbilityTimer += dt;
+        if (bossAbilityTimer >= 5.f) {
+            bossAbilityTimer = 0.f;
+
+            if (bossCallback)
+                bossCallback(getPosition());
+        }
+    }
+    if (!map) return;
+    if (reachedGoal()) return;
 }
 
 
@@ -200,10 +258,10 @@ void Enemy::draw(sf::RenderWindow& window) const {
     ratio = std::clamp(ratio, 0.f, 1.f);
 
     sf::Vector2f pos = shape.getPosition();
-	
+
     float barWidth = isBossEnemy ? 50.f : 36.f;
 
-    sf::RectangleShape back({barWidth , 5.f });
+    sf::RectangleShape back({ barWidth , 5.f });
     back.setFillColor(sf::Color::Red);
     back.setPosition({ pos.x - 18.f, pos.y - 30.f });
 
@@ -244,7 +302,9 @@ void Enemy::setInfestCallback(InfestCallback cb) {
 void Enemy::setBossCallback(BossAbilityCallback cb) {
     bossCallback = cb;
 }
-
+void Enemy::setBurnCallback(BurnCallback cb) {
+    burnCallback = cb;
+}
 
 
 
