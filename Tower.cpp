@@ -10,6 +10,8 @@ Tower::Tower(int dmg, float x, float y) //zmiana inicjatora
 {
     baseDamage = dmg;
     damage = dmg;
+    baseCooldown = cooldown;
+
     shape.setSize({ 40.f, 40.f });
     shape.setOrigin({ 20.f, 20.f });
     shape.setFillColor(sf::Color::Blue);
@@ -50,8 +52,13 @@ void Tower::updateAttack(      //zmiana, dodanie lepszej fizyki
     if (!target)
         return;
 
-    if (timeSinceLastShot < cooldown)
+    float fireRateMult = getFireRateMultiplier();
+    if (fireRateMult <= 0.f)
         return;
+
+    if (timeSinceLastShot < baseCooldown / fireRateMult)
+        return;
+
 
     timeSinceLastShot = 0.f;
 int finalDamage = static_cast<int>(baseDamage * getDamageMultiplier());
@@ -121,5 +128,13 @@ float Tower::getDamageMultiplier() const {
     float mult = 1.f - 0.1f * infestationStacks;
     return std::max(0.f, mult);
 }
+void Tower::addBurn(int stacks) {
+    burnStacks += stacks;
+    burnStacks = std::min(burnStacks, MAX_BURN);
+}
+float Tower::getFireRateMultiplier() const {
+    return std::max(0.f, 1.f - 0.25f * burnStacks);
+}
+
 
 
