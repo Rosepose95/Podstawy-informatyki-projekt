@@ -211,31 +211,25 @@ void Game::startGame() {
 void Game::startNextWave()
 {
     currentWave++;
-
     waveJustLoaded = false;
-    // --- KONFIGURACJA FALI ---
+
+    currentBiome = adventure.getBiomeForNode(currentNodeId);
+
     currentWaveConfig.enemyHP = 50 + currentWave * 10;
-    // zamiast 60.f + currentWave * 5.f
-// ustaw multiplikator (dobierz skalowanie do testów)
     currentWaveConfig.speed = 1.0f + currentWave * 0.03f;
-    // np. wave 1 -> 1.03, wave 10 -> 1.3, wave 30 -> 1.9
+
     spawnDelay = 0.8f;
     spawnTimer = 0.f;
-    
-    if (mode == GameMode::Adventure) {
-        adventureBiome = (currentWave - 1) / 10;
-        //isBossWave = (currentWave % 10 == 0);
+
+    if (mode == GameMode::Adventure)
         isBossWave = adventure.isBossNode(currentNodeId);
-    }
-    else {
+    else
         isBossWave = (currentWave % 5 == 0);
-    }
 
     enemiesToSpawn = isBossWave ? 1 : 5 + currentWave;
     waveInProgress = true;
-
-
 }
+
 // --- Aktualizacja gry ---
 void Game::update(float dt) {
     if (gameOver) return;
@@ -281,13 +275,12 @@ void Game::update(float dt) {
         if (spawnTimer >= spawnDelay) {
             spawnTimer = 0.f;
             int ts = map->tileSize;
-            EnemyType type = EnemyType::Normal;
-            if (isBossWave) type = EnemyType::Boss;
-            else {
-                if (currentWave >= 3 && rand() % 3 == 0) type = EnemyType::Fast;
-                if (currentWave >= 5 && rand() % 5 == 0) type = EnemyType::Infestor;
-				if (currentWave >= 10 && rand() % 7 == 0) type = EnemyType::Crusher;
-            }
+
+            Biomes biome = currentBiome;
+
+            EnemyType type = pickEnemyForBiome(biome, isBossWave);
+
+            
 
             auto& spawns = map->spawnPoints;
             if (spawns.empty()) {
@@ -302,42 +295,53 @@ void Game::update(float dt) {
 
             enemies.emplace_back(currentWaveConfig.enemyHP, spawnX, spawnY, type);
 
-            enemies.back().setMap(map);
-            if (type == EnemyType::Boss) {
-  
-                enemies.back().setBurnCallback(
+            Enemy& e = enemies.back();
+            e.setMap(map);
+            e.applyWaveSpeed(currentWaveConfig.speed);
+
+            // --- INFESTATION (tylko Infestor / MeadowBoss) ---
+            if (e.getType() == EnemyType::Infestor ||
+                e.getType() == EnemyType::MeadowBoss)
+            {
+                e.setInfestCallback(
+                    [this](sf::Vector2f pos, float radius, int stacks) {
+                        infestTowers(pos, radius, stacks);
+                    }
+                );
+            }
+
+            // --- FIRE BIOME ---
+            if (e.getType() == EnemyType::FireBoss ||
+                e.getType() == EnemyType::Flame ||
+                e.getType() == EnemyType::Fireball ||
+                e.getType() == EnemyType::Crusher)
+            {
+                e.setBurnCallback(
                     [this](sf::Vector2f pos, float radius, int stacks) {
                         burnTowers(pos, radius, stacks);
                     }
                 );
-                enemies.back().setBossCallback(
+            }
+
+            // --- BOSS-SPECYFICZNE ABILITY ---
+            if (e.getType() == EnemyType::FireBoss)
+            {
+                e.setBossCallback(
                     [this](sf::Vector2f pos) {
-                        // infestation
-                        infestTowers(pos, 80.f, 1);
-
-                        // przesuwanie
+                        // FireBoss = kontrola mapy
                         pushTowersNear(pos);
-
-                        // burn punish
-                        for (auto& t : towers) {
-                            if (t.getBurnStacks() > 0)
-                                t.forceDestroy();
-                        }
                     }
                 );
-
-
             }
-            
-
-            enemies.back().applyWaveSpeed(currentWaveConfig.speed);
-
-
-            enemies.back().setInfestCallback(
-                [this](sf::Vector2f pos, float radius, int stacks) {
-                    infestTowers(pos, radius, stacks);
-                }
-            );
+            else if (e.getType() == EnemyType::MeadowBoss)
+            {
+                e.setBossCallback(
+                    [this](sf::Vector2f pos) {
+                        // MeadowBoss = infestation pressure
+                        infestTowers(pos, 100.f, 2);
+                    }
+                );
+            }
 
 
             enemiesToSpawn--;
@@ -793,7 +797,34 @@ void Game::burnTowers(sf::Vector2f pos, float radius, int stacks) {
             t.addBurn(stacks);
     }
 }
+EnemyType Game::pickEnemyForBiome(Biomes biome, bool isBossWave) {
+    if (isBossWave) {
+        switch (biome) {
+        case Biomes::Fire:
+            return EnemyType::FireBoss;
+        case Biomes::Meadow:
+            return EnemyType::MeadowBoss;
+        default:
+            return EnemyType::MeadowBoss;
+        }
+    }
 
-
-
+    switch (biome) {
+    case Biomes::Fire: {
+        int r = rand() % 4;
+        if (r == 0) return EnemyType::Fast;
+        if (r == 1) return EnemyType::Flame;
+        if (r == 2) return EnemyType::Crusher;
+        return EnemyType::Normal;
+    }
+    case Biomes::Meadow: {
+        int r = rand() % 3;
+        if (r == 0) return EnemyType::Fast;
+        if (r == 1) return EnemyType::Infestor;
+        return EnemyType::Normal;
+    }
+    default:
+        return EnemyType::Normal;
+    }
+}
 
