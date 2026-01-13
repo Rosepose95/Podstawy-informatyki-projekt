@@ -36,8 +36,14 @@ namespace SaveSystem {
         // --- TOWERS ---
         const auto& towers = g.getTowers();
         file << "TOWERS " << towers.size() << "\n";
-        for (auto& t : towers)
-            file << t.getPosition().x << " " << t.getPosition().y << "\n";
+        for (auto& t : towers) {
+            file << t.getPosition().x << " "
+                << t.getPosition().y << " "
+                << t.getInfestationStacks() << " "
+                << t.getBurnStacks() << " "
+                << t.isDestroyed() << "\n";
+        }
+
 
         // --- ENEMIES ---
         const auto& enemies = g.getEnemies();
@@ -135,11 +141,23 @@ namespace SaveSystem {
         file >> token; // TOWERS
         size_t towerCount;
         file >> towerCount;
+
         for (size_t i = 0; i < towerCount; ++i) {
             float x, y;
-            file >> x >> y;
+            int infest, burn;
+            bool destroyed;
+
+            file >> x >> y >> infest >> burn >> destroyed;
+
             g.addTowerFromSave(x, y);
+
+            // ustaw statusy
+            auto& t = const_cast<Tower&>(g.getTowers().back());
+            t.setInfestationStacks(infest);
+            t.setBurnStacks(burn);
+            t.setDestroyed(destroyed);
         }
+
 
         // ENEMIES
         file >> token; // ENEMIES
@@ -270,7 +288,7 @@ namespace SaveSystem {
 
         // GAMESTATE
         std::getline(file, token); // "GAMESTATE"
-        std::getline(file, token); // linia z wartoúciami
+        std::getline(file, token); // linia z warto≈õciami
         std::istringstream gs(token);
         int wave, lives, gold, baseHP, enemiesToSpawn;
         float spawnTimer, waveBreakTimer;
