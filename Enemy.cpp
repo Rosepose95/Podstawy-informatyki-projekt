@@ -22,7 +22,7 @@ Enemy::Enemy(int h, float startX, float startY, EnemyType t)
         shape.setFillColor(sf::Color::Yellow);
         break;
 
-    case EnemyType::Tank:
+    case EnemyType::Infestor:
         baseSpeed = 60.f;
         health = h * 2;
         shape.setFillColor(sf::Color(150, 0, 0));
@@ -30,7 +30,7 @@ Enemy::Enemy(int h, float startX, float startY, EnemyType t)
     case EnemyType::Boss:
         isBossEnemy = true; // <<< BRAKOWAŁO
         baseSpeed = 40.f;
-        maxHealth = h * 5;
+        maxHealth = h * 10;
         health = maxHealth;
         shape.setRadius(28.f);
         shape.setOrigin({ 28.f, 28.f });
@@ -123,6 +123,19 @@ sf::Vector2f Enemy::tileCenter(sf::Vector2i tile) const {
 }
 
 void Enemy::update(float dt) {
+    if (type == EnemyType::Boss) {
+        bossAbilityTimer += dt;
+        if (bossAbilityTimer >= 5.f) {
+            bossAbilityTimer = 0.f;
+
+            if (bossCallback) {
+                bossCallback(getPosition());
+            }
+
+        }
+    }
+    if (!map) return;
+    if (reachedGoal()) return;
     if (isBossEnemy && !rage && health <= maxHealth * 0.5f) {
         rage = true;
         speed *= 1.8f;          // rage speed
@@ -158,7 +171,7 @@ void Enemy::update(float dt) {
     // NORMALNY RUCH
     sf::Vector2f dir = toTarget / dist;
     shape.move(dir * moveDist);
-    if (type == EnemyType::Tank) {
+    if (type == EnemyType::Infestor) {
         infestationTimer += dt;
         if (infestationTimer >= 1.0f) {
             infestationTimer = 0.f;
@@ -181,17 +194,18 @@ void Enemy::update(float dt) {
         }
     }
 
-    if (type == EnemyType::Boss) {
-        bossAbilityTimer += dt;
-        if (bossAbilityTimer >= 5.f) {
-            bossAbilityTimer = 0.f;
+    if (type == EnemyType::Flame) {
+        burnTimer += dt;
 
-            if (bossCallback) {
-                bossCallback(getPosition());
+        if (burnTimer >= 1.5f) {
+            burnTimer = 0.f;
+
+            if (burnCallback) {
+                burnCallback(getPosition(), 50.f, 1);
             }
-
         }
     }
+
     if (type == EnemyType::Fireball) {
         burnTimer += dt;
         if (burnTimer >= 5.f) {
@@ -210,7 +224,7 @@ void Enemy::update(float dt) {
         }
     }
 
-    if (type == EnemyType::FireTank) {
+    if (type == EnemyType::Crusher) {
         burnTimer += dt;
         if (burnTimer >= 2.f) {
             burnTimer = 0.f;
@@ -219,16 +233,16 @@ void Enemy::update(float dt) {
         }
     }
     if (type == EnemyType::FireBoss) {
-        bossAbilityTimer += dt;
-        if (bossAbilityTimer >= 5.f) {
-            bossAbilityTimer = 0.f;
+        bossSkillTimer += dt;
 
+        if (bossSkillTimer >= 2.5f) {
+            bossSkillTimer = 0.f;
             if (bossCallback)
                 bossCallback(getPosition());
         }
     }
-    if (!map) return;
-    if (reachedGoal()) return;
+
+    
 }
 
 
@@ -304,6 +318,22 @@ void Enemy::setBossCallback(BossAbilityCallback cb) {
 }
 void Enemy::setBurnCallback(BurnCallback cb) {
     burnCallback = cb;
+}
+EnemyStatus Enemy::getStatus() const {
+    EnemyStatus s;
+    s.hp = health;
+    s.type = type;
+    s.rage = rage;
+    return s;
+}
+
+void Enemy::setStatus(const EnemyStatus& s) {
+    health = s.hp;
+    type = s.type;
+    rage = s.rage;
+
+    if (rage)
+        speed = baseSpeed * 1.8f;
 }
 
 
