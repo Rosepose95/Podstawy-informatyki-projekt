@@ -17,7 +17,13 @@ private:
 	int infestationStacks = 0;
 	static constexpr int MAX_INFESTATION = 10;
     int baseDamage = 0;
-  
+  	static constexpr int MAX_BURN = 4;
+
+	int burnStacks = 0;
+	float baseCooldown = 0.f;
+
+
+
     bool destroyed = false;
     sf::RectangleShape shape;
 
@@ -30,6 +36,8 @@ public:
 	bool isDestroyed() const;
 	int getInfestationStacks() const;
 	float getDamageMultiplier() const;
+	void addBurn(int stacks);
+	float getFireRateMultiplier() const;
 
 
     sf::Vector2f getPosition() const;
@@ -38,6 +46,7 @@ public:
 
 
 #endif
+
 
 
 
