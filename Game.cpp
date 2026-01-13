@@ -1,4 +1,4 @@
-﻿#include "Game.h"
+#include "Game.h"
 #include "Enemy.h"
 #include "Tower.h"
 #include "Map.h"
@@ -27,8 +27,8 @@ Game::Game()
     , Restart(font)
     , Exit(font)
     , infoText(font) // dodatkowy tekst informacyjny
-	, autoSaveText(font)
-   , nodeCompletedText(font)
+    , autoSaveText(font)
+    , nodeCompletedText(font)
 
 {
     // --- Wczytanie czcionki ---
@@ -115,7 +115,7 @@ Game::Game()
     // --- Wczytanie tekstury ikonki zapisu ---
     if (!autoSaveTexture.loadFromFile("assets/save1.png"))
         throw std::runtime_error("Nie można wczytać save1.png");
-    
+
     autoSaveIcon.setTexture(autoSaveTexture);
     auto bounds = autoSaveIcon.getLocalBounds();
     autoSaveIcon.setOrigin({
@@ -123,7 +123,7 @@ Game::Game()
         bounds.size.y / 2.f
         });
 
-     // trochę wyżej niż tekst
+    // trochę wyżej niż tekst
     autoSaveIcon.setScale({ 1.f, 1.f });       // dopasuj wielkość
     // to samo co autoSaveText
     /*std::vector<Biome> biomes = {
@@ -185,10 +185,10 @@ void Game::startGame() {
     gameOver = false;
     spawnTimer = 0.f;
     waveBreakTimer = 0.f;
-	
+
     waveJustLoaded = false;
     inWorldMap = false;
-	bossDefeatedThisFrame = false;
+    bossDefeatedThisFrame = false;
 
     // ustawienie slidera fali poza ekranem
     NextWaveText.setString("Get ready for wave 1");
@@ -221,7 +221,7 @@ void Game::startNextWave()
     // np. wave 1 -> 1.03, wave 10 -> 1.3, wave 30 -> 1.9
     spawnDelay = 0.8f;
     spawnTimer = 0.f;
-
+    
     if (mode == GameMode::Adventure) {
         adventureBiome = (currentWave - 1) / 10;
         //isBossWave = (currentWave % 10 == 0);
@@ -233,18 +233,18 @@ void Game::startNextWave()
 
     enemiesToSpawn = isBossWave ? 1 : 5 + currentWave;
     waveInProgress = true;
-	
-	
+
+
 }
 // --- Aktualizacja gry ---
 void Game::update(float dt) {
     if (gameOver) return;
     totalPlayTime += dt;
 
-   
+
     if (inWorldMap) {
         return;
-	}
+    }
 
     if (waveJustLoaded) {
         waveJustLoaded = false;
@@ -273,7 +273,7 @@ void Game::update(float dt) {
             waveBreakTimer = 0.f;
         }
     }
-    
+
 
     // --- Spawn przeciwników ---
     if (enemiesToSpawn > 0 && !waveJustLoaded) {
@@ -302,30 +302,36 @@ void Game::update(float dt) {
             enemies.emplace_back(currentWaveConfig.enemyHP, spawnX, spawnY, type);
 
             enemies.back().setMap(map);
-			if (type == EnemyType::Boss) {
-    			enemies.back().setBossCallback(
-      			  [this](sf::Vector2f pos) {
-           		 // infestation
-           			 infestTowers(pos, 40.f, 1);
-	
-           		 // przesuwanie
-           		 pushTowersNear(pos);
-        }
-    );
-}
-			if (type == EnemyType::Fireball || type == EnemyType::Flame) {
- 			   burnTimer += dt;
-   				 if (burnTimer >= 5.f) {
-       				 burnTimer = 0.f;
-      			     if (burnCallback) {
-           				 burnCallback(getPosition(), 1);
-        }
-    }
-}
+            if (type == EnemyType::Boss) {
+  
+                enemies.back().setBurnCallback(
+                    [this](sf::Vector2f pos, float radius, int stacks) {
+                        burnTowers(pos, radius, stacks);
+                    }
+                );
+                enemies.back().setBossCallback(
+                    [this](sf::Vector2f pos) {
+                        // infestation
+                        infestTowers(pos, 80.f, 1);
+
+                        // przesuwanie
+                        pushTowersNear(pos);
+
+                        // burn punish
+                        for (auto& t : towers) {
+                            if (t.getBurnStacks() > 0)
+                                t.forceDestroy();
+                        }
+                    }
+                );
+
+
+            }
+            
 
             enemies.back().applyWaveSpeed(currentWaveConfig.speed);
 
-            
+
             enemies.back().setInfestCallback(
                 [this](sf::Vector2f pos, float radius, int stacks) {
                     infestTowers(pos, radius, stacks);
@@ -343,24 +349,38 @@ void Game::update(float dt) {
     // --- Ruch przeciwników ---
     for (auto it = enemies.begin(); it != enemies.end();) {
         it->update(dt);
-        if (it->shouldInfest()) {
-            auto towersNear = getTowersNear(it->getPosition(), 40.f);
-            for (auto* t : towersNear) {
-                t->addInfestation(1);
-            }
-            it->resetInfestTimer();
-        }
-
+       
         if (it->reachedGoal()) {
             playerLives -= it->getLifeDamage();
             it = enemies.erase(it);
         }
         else if (it->isDead()) {
-            if (isBossWave) {
-                bossDefeatedThisFrame = true;
+
+            if (it->getType() == EnemyType::FireBoss) {
+                sf::Vector2f pos = it->getPosition();
+
+                //  eksplozja burn
+                burnTowers(pos, 120.f, 3);
+
+                //  spawn Flame
+                for (int i = 0; i < 4; ++i) {
+                    Enemy e(40, pos.x, pos.y, EnemyType::Flame);
+                    e.setMap(map);
+                    e.setBurnCallback(
+                        [this](sf::Vector2f p, float r, int s) {
+                            burnTowers(p, r, s);
+                        }
+                    );
+                    enemies.push_back(e);
+                }
             }
+
+            if (isBossWave)
+                bossDefeatedThisFrame = true;
+
             it = enemies.erase(it);
         }
+
         else ++it;
     }
 
@@ -401,9 +421,12 @@ void Game::update(float dt) {
     updateUI();
     if (bossDefeatedThisFrame) {
         bossDefeatedThisFrame = false;
-        onMapCompleted();
-        return; //  WAŻNE — kończymy update tej klatki
+        // tylko info, bez world map
+        showInfo = true;
+        infoText.setString("BOSS DEFEATED!");
+        infoClock.restart();
     }
+
 
 }
 
@@ -471,7 +494,7 @@ void Game::drawUI(sf::RenderWindow& window) {
             window.draw(autoSaveIcon);
 
             autoSaveIcon.setColor(sf::Color(255, 255, 255, 255));
-            
+
         }
         else {
             showAutoSave = false;
@@ -600,8 +623,8 @@ void Game::onLoadedFromSave()
 {
     waveJustLoaded = true;
     gameOver = false;
-	inWorldMap = false;
-    
+    inWorldMap = false;
+
 
 }
 // Game.cpp
@@ -719,21 +742,21 @@ void Game::infestTowers(sf::Vector2f pos, float radius, int stacks) {
     }
 }
 
-    
+
 void Game::pushTowersNear(sf::Vector2f bossPos)
 {
+    std::cout << "Push";
     int ts = map->tileSize;
 
     for (auto& t : towers) {
-        sf::Vector2f tp = t.getPosition();
+        sf::Vector2f diff = t.getPosition() - bossPos;
+        float dist2 = diff.x * diff.x + diff.y * diff.y;
 
-        float dx = std::abs(tp.x - bossPos.x);
-        float dy = std::abs(tp.y - bossPos.y);
+        if (dist2 <= (ts * 2.5f) * (ts * 2.5f)) {
 
-        if (dx <= ts * 1.2f && dy <= ts * 0.5f) {
 
-            int tx = tp.x / ts;
-            int ty = tp.y / ts;
+            int tx = diff.x / ts;
+            int ty =diff.y / ts;
 
             // najpierw prawo
             if (tx + 1 < map->getWidth() &&
@@ -742,7 +765,8 @@ void Game::pushTowersNear(sf::Vector2f bossPos)
                 t.setPosition({
                     (tx + 1) * ts + ts / 2.f,
                     ty * ts + ts / 2.f
-                });
+                    });
+                //std::cout << "Push";
                 return;
             }
 
@@ -753,7 +777,7 @@ void Game::pushTowersNear(sf::Vector2f bossPos)
                 t.setPosition({
                     (tx - 1) * ts + ts / 2.f,
                     ty * ts + ts / 2.f
-                });
+                    });
                 return;
             }
         }
@@ -761,8 +785,11 @@ void Game::pushTowersNear(sf::Vector2f bossPos)
 }
 
 void Game::burnTowers(sf::Vector2f pos, float radius, int stacks) {
+    float r2 = radius * radius;
+
     for (auto& t : towers) {
-        if (distance(t.getPosition(), pos) <= radius)
+        sf::Vector2f diff = t.getPosition() - pos;
+        if (diff.x * diff.x + diff.y * diff.y <= r2)
             t.addBurn(stacks);
     }
 }
