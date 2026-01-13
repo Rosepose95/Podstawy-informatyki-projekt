@@ -24,16 +24,19 @@ public:
     void resetInfestTimer();
     void takeDamage(int dmg);
     bool isDead() const;
+
     using InfestCallback = std::function<void(sf::Vector2f, float, int)>;
-
-
     void setInfestCallback(InfestCallback cb);
+
+    using EnemyEventCallback = std::function<void(sf::Vector2f pos, EnemyType type)>;
+    EnemyEventCallback eventCallback;
+
     sf::Vector2f getPosition() const;
     float getRadius() const;
     void setSpeed(float s) { speed = s; }
     void recalculatePath();
 
-    // Ustawienie pozycji kafelka i s¹siednich kafelków po wczytaniu
+    // Ustawienie pozycji kafelka i sąsiednich kafelków po wczytaniu
     void forceWorldPosition(sf::Vector2f pos);
 
     void draw(sf::RenderWindow& window) const;
@@ -56,8 +59,11 @@ public:
 
     bool isBoss() const { return isBossEnemy; }
     bool isRaging() const { return rage; }
+    void setEventCallback(EnemyEventCallback cb) {
+    eventCallback = cb;}
+
 private:
-    int health;  //¿ycie
+    int health;  //życie
     int maxHealth;
     float bossAbilityTimer = 0.f;
 
@@ -88,3 +94,4 @@ private:
 
 
 #endif
+
