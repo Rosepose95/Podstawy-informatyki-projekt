@@ -53,17 +53,19 @@ void Tower::updateAttack(      //zmiana, dodanie lepszej fizyki
         return;
 
     timeSinceLastShot = 0.f;
+int finalDamage = static_cast<int>(damage * getDamageMultiplier());
 
-    int finalDamage = static_cast<int>(damage * getDamageMultiplier());
+if (finalDamage <= 0)
+    return; // wieża martwa funkcjonalnie
 
-    if (finalDamage <= 0)
-        return;
+bullets.emplace_back(
+    shape.getPosition(),
+    target->getPosition(),
+    finalDamage
+);
 
-    bullets.emplace_back(
-        shape.getPosition(),
-        target->getPosition(),
-        finalDamage
-    );
+    
+
 
 }
 
@@ -76,26 +78,47 @@ void Tower::upgrade() {
 
 void Tower::draw(sf::RenderWindow& window) const {
     window.draw(shape);
+    if (infestationStacks > 0) {
+    sf::RectangleShape barBack({ 30.f, 4.f });
+    barBack.setFillColor(sf::Color(50, 50, 50));
+    barBack.setPosition(shape.getPosition().x - 15.f,
+                        shape.getPosition().y - 28.f);
+
+    float ratio = 1.f - infestationStacks / float(MAX_INFESTATION);
+
+    sf::RectangleShape bar({ 30.f * ratio, 4.f });
+
+    // kolor zależny od infestation
+    if (ratio > 0.6f)
+        bar.setFillColor(sf::Color::Green);
+    else if (ratio > 0.3f)
+        bar.setFillColor(sf::Color::Yellow);
+    else
+        bar.setFillColor(sf::Color::Red);
+
+    bar.setPosition(barBack.getPosition());
+
+    window.draw(barBack);
+    window.draw(bar);
+}
+
 }
 void Tower::addInfestation(int stacks) {
     infestationStacks += stacks;
-
-    float reduction = 0.1f * infestationStacks; // 10% za stack
-    reduction = std::min(reduction, 1.0f);      // max 100%
-
-    damage = baseDamage * (1.f - reduction);
-
-    if (damage <= 0.f) {
-        damage = 0.f;
-        destroyed = true;
-    }
+    infestationStacks = std::min(infestationStacks, MAX_INFESTATION);
 }
 
+bool Tower::isDestroyed() const {
+    return infestationStacks >= MAX_INFESTATION;
+}
+
+int Tower::getInfestationStacks() const {
+    return infestationStacks;
+}
 
 float Tower::getDamageMultiplier() const {
-    return std::max(0.f, 1.f - infestationStacks * 0.1f);
+    // 10% mniej dmg za stack
+    float mult = 1.f - 0.1f * infestationStacks;
+    return std::max(0.f, mult);
 }
 
-bool Tower::isDestroyedByInfestation() const {
-    return infestationStacks >= 10;
-}
