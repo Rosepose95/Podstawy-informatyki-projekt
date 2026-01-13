@@ -279,6 +279,11 @@ void Game::update(float dt) {
             Biomes biome = currentBiome;
 
             EnemyType type = pickEnemyForBiome(biome, isBossWave);
+        int r = rand() % 6;
+if (r == 0) return EnemyType::Fireball;
+if (currentWave >= 6 && rand() % 8 == 0)
+    return EnemyType::Crusher;
+
 
             
 
@@ -324,7 +329,8 @@ void Game::update(float dt) {
             }
 
             // --- BOSS-SPECYFICZNE ABILITY ---
-            if (e.getType() == EnemyType::FireBoss)
+            if (e.getType() == EnemyType::FireBoss||
+                e.getType() == EnemyType::Crusher)
             {
                 e.setBossCallback(
                     [this](sf::Vector2f pos) {
@@ -827,5 +833,6 @@ EnemyType Game::pickEnemyForBiome(Biomes biome, bool isBossWave) {
         return EnemyType::Normal;
     }
 }
+
 
 
