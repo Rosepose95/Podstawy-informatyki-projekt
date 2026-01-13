@@ -41,10 +41,13 @@ Enemy::Enemy(int h, float startX, float startY, EnemyType t)
         baseSpeed = 160.f;
         shape.setFillColor(sf::Color(255, 120, 0));
         break;
-
     case EnemyType::Flame:
-        baseSpeed = 60.f;
-        shape.setFillColor(sf::Color(200, 60, 20));
+        baseSpeed = 55.f;
+        maxHealth = h * 0.8f;
+        health = maxHealth;
+        shape.setRadius(14.f);
+        shape.setOrigin({ 14.f, 14.f });
+        shape.setFillColor(sf::Color(220, 80, 20));
         break;
     case EnemyType::FireBoss:
         isBossEnemy = true;
@@ -237,36 +240,50 @@ void Enemy::update(float dt) {
             }
         }
     }
+// --- FIRE DAMAGE OVER TIME ---
+if (burnCallback) {
+    burnTimer += dt;
 
-    
+    float interval = 0.f;
+    float radius = 0.f;
+    int stacks = 1;
 
-    
-    if (type == EnemyType::Flame || type == EnemyType::Fireball || type == EnemyType::Crusher) {
-        burnTimer += dt;
+    switch (type) {
+    case EnemyType::Flame:
+        interval = 1.5f;
+        radius = 45.f;
+        break;
 
-        float interval = 2.f;
-        float radius = 60.f;
-        int stacks = 1;
+    case EnemyType::Fireball:
+        interval = 4.5f;
+        radius = 90.f;
+        break;
 
-        if (type == EnemyType::Fireball) {
-            interval = 4.f;
-            radius = 80.f;
-        }
-        if (type == EnemyType::Flame) {
-            interval = 1.5f;
-            radius = 50.f;
-        }
-        if (type == EnemyType::Crusher) {
-            interval = 2.5f;
-            radius = 70.f;
-        }
+    case EnemyType::Crusher:
+        interval = 2.5f;
+        radius = 60.f;
+        break;
 
-        if (burnTimer >= interval) {
-            burnTimer = 0.f;
-            if (burnCallback)
-                burnCallback(getPosition(), radius, stacks);
-        }
+    case EnemyType::FireBoss:
+        interval = 2.0f;
+        radius = 100.f;
+        stacks = 2;
+        break;
+
+    default:
+        break;
     }
+
+    if (interval > 0.f && burnTimer >= interval) {
+        burnTimer = 0.f;
+        burnCallback(getPosition(), radius, stacks);
+    }
+}
+
+    
+
+    
+    
 
     
     if (type == EnemyType::FireBoss) {
@@ -399,6 +416,7 @@ void Enemy::setStatus(const EnemyStatus& s) {
     if (rage)
         speed = baseSpeed * 1.8f;
 }
+
 
 
 
