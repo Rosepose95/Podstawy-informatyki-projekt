@@ -12,12 +12,12 @@ enum class GameMode {
     Endless,
     Adventure
 };
-struct Biome {
+/*struct Biome {
     std::string name;
     std::vector<EnemyType> enemies;
     EnemyType boss;
 };
-
+*/
 // --- Struktura konfiguracji fali ---
 struct WaveConfig {
     int count;       // liczba przeciwników
@@ -102,6 +102,7 @@ private:
     sf::Clock nodeCompletedClock;
     sf::Text nodeCompletedText;
     bool bossDefeatedThisFrame = false;
+    Biomes currentBiome = Biomes::Meadow;
 
 
 public:
@@ -205,6 +206,7 @@ public:
     std::vector<Tower*> getTowersNear(sf::Vector2f pos, float radius);
     void pushTowersNear(sf::Vector2f bossPos);
     void burnTowers(sf::Vector2f pos, float radius, int stacks);
+    EnemyType pickEnemyForBiome(Biomes biome, bool isBossWave);
 
 };
 
