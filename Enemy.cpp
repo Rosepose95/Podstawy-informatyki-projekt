@@ -200,13 +200,14 @@ void Enemy::draw(sf::RenderWindow& window) const {
     ratio = std::clamp(ratio, 0.f, 1.f);
 
     sf::Vector2f pos = shape.getPosition();
+	
     float barWidth = isBossEnemy ? 50.f : 36.f;
 
     sf::RectangleShape back({barWidth , 5.f });
     back.setFillColor(sf::Color::Red);
     back.setPosition({ pos.x - 18.f, pos.y - 30.f });
 
-    sf::RectangleShape hp({ 36.f * ratio, 5.f });
+    sf::RectangleShape hp({ barWidth * ratio, 5.f });
     hp.setFillColor(sf::Color::Green);
     hp.setPosition(back.getPosition());
 
@@ -243,6 +244,7 @@ void Enemy::setInfestCallback(InfestCallback cb) {
 void Enemy::setBossCallback(BossAbilityCallback cb) {
     bossCallback = cb;
 }
+
 
 
 
