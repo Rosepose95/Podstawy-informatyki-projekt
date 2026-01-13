@@ -11,7 +11,9 @@ enum class EnemyType {  //typy enemy
     Normal,
     Fast,
     Tank,
-    Boss
+    Boss,
+    Fireball,
+    Flame
 };
 
 class Enemy {
@@ -90,6 +92,7 @@ private:
 
 
 #endif
+
 
 
 
