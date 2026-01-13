@@ -12,15 +12,15 @@ private:
     float timeSinceLastShot;
     int level;
     float range;
-    
-    // infestation
-	int infestationStacks = 0;
-	static constexpr int MAX_INFESTATION = 10;
-    int baseDamage = 0;
-  	static constexpr int MAX_BURN = 4;
 
-	int burnStacks = 0;
-	float baseCooldown = 0.f;
+    // infestation
+    int infestationStacks = 0;
+    static constexpr int MAX_INFESTATION = 10;
+    int baseDamage = 0;
+    static constexpr int MAX_BURN = 4;
+
+    int burnStacks = 0;
+    float baseCooldown = 0.f;
 
 
 
@@ -29,15 +29,24 @@ private:
 
 public:
     Tower(int dmg, float x, float y);
-	void updateAttack(std::vector<Enemy>& enemies, float dt, std::vector<Bullet>& bullets);  //zmiana na referencje
+    void updateAttack(std::vector<Enemy>& enemies, float dt, std::vector<Bullet>& bullets);  //zmiana na referencje
     void upgrade();
 
     void addInfestation(int stacks);
-	bool isDestroyed() const;
-	int getInfestationStacks() const;
-	float getDamageMultiplier() const;
-	void addBurn(int stacks);
-	float getFireRateMultiplier() const;
+    bool isDestroyed() const;
+    int getInfestationStacks() const;
+    float getDamageMultiplier() const;
+    
+    float getFireRateMultiplier() const;
+    // burn
+    void addBurn(int stacks);
+    int getBurnStacks() const;
+
+    // destroy
+    void forceDestroy();
+
+    // movement
+    void setPosition(sf::Vector2f pos);
 
 
     sf::Vector2f getPosition() const;
@@ -46,7 +55,6 @@ public:
 
 
 #endif
-
 
 
 
