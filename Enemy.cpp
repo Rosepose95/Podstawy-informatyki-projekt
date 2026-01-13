@@ -27,7 +27,7 @@ Enemy::Enemy(int h, float startX, float startY, EnemyType t)
         health = h * 2;
         shape.setFillColor(sf::Color(150, 0, 0));
         break;
-    case EnemyType::Boss:
+    case EnemyType::MeadowBoss:
         isBossEnemy = true; // <<< BRAKOWAŁO
         baseSpeed = 40.f;
         maxHealth = h * 10;
@@ -46,6 +46,16 @@ Enemy::Enemy(int h, float startX, float startY, EnemyType t)
         baseSpeed = 60.f;
         shape.setFillColor(sf::Color(200, 60, 20));
         break;
+    case EnemyType::FireBoss:
+        isBossEnemy = true;
+        baseSpeed = 35.f;
+        maxHealth = h * 12;
+        health = maxHealth;
+        shape.setRadius(30.f);
+        shape.setOrigin({ 30.f, 30.f });
+        shape.setFillColor(sf::Color(200, 50, 0));
+        break;
+
     }
     speed = baseSpeed;
     shape.setPosition({ startX, startY });
@@ -123,17 +133,31 @@ sf::Vector2f Enemy::tileCenter(sf::Vector2i tile) const {
 }
 
 void Enemy::update(float dt) {
-    if (type == EnemyType::Boss) {
-        bossAbilityTimer += dt;
-        if (bossAbilityTimer >= 5.f) {
-            bossAbilityTimer = 0.f;
+    if (isBossEnemy) {
+        bossSkillTimer += dt;
 
-            if (bossCallback) {
-                bossCallback(getPosition());
-            }
+        // faza rage
+        if (!rage && health <= maxHealth * 0.5f) {
+            rage = true;
+            speed = baseSpeed * 1.8f;
+            shape.setFillColor(sf::Color(255, 80, 80));
+        }
 
+        // warning + skill
+        if (!warningActive) {
+            warningActive = true;
+            warningClock.restart();
+            warningPos = getPosition();
+        }
+
+        if (warningClock.getElapsedTime().asSeconds() >= 0.8f) {
+            warningActive = false;
+
+            if (bossCallback)
+                bossCallback(warningPos);
         }
     }
+
     if (!map) return;
     if (reachedGoal()) return;
     if (isBossEnemy && !rage && health <= maxHealth * 0.5f) {
@@ -142,6 +166,26 @@ void Enemy::update(float dt) {
     }
     if (isBossEnemy && rage) {
         shape.setFillColor(sf::Color(160, 0, 200)); // rage color
+    }
+    if (isBossEnemy) {
+        float hpRatio = (float)health / maxHealth;
+
+        if (hpRatio <= 0.25f && bossPhase < 3) {
+            bossPhase = 3;
+            if (burnCallback)
+                burnCallback(getPosition(), 140.f, 4);
+        }
+        else if (hpRatio <= 0.5f && bossPhase < 2) {
+            bossPhase = 2;
+            if (bossCallback)
+                bossCallback(getPosition()); // push towers
+        }
+        else if (hpRatio <= 0.75f && bossPhase < 1) {
+            bossPhase = 1;
+            // spawn Flame handled in Game
+            if (bossCallback)
+                bossCallback(getPosition());
+        }
     }
 
     
@@ -194,44 +238,37 @@ void Enemy::update(float dt) {
         }
     }
 
-    if (type == EnemyType::Flame) {
-        burnTimer += dt;
-
-        if (burnTimer >= 1.5f) {
-            burnTimer = 0.f;
-
-            if (burnCallback) {
-                burnCallback(getPosition(), 50.f, 1);
-            }
-        }
-    }
-
-    if (type == EnemyType::Fireball) {
-        burnTimer += dt;
-        if (burnTimer >= 5.f) {
-            burnTimer = 0.f;
-            if (burnCallback)
-                burnCallback(getPosition(), 80.f, 1);
-        }
-    }
     
-    if (type == EnemyType::Fireball || type == EnemyType::Flame) {
+
+    
+    if (type == EnemyType::Flame || type == EnemyType::Fireball || type == EnemyType::Crusher) {
         burnTimer += dt;
-        if (burnTimer >= 3.f) {
+
+        float interval = 2.f;
+        float radius = 60.f;
+        int stacks = 1;
+
+        if (type == EnemyType::Fireball) {
+            interval = 4.f;
+            radius = 80.f;
+        }
+        if (type == EnemyType::Flame) {
+            interval = 1.5f;
+            radius = 50.f;
+        }
+        if (type == EnemyType::Crusher) {
+            interval = 2.5f;
+            radius = 70.f;
+        }
+
+        if (burnTimer >= interval) {
             burnTimer = 0.f;
             if (burnCallback)
-                burnCallback(getPosition(), 120.f, 1);
+                burnCallback(getPosition(), radius, stacks);
         }
     }
 
-    if (type == EnemyType::Crusher) {
-        burnTimer += dt;
-        if (burnTimer >= 2.f) {
-            burnTimer = 0.f;
-            if (burnCallback)
-                burnCallback(getPosition(), 60.f, 1);
-        }
-    }
+    
     if (type == EnemyType::FireBoss) {
         bossSkillTimer += dt;
 
@@ -240,6 +277,23 @@ void Enemy::update(float dt) {
             if (bossCallback)
                 bossCallback(getPosition());
         }
+        
+            if (!warningActive) {
+                warningActive = true;
+                warningClock.restart();
+                warningPos = getPosition();
+            }
+
+            if (warningClock.getElapsedTime().asSeconds() >= 0.8f) {
+                warningActive = false;
+
+                if (bossCallback)
+                    bossCallback(warningPos);
+            }
+        
+
+
+
     }
 
     
@@ -272,6 +326,13 @@ void Enemy::draw(sf::RenderWindow& window) const {
     ratio = std::clamp(ratio, 0.f, 1.f);
 
     sf::Vector2f pos = shape.getPosition();
+    if (warningActive) {
+        sf::CircleShape warn(60.f);
+        warn.setOrigin({ 60.f, 60.f });
+        warn.setPosition(warningPos);
+        warn.setFillColor(sf::Color(255, 100, 0, 80));
+        window.draw(warn);
+    }
 
     float barWidth = isBossEnemy ? 50.f : 36.f;
 
@@ -287,10 +348,13 @@ void Enemy::draw(sf::RenderWindow& window) const {
     window.draw(hp);
 }
 int Enemy::getLifeDamage() const {
-    if (type == EnemyType::Boss)
-        return 5;   // boss zabiera 5 żyć
-    return 1;       // normalny wróg
+    if (isBossEnemy)
+        return 5;
+    if (type == EnemyType::Crusher)
+        return 2;
+    return 1;
 }
+
 void Enemy::forceWorldPosition(sf::Vector2f pos) {
     shape.setPosition(pos);
 }
