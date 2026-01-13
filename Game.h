@@ -1,4 +1,4 @@
-﻿#ifndef GAME_H
+#ifndef GAME_H
 #define GAME_H
 #include "WorldMap.h"
 #include <SFML/Graphics.hpp>
@@ -40,7 +40,7 @@ private:
     std::vector<Enemy> enemies; // lista przeciwników
     std::vector<Tower> towers;  // lista wież
     std::vector<Bullet> bullets; // lista pocisków
-    Map* map = nullptr; 
+    Map* map = nullptr;
     // wskaźnik na mapę
     AdventureMode adventure;
     std::string currentNodeId;
@@ -137,7 +137,7 @@ public:
     int getBaseHP() const;
     bool isGameOver() const;
 
-	void loadWaveFromFile(const std::string& filename);
+    void loadWaveFromFile(const std::string& filename);
 
     // --- Autosave ---
     void autoSave();
@@ -193,9 +193,9 @@ public:
     ) const;
 
     void getStats(float& playTime, int& enemiesKilled) const;
-   
+
     void onLoadedFromSave();
-    
+
     AdventureMode& getAdventure();
 
     void setCurrentNode(const std::string& id);
@@ -203,10 +203,9 @@ public:
     void handleWorldMapClick(sf::Vector2f mouseWorldPos);
     void infestTowers(sf::Vector2f pos, float radius, int stacks);
     std::vector<Tower*> getTowersNear(sf::Vector2f pos, float radius);
-	void pushTowersNear(sf::Vector2f bossPos);
-
+    void pushTowersNear(sf::Vector2f bossPos);
+    void burnTowers(sf::Vector2f pos, float radius, int stacks);
 
 };
 
 #endif
-
