@@ -1,5 +1,6 @@
 #include "Tower.h"
 #include <cmath>
+#include <iostream>
 
 Tower::Tower(int dmg, float x, float y) //zmiana inicjatora
     : damage(dmg),
@@ -29,7 +30,7 @@ void Tower::updateAttack(      //zmiana, dodanie lepszej fizyki
     std::vector<Bullet>& bullets
 ) {
     if (isDestroyed())
-    return;
+        return;
 
     timeSinceLastShot += dt;
 
@@ -61,16 +62,16 @@ void Tower::updateAttack(      //zmiana, dodanie lepszej fizyki
 
 
     timeSinceLastShot = 0.f;
-int finalDamage = static_cast<int>(baseDamage * getDamageMultiplier());
+    int finalDamage = static_cast<int>(baseDamage * getDamageMultiplier());
 
-if (finalDamage <= 0)
-    return; // wieża martwa funkcjonalnie
+    if (finalDamage <= 0)
+        return; // wieża martwa funkcjonalnie
 
-bullets.emplace_back(
-    shape.getPosition(),
-    target->getPosition(),
-    finalDamage
-);
+    bullets.emplace_back(
+        shape.getPosition(),
+        target->getPosition(),
+        finalDamage
+    );
 
 }
 
@@ -83,31 +84,58 @@ void Tower::upgrade() {
 
 void Tower::draw(sf::RenderWindow& window) const {
     window.draw(shape);
+    
     if (infestationStacks > 0) {
-    sf::RectangleShape barBack({ 30.f, 4.f });
-    barBack.setFillColor(sf::Color(50, 50, 50));
-    barBack.setPosition(shape.getPosition().x - 15.f,
-                        shape.getPosition().y - 28.f);
+        sf::RectangleShape barBack({ 30.f, 4.f });
+        barBack.setFillColor(sf::Color(50, 50, 50));
+        barBack.setPosition({ shape.getPosition().x - 15.f,
+            shape.getPosition().y - 28.f });
 
-    float ratio = 1.f - infestationStacks / float(MAX_INFESTATION);
-    ratio = std::clamp(ratio, 0.f, 1.f);
+       
+
+        float ratio = 1.f - infestationStacks / float(MAX_INFESTATION);
+        ratio = std::clamp(ratio, 0.f, 1.f);
 
 
-    sf::RectangleShape bar({ 30.f * ratio, 4.f });
+        sf::RectangleShape bar({ 30.f * ratio, 4.f });
+        
 
-    // kolor zależny od infestation
-    if (ratio > 0.6f)
-        bar.setFillColor(sf::Color::Green);
-    else if (ratio > 0.3f)
-        bar.setFillColor(sf::Color::Yellow);
-    else
-        bar.setFillColor(sf::Color::Red);
+        sf::CircleShape infestIcon(5.f);
+        infestIcon.setFillColor(sf::Color(60, 200, 60));
+        infestIcon.setPosition({
+            shape.getPosition().x + 4.f,
+          std::max(0.f, shape.getPosition().y - 42.f)
+            });
+        window.draw(infestIcon);
+        // kolor zależny od infestation
+        if (ratio > 0.6f)
+            bar.setFillColor(sf::Color::Green);
+        else if (ratio > 0.3f)
+            bar.setFillColor(sf::Color::Yellow);
+        else
+            bar.setFillColor(sf::Color::Red);
 
-    bar.setPosition(barBack.getPosition());
+        bar.setPosition(barBack.getPosition());
 
-    window.draw(barBack);
-    window.draw(bar);
-}
+        window.draw(barBack);
+        window.draw(bar);
+    }
+    if (burnStacks > 0) {
+        sf::CircleShape burnIcon(5.f);
+        burnIcon.setFillColor(
+            sf::Color(255, 80 + burnStacks * 20, 0)
+        );
+        burnIcon.setPosition({
+            shape.getPosition().x - 14.f,
+            shape.getPosition().y - 42.f
+            });
+        window.draw(burnIcon);
+        
+
+    }
+   
+
+
 
 }
 void Tower::addInfestation(int stacks) {
@@ -128,13 +156,24 @@ float Tower::getDamageMultiplier() const {
     float mult = 1.f - 0.1f * infestationStacks;
     return std::max(0.f, mult);
 }
+float Tower::getFireRateMultiplier() const {
+    return std::max(0.f, 1.f - 0.25f * burnStacks);
+}
 void Tower::addBurn(int stacks) {
     burnStacks += stacks;
     burnStacks = std::min(burnStacks, MAX_BURN);
 }
-float Tower::getFireRateMultiplier() const {
-    return std::max(0.f, 1.f - 0.25f * burnStacks);
+
+int Tower::getBurnStacks() const {
+    return burnStacks;
 }
 
+void Tower::forceDestroy() {
+    destroyed = true;
+}
+
+void Tower::setPosition(sf::Vector2f pos) {
+    shape.setPosition(pos);
+}
 
 
