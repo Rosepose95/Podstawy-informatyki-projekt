@@ -6,17 +6,23 @@
 #include <functional>
 #include <string>
 
-class Map;
 enum class EnemyType {
     Normal,
     Fast,
-    Tank,
-    Boss,
 
-    Fireball,
+    Infestor,     // stary "tank" z infestation
+    Crusher,     // FIRE tank – push wież
+
     Flame,
-    FireTank,
-    FireBoss
+    Boss,
+    FireBoss,
+	Fireball
+};
+
+struct EnemyStatus {
+    int hp;
+    EnemyType type;
+    bool rage;
 };
 
 class Enemy {
@@ -68,6 +74,8 @@ public:
 
     float burnTimer = 0.f;
     BurnCallback burnCallback;
+    EnemyStatus getStatus() const;
+    void setStatus(const EnemyStatus& s);
 
 private:
     int health;  //życie
@@ -94,6 +102,9 @@ private:
     bool isBossEnemy = false;
     bool rage = false;
     InfestCallback infestCallback;
+   
+    float bossSkillTimer = 0.f;
+
 
 
 
