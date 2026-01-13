@@ -16,8 +16,8 @@ private:
     // infestation
 	int infestationStacks = 0;
 	static constexpr int MAX_INFESTATION = 10;
-	
-    float baseDamage = 0.f;   // zapamiêtujemy oryginalny damage
+    int baseDamage = 0;
+  
     bool destroyed = false;
     sf::RectangleShape shape;
 
@@ -38,5 +38,6 @@ public:
 
 
 #endif
+
 
 
