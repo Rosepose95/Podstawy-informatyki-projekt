@@ -8,7 +8,8 @@ Tower::Tower(int dmg, float x, float y) //zmiana inicjatora
     level(1),
     range(150.f)
 {
-    baseDamage = damage;
+    baseDamage = dmg;
+    damage = dmg;
     shape.setSize({ 40.f, 40.f });
     shape.setOrigin({ 20.f, 20.f });
     shape.setFillColor(sf::Color::Blue);
@@ -25,8 +26,8 @@ void Tower::updateAttack(      //zmiana, dodanie lepszej fizyki
     float dt,
     std::vector<Bullet>& bullets
 ) {
-    if (destroyed || damage <= 0.f)
-        return;
+    if (isDestroyed())
+    return;
 
     timeSinceLastShot += dt;
 
@@ -53,7 +54,7 @@ void Tower::updateAttack(      //zmiana, dodanie lepszej fizyki
         return;
 
     timeSinceLastShot = 0.f;
-int finalDamage = static_cast<int>(damage * getDamageMultiplier());
+int finalDamage = static_cast<int>(baseDamage * getDamageMultiplier());
 
 if (finalDamage <= 0)
     return; // wieża martwa funkcjonalnie
@@ -63,9 +64,6 @@ bullets.emplace_back(
     target->getPosition(),
     finalDamage
 );
-
-    
-
 
 }
 
@@ -85,6 +83,8 @@ void Tower::draw(sf::RenderWindow& window) const {
                         shape.getPosition().y - 28.f);
 
     float ratio = 1.f - infestationStacks / float(MAX_INFESTATION);
+    ratio = std::clamp(ratio, 0.f, 1.f);
+
 
     sf::RectangleShape bar({ 30.f * ratio, 4.f });
 
@@ -121,4 +121,5 @@ float Tower::getDamageMultiplier() const {
     float mult = 1.f - 0.1f * infestationStacks;
     return std::max(0.f, mult);
 }
+
 
