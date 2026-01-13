@@ -159,18 +159,16 @@ void Enemy::update(float dt) {
         }
     }
 
-if (type == EnemyType::Boss) {
-    bossAbilityTimer += dt;
-    if (bossAbilityTimer >= 5.f) {
-        bossAbilityTimer = 0.f;
-        if (infestCallback) {
-            infestCallback(getPosition(), 1.f, 0); // 0 = boss meadow
-        }
-    }
-}
+	if (type == EnemyType::Boss) {
+   		bossAbilityTimer += dt;
+   		if (bossAbilityTimer >= 5.f) {
+        	bossAbilityTimer = 0.f;
 
-
-
+        	if (eventCallback) {
+            	eventCallback(getPosition(), type);
+        	}
+    	}
+	}
 
 }
 
@@ -247,4 +245,5 @@ void Enemy::resetInfestTimer() {
 void Enemy::setInfestCallback(InfestCallback cb) {
     infestCallback = cb;
 }
+
 
