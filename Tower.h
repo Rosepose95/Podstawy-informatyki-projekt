@@ -4,6 +4,11 @@
 #include <SFML/Graphics.hpp>
 #include "Enemy.h"
 #include "Bullet.h"
+struct TowerStatus {
+    int infestation = 0;
+    int burn = 0;
+    bool destroyed = false;
+};
 
 class Tower {
 private:
@@ -47,7 +52,14 @@ public:
 
     // movement
     void setPosition(sf::Vector2f pos);
+    TowerStatus getStatus() const;
+    void setStatus(const TowerStatus& s);
 
+
+
+    void setInfestationStacks(int v);
+    void setBurnStacks(int v);
+    void setDestroyed(bool v);
 
     sf::Vector2f getPosition() const;
     void draw(sf::RenderWindow& window) const;
