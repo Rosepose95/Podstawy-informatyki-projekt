@@ -26,6 +26,8 @@ private:
 
     int burnStacks = 0;
     float baseCooldown = 0.f;
+    
+    float frozenTimer = 0.f;
 
 
 
