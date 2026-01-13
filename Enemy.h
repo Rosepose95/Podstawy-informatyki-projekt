@@ -20,16 +20,11 @@ public:
     bool reachedGoal() const;
     void setMap(const Map* m);
     void update(float dt);
-    bool shouldInfest() const;
-    void resetInfestTimer();
     void takeDamage(int dmg);
     bool isDead() const;
 
     using InfestCallback = std::function<void(sf::Vector2f, float, int)>;
     void setInfestCallback(InfestCallback cb);
-
-    using EnemyEventCallback = std::function<void(sf::Vector2f pos, EnemyType type)>;
-    EnemyEventCallback eventCallback;
 
     using BossAbilityCallback = std::function<void(sf::Vector2f)>;
 
@@ -63,8 +58,6 @@ public:
 
     bool isBoss() const { return isBossEnemy; }
     bool isRaging() const { return rage; }
-    void setEventCallback(EnemyEventCallback cb) {
-    eventCallback = cb;}
 private:
     int health;  //życie
     int maxHealth;
@@ -97,5 +90,6 @@ private:
 
 
 #endif
+
 
 
