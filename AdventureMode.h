@@ -1,12 +1,16 @@
 #pragma once
 #include <string>
 #include <unordered_map>
+
+
+
 struct AdventureNode {
     std::string id;
     bool unlocked = false;
     bool completed = false;
-    bool boss = false;   
+    bool boss = false;
 };
+
 enum class Biomes {
     Meadow,
     Fire,
@@ -34,4 +38,3 @@ public:
 private:
     std::unordered_map<std::string, AdventureNode> nodes;
 };
-
