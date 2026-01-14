@@ -68,10 +68,19 @@ public:
 
     sf::Vector2f getPosition() const;
     void draw(sf::RenderWindow& window) const;
+// slow
+void addSlow(int stacks);
+int getSlowStacks() const;
+
+// freeze
+void freeze(float time);
+bool isFrozen() const;
+
 };
 
 
 #endif
+
 
 
 
