@@ -333,6 +333,25 @@ void Game::update(float dt) {
         }
     );
 }
+// --- ICE BIOME ---
+if (e.getType() == EnemyType::IceShard ||
+    e.getType() == EnemyType::FrostWalker ||
+    e.getType() == EnemyType::IceBoss)
+{
+    e.setBossCallback(
+        [this, &e](sf::Vector2f pos) {
+            slowTowers(pos, 80.f, 1);
+        }
+    );
+}
+if (e.getType() == EnemyType::IceBoss) {
+    e.setBossCallback(
+        [this](sf::Vector2f pos) {
+            freezeTowers(pos, 120.f, 1.5f);
+            pushTowersNear(pos); // ale w bok
+        }
+    );
+}
 
             // --- BOSS-SPECYFICZNE ABILITY ---
             if (e.getType() == EnemyType::FireBoss ||
@@ -801,6 +820,25 @@ void Game::burnTowers(sf::Vector2f pos, float radius, int stacks) {
             t.addBurn(stacks);
     }
 }
+void Game::slowTowers(sf::Vector2f pos, float radius, int stacks) {
+    float r2 = radius * radius;
+
+    for (auto& t : towers) {
+        sf::Vector2f d = t.getPosition() - pos;
+        if (d.x*d.x + d.y*d.y <= r2)
+            t.addSlow(stacks);
+    }
+}
+void Game::freezeTowers(sf::Vector2f pos, float radius, float time) {
+    float r2 = radius * radius;
+
+    for (auto& t : towers) {
+        sf::Vector2f d = t.getPosition() - pos;
+        if (d.x*d.x + d.y*d.y <= r2)
+            t.freeze(time);
+    }
+}
+
 EnemyType Game::pickEnemyForBiome(Biomes biome, bool isBossWave) {
     if (isBossWave) {
         switch (biome) {
@@ -808,6 +846,9 @@ EnemyType Game::pickEnemyForBiome(Biomes biome, bool isBossWave) {
             return EnemyType::FireBoss;
         case Biomes::Meadow:
             return EnemyType::MeadowBoss;
+        case Biomes::Ice:
+            return EnemyType::IceBoss;
+
         default:
             return EnemyType::MeadowBoss;
         }
@@ -826,11 +867,19 @@ EnemyType Game::pickEnemyForBiome(Biomes biome, bool isBossWave) {
         if (r == 0) return EnemyType::Fast;
         if (r == 1) return EnemyType::Infestor;
         return EnemyType::Normal;
+    case Biomes::Ice: {
+    int r = rand() % 4;
+    if (r == 0) return EnemyType::IceShard;
+    if (r == 1) return EnemyType::FrostWalker;
+    return EnemyType::Normal;
+}
+
     }
     default:
         return EnemyType::Normal;
     }
 }
+
 
 
 
