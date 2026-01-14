@@ -1,8 +1,8 @@
 #include "Bullet.h"
 #include <cmath>
 
-Bullet::Bullet(sf::Vector2f start, sf::Vector2f target, int dmg) //dodatek do konstruktora
-    : speed(300.f), lifetime(3.f), damage(dmg), dead(false) {
+Bullet::Bullet(sf::Vector2f start, sf::Vector2f target, int dmg, BulletEffect eff) //dodatek do konstruktora
+    : speed(300.f), lifetime(3.f), damage(dmg), dead(false), effect(eff) {
 
     shape.setRadius(5.f);
     shape.setFillColor(sf::Color::Black);
@@ -28,7 +28,7 @@ void Bullet::draw(sf::RenderWindow& window) const {
     window.draw(shape);
 }
 
-bool Bullet::isDead() const { //doda≥am parÍ metod, by pociski dzia≥a≥y poprawnie
+bool Bullet::isDead() const { //doda≈Çam parƒô metod, by pociski dzia≈Ça≈Çy poprawnie
     return dead || lifetime <= 0.f;
 }
 
