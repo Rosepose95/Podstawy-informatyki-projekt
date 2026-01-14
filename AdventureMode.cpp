@@ -41,9 +41,9 @@ bool AdventureMode::isBossNode(const std::string& id) const
 
 void AdventureMode::init()
 {
-    nodes["grasslands"] = { "grasslands", true,  false, false };
-    nodes["desert"] = { "desert",     false, false, false };
-    nodes["ice"] = { "ice",        false, false, false };
+    nodes["grasslands"] = { "grasslands", false,  false, true};
+    nodes["desert"] = { "desert",     false, false, true };
+    nodes["ice"] = { "ice",        false, false, true };
     nodes["volcano"] = { "volcano",    false, false, true }; //  BOSS
 
 }
