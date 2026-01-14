@@ -1,0 +1,17 @@
+﻿  Game.cpp
+C:\Users\Ania\Desktop\studia\Podstawy Informatyki - sprawozdania\zadania\MojaGra\MojaGra\Game.cpp(392,12): warning C4244: "inicjowanie": konwersja z "T" do "int", możliwa utrata danych
+C:\Users\Ania\Desktop\studia\Podstawy Informatyki - sprawozdania\zadania\MojaGra\MojaGra\Game.cpp(392,12): warning C4244:         with
+C:\Users\Ania\Desktop\studia\Podstawy Informatyki - sprawozdania\zadania\MojaGra\MojaGra\Game.cpp(392,12): warning C4244:         [
+C:\Users\Ania\Desktop\studia\Podstawy Informatyki - sprawozdania\zadania\MojaGra\MojaGra\Game.cpp(392,12): warning C4244:             T=float
+C:\Users\Ania\Desktop\studia\Podstawy Informatyki - sprawozdania\zadania\MojaGra\MojaGra\Game.cpp(392,12): warning C4244:         ]
+C:\Users\Ania\Desktop\studia\Podstawy Informatyki - sprawozdania\zadania\MojaGra\MojaGra\Game.cpp(393,12): warning C4244: "inicjowanie": konwersja z "T" do "int", możliwa utrata danych
+C:\Users\Ania\Desktop\studia\Podstawy Informatyki - sprawozdania\zadania\MojaGra\MojaGra\Game.cpp(393,12): warning C4244:         with
+C:\Users\Ania\Desktop\studia\Podstawy Informatyki - sprawozdania\zadania\MojaGra\MojaGra\Game.cpp(393,12): warning C4244:         [
+C:\Users\Ania\Desktop\studia\Podstawy Informatyki - sprawozdania\zadania\MojaGra\MojaGra\Game.cpp(393,12): warning C4244:             T=float
+C:\Users\Ania\Desktop\studia\Podstawy Informatyki - sprawozdania\zadania\MojaGra\MojaGra\Game.cpp(393,12): warning C4244:         ]
+  main.cpp
+C:\Users\Ania\Desktop\studia\Podstawy Informatyki - sprawozdania\zadania\MojaGra\MojaGra\main.cpp(25,22): warning C4834: odrzucenie wartości zwracanej funkcji z atrybutem [[nodiscard]]
+C:\Users\Ania\Desktop\studia\Podstawy Informatyki - sprawozdania\zadania\MojaGra\MojaGra\main.cpp(47,30): warning C4834: odrzucenie wartości zwracanej funkcji z atrybutem [[nodiscard]]
+C:\Users\Ania\Desktop\studia\Podstawy Informatyki - sprawozdania\zadania\MojaGra\MojaGra\main.cpp(53,29): warning C4834: odrzucenie wartości zwracanej funkcji z atrybutem [[nodiscard]]
+  Generowanie kodu...
+  MojaGra.vcxproj -> C:\Users\Ania\Desktop\studia\Podstawy Informatyki - sprawozdania\zadania\MojaGra\x64\Debug\MojaGra.exe
