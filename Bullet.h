@@ -2,8 +2,27 @@
 #define BULLET_H
 
 #include <SFML/Graphics.hpp>
+enum class BulletEffect {
+    Normal,
+    Ice
+};
+
+
 
 class Bullet {
+public:
+    Bullet(sf::Vector2f start, sf::Vector2f target, int dmg, BulletEffect eff);  //poprawka do konstruktora
+
+    void update(float dt);
+    void draw(sf::RenderWindow& window) const;
+
+    bool isDead() const;
+    void kill(); //usuwanie u≈ºytych pocisk√≥w i ich pozycja
+
+    sf::Vector2f getPosition() const;
+    int getDamage() const;
+    BulletEffect getEffect() const { 
+        return effect; }
 private:
     sf::CircleShape shape;
     sf::Vector2f direction; //zmiana zmiennych 
@@ -11,18 +30,10 @@ private:
     float lifetime;
     int damage;
     bool dead;
+    BulletEffect effect = BulletEffect::Normal;
 
-public:
-	Bullet(sf::Vector2f start, sf::Vector2f target, int dmg);  //poprawka do konstruktora
+    
 
-    void update(float dt);
-    void draw(sf::RenderWindow& window) const;
-
-    bool isDead() const;
-    void kill(); //usuwanie uøytych pociskÛw i ich pozycja
-
-    sf::Vector2f getPosition() const;
-    int getDamage() const;
 };
 
 #endif
