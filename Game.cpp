@@ -320,6 +320,8 @@ void Game::update(float dt) {
     );
 }
 
+            if (!e.isBoss() && e.getType() == EnemyType::Normal)
+    e.setColor(biomeColor);
 
             // --- FIRE BIOME ---
             if (e.getType() == EnemyType::FireBoss ||
@@ -345,13 +347,32 @@ if (e.getType() == EnemyType::IceShard ||
     );
 }
 if (e.getType() == EnemyType::IceBoss) {
-    e.setBossCallback(
-        [this](sf::Vector2f pos) {
-            freezeTowers(pos, 120.f, 1.5f);
-            pushTowersNear(pos); // ale w bok
-        }
-    );
+ e.setBossCallback(
+    [this](sf::Vector2f pos) {
+        slowTowers(pos, 120.f, 2);
+        freezeTowers(pos, 100.f, 1.5f);
+        pushTowersNear(pos);
+    }
+);
+
 }
+sf::Color biomeColor;
+
+switch (currentBiome) {
+case Biomes::Meadow:
+    biomeColor = sf::Color(80, 160, 80);
+    break;
+case Biomes::Fire:
+    biomeColor = sf::Color(200, 80, 40);
+    break;
+case Biomes::Ice:
+    biomeColor = sf::Color(150, 200, 255);
+    break;
+default:
+    biomeColor = sf::Color::White;
+}
+
+e.setColor(biomeColor);
 
             // --- BOSS-SPECYFICZNE ABILITY ---
             if (e.getType() == EnemyType::FireBoss ||
@@ -879,6 +900,7 @@ EnemyType Game::pickEnemyForBiome(Biomes biome, bool isBossWave) {
         return EnemyType::Normal;
     }
 }
+
 
 
 
