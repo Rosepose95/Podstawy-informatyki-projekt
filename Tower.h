@@ -7,8 +7,11 @@
 struct TowerStatus {
     int infestation = 0;
     int burn = 0;
+    int slow = 0;
+    float freeze = 0.f;
     bool destroyed = false;
 };
+
 
 class Tower {
 private:
@@ -80,6 +83,7 @@ bool isFrozen() const;
 
 
 #endif
+
 
 
 
