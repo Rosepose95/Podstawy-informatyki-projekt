@@ -12,6 +12,7 @@
 #include "SaveSystem.h"
 #include "AdventureMode.h"
 #include "WorldMap.h"
+#include "GameTypes.h"
 
 Game::Game()
     :autoSaveIcon(autoSaveTexture)
@@ -210,6 +211,8 @@ void Game::startGame() {
 // --- Rozpoczęcie kolejnej fali ---
 void Game::startNextWave()
 {
+    
+
     currentWave++;
     waveJustLoaded = false;
 
@@ -280,23 +283,25 @@ void Game::update(float dt) {
 
             EnemyType type = pickEnemyForBiome(biome, isBossWave);
 
-// fire biome extra spice
+            // fire biome extra spice
             if (biome == Biomes::Fire && !isBossWave) {
                 int r = rand() % 6;
                 if (r == 0) type = EnemyType::Fireball;
-                    if (currentWave >= 6 && rand() % 8 == 0)
-                        type = EnemyType::Crusher;
-}
+                if (currentWave >= 6 && rand() % 8 == 0)
+                    type = EnemyType::Crusher;
+            }
 
 
 
-            
+
 
             auto& spawns = map->spawnPoints;
             if (spawns.empty()) {
                 std::cout << "NO SPAWN POINTS\n";
+                enemiesToSpawn = 0;
                 return;
             }
+
 
             if (spawns.empty()) return;
             sf::Vector2i spawnTile = spawns[rand() % spawns.size()];
@@ -314,164 +319,169 @@ void Game::update(float dt) {
                 e.getType() == EnemyType::MeadowBoss)
             {
                 e.setInfestCallback(
-                [this](sf::Vector2f pos, float radius, int stacks) {
-                    infestTowers(pos, radius, stacks);
-        }
-    );
-}
+                    [this](sf::Vector2f pos, float radius, int stacks) {
+                        infestTowers(pos, radius, stacks);
+                    }
+                );
+            }
 
-            
+
 
             // --- FIRE BIOME ---
             if (e.getType() == EnemyType::FireBoss ||
                 e.getType() == EnemyType::Flame ||
                 e.getType() == EnemyType::Fireball ||
                 e.getType() == EnemyType::Crusher)
-    {
+            {
                 e.setBurnCallback(
-                [this](sf::Vector2f pos, float radius, int stacks) {
-                    burnTowers(pos, radius, stacks);
-        }
-    );
-}
-if (e.getType() == EnemyType::FireBoss) {
-    e.setBossCallback(
-        [this](sf::Vector2f pos) {
-            pushTowersNear(pos);
-        }
-    );
-}
-else if (e.getType() == EnemyType::IceBoss) {
-    e.setBossCallback(
-        [this](sf::Vector2f pos) {
-            slowTowers(pos, 120.f, 2);
-            freezeTowers(pos, 100.f, 1.5f);
-            pushTowersNear(pos);
-        }
-    );
-}
-else if (e.getType() == EnemyType::Crusher) {
-    e.setBossCallback(
-        [this](sf::Vector2f pos) {
-            pushTowersNear(pos);
-        }
-    );
-}
+                    [this](sf::Vector2f pos, float radius, int stacks) {
+                        burnTowers(pos, radius, stacks);
+                    }
+                );
+            }
+            if (e.getType() == EnemyType::FireBoss) {
+                e.setBossCallback(
+                    [this](sf::Vector2f pos) {
+                        pushTowersNear(pos);
+                    }
+                );
+            }
+            else if (e.getType() == EnemyType::IceBoss) {
+                e.setBossCallback(
+                    [this](sf::Vector2f pos) {
+                        slowTowers(pos, 120.f, 2);
+                        freezeTowers(pos, 100.f, 1.5f);
+                        pushTowersNear(pos);
+                    }
+                );
+            }
+            else if (e.getType() == EnemyType::Crusher) {
+                e.setBossCallback(
+                    [this](sf::Vector2f pos) {
+                        pushTowersNear(pos);
+                    }
+                );
+            }
 
 
-}
-sf::Color biomeColor;
 
-switch (currentBiome) {
-case Biomes::Meadow:
-    biomeColor = sf::Color(80, 160, 80);
-    break;
-case Biomes::Fire:
-    biomeColor = sf::Color(200, 80, 40);
-    break;
-case Biomes::Ice:
-    biomeColor = sf::Color(150, 200, 255);
-    break;
-default:
-    biomeColor = sf::Color::White;
-}
+            sf::Color biomeColor;
 
-e.setColor(biomeColor);
-
-            
-            
+            switch (currentBiome) {
+            case Biomes::Meadow:
+                biomeColor = sf::Color(255, 0, 0);
+                break;
+            case Biomes::Fire:
+                biomeColor = sf::Color(200, 80, 40);
+                break;
+            case Biomes::Ice:
+                biomeColor = sf::Color(150, 200, 255);
+                break;
+            default:
+                biomeColor = sf::Color::White;
+            }
 
 
-if (!e.isBoss() && e.getType() == EnemyType::Normal)
-    e.setColor(biomeColor);
+            if (!e.isBoss() && e.getType() == EnemyType::Normal)
+                e.setColor(biomeColor);
 
             enemiesToSpawn--;
         }
     }
 
-    // --- Sprawdzenie Game Over ---
-    if (playerLives <= 0) gameOver = true;
+// --- Sprawdzenie Game Over ---
+if (playerLives <= 0) gameOver = true;
 
-    // --- Ruch przeciwników ---
-    for (auto it = enemies.begin(); it != enemies.end();) {
-        it->update(dt);
-       
-        if (it->reachedGoal()) {
-            playerLives -= it->getLifeDamage();
-            it = enemies.erase(it);
+// --- Ruch przeciwników ---
+for (auto it = enemies.begin(); it != enemies.end();) {
+    it->update(dt);
+
+    if (it->reachedGoal()) {
+        playerLives -= it->getLifeDamage();
+        it = enemies.erase(it);
+    }
+    else if (it->isDead()) {
+
+        if (it->getType() == EnemyType::FireBoss) {
+            sf::Vector2f pos = it->getPosition();
+
+            //  eksplozja burn
+            burnTowers(pos, 120.f, 3);
+
+            //  spawn Flame
+            for (int i = 0; i < 4; ++i) {
+                Enemy e(40, pos.x, pos.y, EnemyType::Flame);
+                e.setMap(map);
+                e.setBurnCallback(
+                    [this](sf::Vector2f p, float r, int s) {
+                        burnTowers(p, r, s);
+                    }
+                );
+                enemies.push_back(e);
+            }
         }
-        else if (it->isDead()) {
 
-            if (it->getType() == EnemyType::FireBoss) {
-                sf::Vector2f pos = it->getPosition();
+        if (isBossWave)
+            bossDefeatedThisFrame = true;
 
-                //  eksplozja burn
-                burnTowers(pos, 120.f, 3);
+        it = enemies.erase(it);
+    }
 
-                //  spawn Flame
-                for (int i = 0; i < 4; ++i) {
-                    Enemy e(40, pos.x, pos.y, EnemyType::Flame);
-                    e.setMap(map);
-                    e.setBurnCallback(
-                        [this](sf::Vector2f p, float r, int s) {
-                            burnTowers(p, r, s);
-                        }
-                    );
-                    enemies.push_back(e);
+    else ++it;
+}
+
+// --- Atak wież ---
+for (auto& t : towers) t.updateAttack(enemies, dt, bullets);
+
+// --- Aktualizacja pocisków ---
+for (auto& b : bullets) b.update(dt);
+
+// --- Kolizje bullet <-> enemy ---
+for (auto& b : bullets) {
+    for (auto& e : enemies) {
+        if (e.isDead()) continue;
+        sf::Vector2f bp = b.getPosition();
+        sf::Vector2f ep = e.getPosition();
+        float dx = bp.x - ep.x;
+        float dy = bp.y - ep.y;
+        if (dx * dx + dy * dy <= e.getRadius() * e.getRadius()) {
+            e.takeDamage(b.getDamage());
+            if (b.getEffect() == BulletEffect::Ice) {
+                e.applySlow(0.5f, 2.5f);
+
+                if (rand() % 4 == 0) { // 25%
+                    e.applyFreeze(1.2f);
                 }
             }
 
-            if (isBossWave)
-                bossDefeatedThisFrame = true;
-
-            it = enemies.erase(it);
-        }
-
-        else ++it;
-    }
-
-    // --- Atak wież ---
-    for (auto& t : towers) t.updateAttack(enemies, dt, bullets);
-
-    // --- Aktualizacja pocisków ---
-    for (auto& b : bullets) b.update(dt);
-
-    // --- Kolizje bullet <-> enemy ---
-    for (auto& b : bullets) {
-        for (auto& e : enemies) {
-            if (e.isDead()) continue;
-            sf::Vector2f bp = b.getPosition();
-            sf::Vector2f ep = e.getPosition();
-            float dx = bp.x - ep.x;
-            float dy = bp.y - ep.y;
-            if (dx * dx + dy * dy <= e.getRadius() * e.getRadius()) {
-                e.takeDamage(b.getDamage());
-                b.kill();
-                break;
-            }
+            b.kill();
+            break;
         }
     }
+}
 
-    // --- Usuwanie martwych pocisków ---
-    bullets.erase(std::remove_if(bullets.begin(), bullets.end(), [](const Bullet& b) { return b.isDead(); }), bullets.end());
-    towers.erase(
-        std::remove_if(
-            towers.begin(),
-            towers.end(),
-            [](const Tower& t) { return t.isDestroyed(); }
-        ),
-        towers.end()
-    );
+// --- Usuwanie martwych pocisków ---
+bullets.erase(std::remove_if(bullets.begin(), bullets.end(), [](const Bullet& b) { return b.isDead(); }), bullets.end());
+towers.erase(
+    std::remove_if(
+        towers.begin(),
+        towers.end(),
+        [](const Tower& t) { return t.isDestroyed(); }
+    ),
+    towers.end()
+);
 
+updateUI();
+if (bossDefeatedThisFrame) {
+    bossDefeatedThisFrame = false;
+    advanceBiome();
+    
 
-    updateUI();
-    if (bossDefeatedThisFrame) {
-        bossDefeatedThisFrame = false;
-        // tylko info, bez world map
-        showInfo = true;
-        infoText.setString("BOSS DEFEATED!");
-        infoClock.restart();
-    }
+    // tylko info, bez world map
+    showInfo = true;
+    infoText.setString("BOSS DEFEATED!");
+    infoClock.restart();
+}
 
 
 }
@@ -843,7 +853,7 @@ void Game::slowTowers(sf::Vector2f pos, float radius, int stacks) {
 
     for (auto& t : towers) {
         sf::Vector2f d = t.getPosition() - pos;
-        if (d.x*d.x + d.y*d.y <= r2)
+        if (d.x * d.x + d.y * d.y <= r2)
             t.addSlow(stacks);
     }
 }
@@ -852,7 +862,7 @@ void Game::freezeTowers(sf::Vector2f pos, float radius, float time) {
 
     for (auto& t : towers) {
         sf::Vector2f d = t.getPosition() - pos;
-        if (d.x*d.x + d.y*d.y <= r2)
+        if (d.x * d.x + d.y * d.y <= r2)
             t.freeze(time);
     }
 }
@@ -885,22 +895,37 @@ EnemyType Game::pickEnemyForBiome(Biomes biome, bool isBossWave) {
         if (r == 0) return EnemyType::Fast;
         if (r == 1) return EnemyType::Infestor;
         return EnemyType::Normal;
-    case Biomes::Ice: {
-    int r = rand() % 4;
-    if (r == 0) return EnemyType::IceShard;
-    if (r == 1) return EnemyType::FrostWalker;
-    return EnemyType::Normal;
-}
-
     }
-    default:
+    case Biomes::Ice: {
+        int r = rand() % 4;
+        if (r == 0) return EnemyType::IceShard;
+        if (r == 1) return EnemyType::FrostWalker;
         return EnemyType::Normal;
     }
+
+
+    default:
+        return EnemyType::Normal;
+
+    }
+}
+void Game::setMode(GameMode m) {
+    mode = m;
 }
 
-
-
-
-
-
-
+void Game::setDifficulty(Difficulty d) {
+    difficulty = d;
+}
+void Game::advanceBiome() {
+    switch (currentBiome) {
+    case Biomes::Meadow:
+        currentBiome = Biomes::Fire;
+        break;
+    case Biomes::Fire:
+        currentBiome = Biomes::Ice;
+        break;
+    case Biomes::Ice:
+        currentBiome = Biomes::Meadow;
+        break;
+    }
+}
