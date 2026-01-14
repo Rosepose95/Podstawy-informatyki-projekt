@@ -36,6 +36,10 @@ void Tower::updateAttack(      //zmiana, dodanie lepszej fizyki
 
     Enemy* target = nullptr;
     float bestDist = range * range;
+    if (freezeTimer > 0.f)
+    return;
+
+float effectiveCooldown = cooldown / getFireRateMultiplier();
 
     for (auto& e : enemies) {
         if (e.isDead())
@@ -60,6 +64,10 @@ void Tower::updateAttack(      //zmiana, dodanie lepszej fizyki
     if (timeSinceLastShot < baseCooldown / fireRateMult)
         return;
 
+    if (freezeTimer > 0.f) {
+    freezeTimer -= dt;
+    return;
+}
 
     timeSinceLastShot = 0.f;
     int finalDamage = static_cast<int>(baseDamage * getDamageMultiplier());
@@ -133,29 +141,40 @@ void Tower::draw(sf::RenderWindow& window) const {
 
 
     }
-    sf::Vector2f p = shape.getPosition();
+    
+float y = shape.getPosition().y - 30.f;
+float x = shape.getPosition().x - 12.f;
 
-    if (infestationStacks > 0) {
-        sf::CircleShape icon(6.f);
-        icon.setFillColor(sf::Color(100, 200, 100));
-        icon.setPosition(p + sf::Vector2f(-10, -30));
-        window.draw(icon);
-    }
+if (burnStacks > 0) {
+    sf::CircleShape c(4.f);
+    c.setFillColor(sf::Color::Red);
+    c.setPosition(x, y);
+    window.draw(c);
+    x += 10.f;
+}
 
-    if (burnStacks > 0) {
-        sf::CircleShape icon(6.f);
-        icon.setFillColor(sf::Color(255, 100, 0));
-        icon.setPosition(p + sf::Vector2f(0, -30));
-        window.draw(icon);
-    }
+if (infestationStacks > 0) {
+    sf::CircleShape c(4.f);
+    c.setFillColor(sf::Color(120, 0, 120));
+    c.setPosition(x, y);
+    window.draw(c);
+    x += 10.f;
+}
 
-    if (frozenTimer > 0.f) {
-        sf::CircleShape icon(6.f);
-        icon.setFillColor(sf::Color(100, 200, 255));
-        icon.setPosition(p + sf::Vector2f(10, -30));
-        window.draw(icon);
-    }
+if (slowStacks > 0) {
+    sf::CircleShape c(4.f);
+    c.setFillColor(sf::Color(150, 200, 255));
+    c.setPosition(x, y);
+    window.draw(c);
+    x += 10.f;
+}
 
+if (freezeTimer > 0.f) {
+    sf::CircleShape c(5.f);
+    c.setFillColor(sf::Color(120, 180, 255, 180));
+    c.setPosition(x, y - 4.f);
+    window.draw(c);
+}
 
 
 
@@ -178,9 +197,8 @@ float Tower::getDamageMultiplier() const {
     float mult = 1.f - 0.1f * infestationStacks;
     return std::max(0.f, mult);
 }
-float Tower::getFireRateMultiplier() const {
-    return std::max(0.f, 1.f - 0.25f * burnStacks);
-}
+
+
 void Tower::addBurn(int stacks) {
     burnStacks += stacks;
     burnStacks = std::min(burnStacks, MAX_BURN);
@@ -202,6 +220,8 @@ TowerStatus Tower::getStatus() const {
     TowerStatus s;
     s.infestation = infestationStacks;
     s.burn = burnStacks;
+    s.slow = slowStacks;
+    s.freeze = freezeTimer;
     s.destroyed = destroyed;
     return s;
 }
@@ -209,9 +229,15 @@ TowerStatus Tower::getStatus() const {
 void Tower::setStatus(const TowerStatus& s) {
     infestationStacks = s.infestation;
     burnStacks = s.burn;
+    slowStacks = s.slow;
+    freezeTimer = s.freeze;
     destroyed = s.destroyed;
 }
-
 void Tower::setInfestationStacks(int v) { infestationStacks = v; }
 void Tower::setBurnStacks(int v) { burnStacks = v; }
 void Tower::setDestroyed(bool v) { destroyed = v; }
+float Tower::getFireRateMultiplier() const {
+    float slowMul = 1.f - 0.1f * slowStacks;
+    return std::max(0.3f, slowMul);
+}
+
