@@ -31,13 +31,14 @@ void Tower::updateAttack(      //zmiana, dodanie lepszej fizyki
 ) {
     if (isDestroyed())
         return;
-
+    if (freezeTimer > 0.f) {
+    freezeTimer -= dt;
+    return;
     timeSinceLastShot += dt;
 
     Enemy* target = nullptr;
     float bestDist = range * range;
-    if (freezeTimer > 0.f)
-    return;
+    
 
 float effectiveCooldown = cooldown / getFireRateMultiplier();
 
@@ -64,9 +65,7 @@ float effectiveCooldown = cooldown / getFireRateMultiplier();
     if (timeSinceLastShot < baseCooldown / fireRateMult)
         return;
 
-    if (freezeTimer > 0.f) {
-    freezeTimer -= dt;
-    return;
+    
 }
 
     timeSinceLastShot = 0.f;
@@ -93,54 +92,6 @@ void Tower::upgrade() {
 void Tower::draw(sf::RenderWindow& window) const {
     window.draw(shape);
 
-    if (infestationStacks > 0) {
-        sf::RectangleShape barBack({ 30.f, 4.f });
-        barBack.setFillColor(sf::Color(50, 50, 50));
-        barBack.setPosition({ shape.getPosition().x - 15.f,
-            shape.getPosition().y - 28.f });
-
-
-
-        float ratio = 1.f - infestationStacks / float(MAX_INFESTATION);
-        ratio = std::clamp(ratio, 0.f, 1.f);
-
-
-        sf::RectangleShape bar({ 30.f * ratio, 4.f });
-
-
-        sf::CircleShape infestIcon(5.f);
-        infestIcon.setFillColor(sf::Color(60, 200, 60));
-        infestIcon.setPosition({
-            shape.getPosition().x + 4.f,
-          std::max(0.f, shape.getPosition().y - 42.f)
-            });
-        window.draw(infestIcon);
-        // kolor zależny od infestation
-        if (ratio > 0.6f)
-            bar.setFillColor(sf::Color::Green);
-        else if (ratio > 0.3f)
-            bar.setFillColor(sf::Color::Yellow);
-        else
-            bar.setFillColor(sf::Color::Red);
-
-        bar.setPosition(barBack.getPosition());
-
-        window.draw(barBack);
-        window.draw(bar);
-    }
-    if (burnStacks > 0) {
-        sf::CircleShape burnIcon(5.f);
-        burnIcon.setFillColor(
-            sf::Color(255, 80 + burnStacks * 20, 0)
-        );
-        burnIcon.setPosition({
-            shape.getPosition().x - 14.f,
-            shape.getPosition().y - 42.f
-            });
-        window.draw(burnIcon);
-
-
-    }
     
 float y = shape.getPosition().y - 30.f;
 float x = shape.getPosition().x - 12.f;
@@ -185,8 +136,9 @@ void Tower::addInfestation(int stacks) {
 }
 
 bool Tower::isDestroyed() const {
-    return infestationStacks >= MAX_INFESTATION;
+    return destroyed || infestationStacks >= MAX_INFESTATION;
 }
+
 
 int Tower::getInfestationStacks() const {
     return infestationStacks;
@@ -240,4 +192,5 @@ float Tower::getFireRateMultiplier() const {
     float slowMul = 1.f - 0.1f * slowStacks;
     return std::max(0.3f, slowMul);
 }
+
 
