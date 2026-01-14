@@ -1,4 +1,4 @@
-﻿#include <SFML/Graphics.hpp>
+#include <SFML/Graphics.hpp>
 #include "Game.h"
 #include "Enemy.h"
 #include "Tower.h"
@@ -9,13 +9,18 @@
 #include "AdventureMode.h"
 #include "WorldMap.h"
 
+#include "MainMenu.h"
+#include "GameTypes.h"
+
 // --- stany gry ---
 enum class GameState {
     MENU,
+    MODE_SELECT,   
     PLAYING,
     PAUSED,
-    EDITOR 
+    EDITOR
 };
+
 
 int main() {
     sf::RenderWindow window(sf::VideoMode({ 1240, 840 }), "Tower Defense SFML 3");
@@ -25,11 +30,16 @@ int main() {
     game.setMap(&map);
     
 
+    
 
     sf::Font font;
     font.openFromFile("assets/ArialMT.ttf");
     Menu menu(1240.f, 840.f, font);
     PauseMenu pauseMenu(1240.f, 840.f, font);
+    // w main.cpp
+    MainMenu modeMenu(1240.f, 840.f, font);
+    bool showMainMenu = false;
+
 
     GameState state = GameState::MENU;      // aktualny stan gry
     GameState nextState = GameState::PLAYING; // stan po animacji przycisku
@@ -93,6 +103,8 @@ int main() {
 
         while (const std::optional<sf::Event> ev = window.pollEvent())
         {
+            
+
             if (ev->is<sf::Event::Closed>()) {
                 window.close();
                 continue;
@@ -111,25 +123,24 @@ int main() {
                 }
             }
 
-            
             // --- KLIKNIĘCIA GAME OVER ---
-            else if (game.isGameOver()) {
+            if (game.isGameOver()) {
                 if (const auto* mouse = ev->getIf<sf::Event::MouseButtonPressed>()) {
                     if (mouse->button == sf::Mouse::Button::Left) {
                         game.autoSave();
 
                         sf::Vector2f clickPos = window.mapPixelToCoords(mouse->position);
-                        game.tryRestart(clickPos);//restart gry
-                        //aby nie stawialo wiezy podczas klikniecia restart
+                        game.tryRestart(clickPos);
+
                         if (!game.isGameOver()) {
                             continue;
                         }
-                        if (game.tryExit(clickPos))  // wyjście z gry
+                        if (game.tryExit(clickPos))
                             window.close();
                     }
                 }
             }
-             
+
             // --- obsługa przycisku pauzy ---
             if (state != GameState::MENU) {
                 if (const auto* mousePressed = ev->getIf<sf::Event::MouseButtonPressed>()) {
@@ -190,8 +201,12 @@ int main() {
                                 map.mapId = "default";
                                 map.loadMap();
                                 map.refreshLogic();
-                                state = GameState::PLAYING;
-                                game.startGame();
+                                state = GameState::MODE_SELECT;
+                                showMainMenu = true;
+                                
+
+                                
+
                             }
                             else if (menu.isLoadClicked(mousepos)) {
                                 menu.enterLoadScreen();
@@ -208,6 +223,35 @@ int main() {
                     }
                 }
             }
+            else if (state == GameState::MODE_SELECT) {
+
+                modeMenu.update(window.mapPixelToCoords(mousepos));
+
+                if (const auto* mouse = ev->getIf<sf::Event::MouseButtonPressed>()) {
+                    if (mouse->button == sf::Mouse::Button::Left) {
+                        modeMenu.handleClick(window.mapPixelToCoords(mousepos));
+                    }
+                }
+
+                if (modeMenu.backClicked()) {
+                    state = GameState::MENU;
+                    modeMenu.reset();
+                }
+
+                if (modeMenu.confirmClicked()) {
+                    game.setMode(modeMenu.getSelectedMode());
+                    game.setDifficulty(modeMenu.getSelectedDifficulty());
+
+                    map.mapId = "default";
+                    map.loadMap();
+                    map.refreshLogic();
+
+                    game.startGame();
+                    state = GameState::PLAYING;
+                    modeMenu.reset();
+                }
+            }
+
 
 
 
@@ -418,6 +462,11 @@ int main() {
 
             menu.handleHover(mousepos);
             menu.draw(window);
+        }
+              
+        else if (state == GameState::MODE_SELECT && showMainMenu) {
+            modeMenu.update(window.mapPixelToCoords(mousepos));
+            modeMenu.draw(window);
         }
 
         else if (state == GameState::EDITOR) {
