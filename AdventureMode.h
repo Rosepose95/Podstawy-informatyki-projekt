@@ -6,6 +6,7 @@ struct AdventureNode {
     bool unlocked = false;
     bool completed = false;
     bool boss = false;   
+};
 enum class Biomes {
     Meadow,
     Fire,
@@ -33,3 +34,4 @@ public:
 private:
     std::unordered_map<std::string, AdventureNode> nodes;
 };
+
