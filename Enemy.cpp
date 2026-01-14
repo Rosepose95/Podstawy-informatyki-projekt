@@ -15,17 +15,20 @@ Enemy::Enemy(int h, float startX, float startY, EnemyType t)
     case EnemyType::Normal:
         baseSpeed = 100.f;
         shape.setFillColor(sf::Color::Red);
+		baseColor = shape.getFillColor();
         break;
 
     case EnemyType::Fast:
         baseSpeed = 140.f;
         shape.setFillColor(sf::Color::Yellow);
+        baseColor = shape.getFillColor();
         break;
 
     case EnemyType::Infestor:
         baseSpeed = 60.f;
         health = h * 2;
         shape.setFillColor(sf::Color(150, 0, 0));
+        baseColor = shape.getFillColor();
         break;
     case EnemyType::MeadowBoss:
         isBossEnemy = true; // <<< BRAKOWAŁO
@@ -35,16 +38,18 @@ Enemy::Enemy(int h, float startX, float startY, EnemyType t)
         shape.setRadius(28.f);
         shape.setOrigin({ 28.f, 28.f });
         shape.setFillColor(sf::Color(80, 0, 120));
+        baseColor = shape.getFillColor();
         break;
 
     case EnemyType::Fireball:
-    baseSpeed = 165.f;
-    maxHealth = h * 0.6f;
-    health = maxHealth;
-    shape.setRadius(12.f);
-    shape.setOrigin({ 12.f, 12.f });
-    shape.setFillColor(sf::Color(255, 140, 40));
-    break;
+        baseSpeed = 165.f;
+        maxHealth = h * 0.6f;
+        health = maxHealth;
+        shape.setRadius(12.f);
+        shape.setOrigin({ 12.f, 12.f });
+        shape.setFillColor(sf::Color(255, 140, 40));
+        baseColor = shape.getFillColor();
+        break;
 
     case EnemyType::Flame:
         baseSpeed = 55.f;
@@ -53,6 +58,7 @@ Enemy::Enemy(int h, float startX, float startY, EnemyType t)
         shape.setRadius(14.f);
         shape.setOrigin({ 14.f, 14.f });
         shape.setFillColor(sf::Color(220, 80, 20));
+        baseColor = shape.getFillColor();
         break;
     case EnemyType::FireBoss:
         isBossEnemy = true;
@@ -63,40 +69,42 @@ Enemy::Enemy(int h, float startX, float startY, EnemyType t)
         shape.setOrigin({ 30.f, 30.f });
         shape.setFillColor(sf::Color(200, 50, 0));
         break;
- case EnemyType::Crusher:
-    baseSpeed = 45.f;
-    maxHealth = h * 3;
-    health = maxHealth;
-    shape.setRadius(22.f);
-    shape.setOrigin({ 22.f, 22.f });
-    shape.setFillColor(sf::Color(140, 50, 30));
-    break;
+    case EnemyType::Crusher:
+        baseSpeed = 45.f;
+        maxHealth = h * 3;
+        health = maxHealth;
+        shape.setRadius(22.f);
+        shape.setOrigin({ 22.f, 22.f });
+        shape.setFillColor(sf::Color(140, 50, 30));
+        break;
     case EnemyType::IceShard:
-    baseSpeed = 150.f;
-    maxHealth = h * 0.7f;
-    health = maxHealth;
-    shape.setRadius(12.f);
-    shape.setOrigin({12.f, 12.f});
-    shape.setFillColor(sf::Color(150, 200, 255));
-    break;
+        baseSpeed = 150.f;
+        maxHealth = h * 0.7f;
+        health = maxHealth;
+        shape.setRadius(12.f);
+        shape.setOrigin({ 12.f, 12.f });
+        shape.setFillColor(sf::Color(150, 200, 255));
+        break;
     case EnemyType::FrostWalker:
-    baseSpeed = 45.f;
-    maxHealth = h * 3;
-    health = maxHealth;
-    shape.setRadius(24.f);
-    shape.setOrigin({24.f, 24.f});
-    shape.setFillColor(sf::Color(100, 140, 200));
-    break;
-  
+        baseSpeed = 45.f;
+        maxHealth = h * 3;
+        health = maxHealth;
+        shape.setRadius(24.f);
+        shape.setOrigin({ 24.f, 24.f });
+        shape.setFillColor(sf::Color(100, 140, 200));
+        baseColor = shape.getFillColor();
+        break;
+
     case EnemyType::IceBoss:
-    isBossEnemy = true;
-    baseSpeed = 30.f;
-    maxHealth = h * 14;
-    health = maxHealth;
-    shape.setRadius(32.f);
-    shape.setOrigin({32.f, 32.f});
-    shape.setFillColor(sf::Color(180, 220, 255));
-    break;
+        isBossEnemy = true;
+        baseSpeed = 30.f;
+        maxHealth = h * 14;
+        health = maxHealth;
+        shape.setRadius(32.f);
+        shape.setOrigin({ 32.f, 32.f });
+        shape.setFillColor(sf::Color(180, 220, 255));
+        baseColor = shape.getFillColor();
+        break;
 
     }
     speed = baseSpeed;
@@ -175,6 +183,20 @@ sf::Vector2f Enemy::tileCenter(sf::Vector2i tile) const {
 }
 
 void Enemy::update(float dt) {
+    // --- ICE TIMERS ---
+    if (slowTimer > 0.f) {
+        slowTimer -= dt;
+        if (slowTimer <= 0.f)
+            slowFactor = 1.f;
+    }
+
+    if (freezeTimer > 0.f) {
+        freezeTimer -= dt;
+        if (freezeTimer <= 0.f) {
+            frozen = false;
+        }
+    }
+
     if (isBossEnemy) {
         bossSkillTimer += dt;
 
@@ -184,7 +206,7 @@ void Enemy::update(float dt) {
             speed = baseSpeed * 1.8f;
             shape.setFillColor(sf::Color(255, 80, 80));
         }
-        
+
 
         // warning + skill
         if (!warningActive) {
@@ -210,6 +232,9 @@ void Enemy::update(float dt) {
     if (isBossEnemy && rage) {
         shape.setFillColor(sf::Color(160, 0, 200)); // rage color
     }
+    if (specialTimer > 0.f)
+        specialTimer -= dt;
+
     if (isBossEnemy) {
         float hpRatio = (float)health / maxHealth;
 
@@ -231,7 +256,7 @@ void Enemy::update(float dt) {
         }
     }
 
-    
+
     if (nextTile == tilePos)
         nextTile = findNextTile();
 
@@ -241,8 +266,13 @@ void Enemy::update(float dt) {
 
     sf::Vector2f toTarget = target - pos;
     float dist = std::sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y);
+    float finalSpeed = speed * slowFactor;
+    if (frozen)
+        finalSpeed = 0.f;
 
-    float moveDist = speed * dt;
+    float moveDist = finalSpeed * dt;
+
+    
 
     if (dist <= moveDist) {
         // SNAP do środka kafelka
@@ -269,64 +299,66 @@ void Enemy::update(float dt) {
             }
         }
     }
-    
-// --- FIRE DAMAGE OVER TIME ---
-if (burnCallback) {
-    burnTimer += dt;
 
-    float interval = 0.f;
-    float radius = 0.f;
-    int stacks = 1;
+    // --- FIRE DAMAGE OVER TIME ---
+    if (burnCallback && type != EnemyType::IceBoss) {
 
-    switch (type) {
-    case EnemyType::Flame:
-        interval = 1.5f;
-        radius = 45.f;
-        break;
+        burnTimer += dt;
 
-    case EnemyType::Fireball:
-        interval = 4.5f;
-        radius = 90.f;
-        break;
-    case EnemyType::Crusher:
-    interval = 2.5f;
-    radius = 60.f;
-    break;
-    case EnemyType::FireBoss:
-        interval = 2.0f;
-        radius = 100.f;
-        stacks = 2;
-        break;
+        float interval = 0.f;
+        float radius = 0.f;
+        int stacks = 1;
 
-    default:
-        break;
+        switch (type) {
+        case EnemyType::Flame:
+            interval = 1.5f;
+            radius = 45.f;
+            break;
+
+        case EnemyType::Fireball:
+            interval = 4.5f;
+            radius = 90.f;
+            break;
+        case EnemyType::Crusher:
+            interval = 2.5f;
+            radius = 60.f;
+            break;
+        case EnemyType::FireBoss:
+            interval = 2.0f;
+            radius = 100.f;
+            stacks = 2;
+            break;
+
+        default:
+            break;
+        }
+        if (type == EnemyType::IceBoss) {
+            float hp = (float)health / maxHealth;
+
+            if (hp < 0.75f && bossPhase < 1) {
+                bossPhase = 1;
+                if (bossCallback)
+                    bossCallback(getPosition()); // slow
+            }
+            if (hp < 0.5f && bossPhase < 2) {
+                bossPhase = 2;
+                if (bossCallback)
+                    bossCallback(getPosition()); // freeze
+            }
+            if (hp < 0.25f && bossPhase < 3) {
+                bossPhase = 3;
+                if (bossCallback)
+                    bossCallback(getPosition()); // push
+            }
+        }
+        
+
+        if (interval > 0.f && burnTimer >= interval) {
+            burnTimer = 0.f;
+            burnCallback(getPosition(), radius, stacks);
+        }
     }
-if (type == EnemyType::IceBoss) {
-    float hp = (float)health / maxHealth;
 
-    if (hp < 0.75f && bossPhase < 1) {
-        bossPhase = 1;
-        if (bossCallback)
-            bossCallback(getPosition()); // slow
-    }
-    if (hp < 0.5f && bossPhase < 2) {
-        bossPhase = 2;
-        if (bossCallback)
-            bossCallback(getPosition()); // freeze
-    }
-    if (hp < 0.25f && bossPhase < 3) {
-        bossPhase = 3;
-        if (bossCallback)
-            bossCallback(getPosition()); // push
-    }
-}
-
-    if (interval > 0.f && burnTimer >= interval) {
-        burnTimer = 0.f;
-        burnCallback(getPosition(), radius, stacks);
-    }
-}   
-    
 }
 
 
@@ -350,11 +382,29 @@ float Enemy::getRadius() const { //metody do paska
 
 
 void Enemy::draw(sf::RenderWindow& window) const {
-    window.draw(shape);
+
+   
 
     float ratio = static_cast<float>(health) / maxHealth;
     ratio = std::clamp(ratio, 0.f, 1.f);
+    
+    float r = shape.getRadius();
+    sf::Vector2f posi = shape.getPosition();
 
+    sf::CircleShape iceOverlay(r + 2.f);
+    iceOverlay.setOrigin({ r + 2.f, r + 2.f });
+    iceOverlay.setPosition(posi);
+
+    iceOverlay.setFillColor(sf::Color(200, 240, 255, 120));
+    if (frozen) {
+        sf::CircleShape ice(shape.getRadius() + 6);
+        ice.setOrigin({ shape.getRadius() + 6, shape.getRadius() + 6 });
+        ice.setPosition(shape.getPosition());
+        ice.setFillColor(sf::Color(180, 220, 255, 120));
+        window.draw(ice);
+        window.draw(iceOverlay);
+    }
+    window.draw(shape);
     sf::Vector2f pos = shape.getPosition();
     if (warningActive) {
         sf::CircleShape warn(60.f);
@@ -429,12 +479,14 @@ void Enemy::setStatus(const EnemyStatus& s) {
     if (rage)
         speed = baseSpeed * 1.8f;
 }
+void Enemy::applySlow(float factor, float duration)
+{
+    slowFactor = std::min(slowFactor, factor);
+    slowTimer = std::max(slowTimer, duration);
+}
 
-
-
-
-
-
-
-
-
+void Enemy::applyFreeze(float duration)
+{
+    frozen = true;
+    freezeTimer = std::max(freezeTimer, duration);
+}
