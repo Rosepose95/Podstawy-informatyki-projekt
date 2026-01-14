@@ -8,10 +8,10 @@
 #include "Bullet.h"
 #include "AdventureMode.h"
 #include "Map.h" // dodanie nagłówka mapy
-enum class GameMode {
-    Endless,
-    Adventure
-};
+#include "GameTypes.h"
+
+
+
 /*struct Biome {
     std::string name;
     std::vector<EnemyType> enemies;
@@ -33,6 +33,8 @@ struct SaveInfo {
     int gold;   // złoto (jeśli planowane)
     bool isAuto;
 };
+
+
 
 class Game {
 private:
@@ -69,7 +71,6 @@ private:
     const float breakDuration = 3.0f; // przerwa między falami w sekundach
     float totalPlayTime = 0.f;
     int enemiesKilled = 0;
-    GameMode mode = GameMode::Endless;
     int adventureBiome = 0; // 0–4
 
     // --- UI ---
@@ -104,6 +105,8 @@ private:
     bool bossDefeatedThisFrame = false;
     Biomes currentBiome = Biomes::Meadow;
 
+    GameMode mode = GameMode::Adventure;
+    Difficulty difficulty = Difficulty::Normal;
 
 public:
     Game();
@@ -207,7 +210,12 @@ public:
     void pushTowersNear(sf::Vector2f bossPos);
     void burnTowers(sf::Vector2f pos, float radius, int stacks);
     EnemyType pickEnemyForBiome(Biomes biome, bool isBossWave);
+    void slowTowers(sf::Vector2f pos, float radius, int stacks);
+    void freezeTowers(sf::Vector2f pos, float radius, float time);
 
+    void setMode(GameMode m);
+    void setDifficulty(Difficulty d);
+    void advanceBiome();
 };
 
 #endif
