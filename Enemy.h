@@ -15,7 +15,12 @@ enum class EnemyType {
     Crusher,     // FIRE tank – push wież
     Flame,
     FireBoss,
-	Fireball
+	Fireball,
+
+	IceShard,     // szybki, lekki slow
+	FrostWalker, // tank + aura slow
+	IceBoss
+
 };
 
 struct EnemyStatus {
@@ -116,6 +121,7 @@ private:
 
 
 #endif
+
 
 
 
