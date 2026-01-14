@@ -184,6 +184,7 @@ void Enemy::update(float dt) {
             speed = baseSpeed * 1.8f;
             shape.setFillColor(sf::Color(255, 80, 80));
         }
+        
 
         // warning + skill
         if (!warningActive) {
@@ -300,12 +301,32 @@ if (burnCallback) {
     default:
         break;
     }
+if (type == EnemyType::IceBoss) {
+    float hp = (float)health / maxHealth;
+
+    if (hp < 0.75f && bossPhase < 1) {
+        bossPhase = 1;
+        if (bossCallback)
+            bossCallback(getPosition()); // slow
+    }
+    if (hp < 0.5f && bossPhase < 2) {
+        bossPhase = 2;
+        if (bossCallback)
+            bossCallback(getPosition()); // freeze
+    }
+    if (hp < 0.25f && bossPhase < 3) {
+        bossPhase = 3;
+        if (bossCallback)
+            bossCallback(getPosition()); // push
+    }
+}
 
     if (interval > 0.f && burnTimer >= interval) {
         burnTimer = 0.f;
         burnCallback(getPosition(), radius, stacks);
     }
 }   
+    
 }
 
 
@@ -408,6 +429,7 @@ void Enemy::setStatus(const EnemyStatus& s) {
     if (rage)
         speed = baseSpeed * 1.8f;
 }
+
 
 
 
