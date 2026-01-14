@@ -91,7 +91,7 @@ namespace SaveSystem {
 
         file << "STATS\n";
         file << playTime << " " << killed << "\n";
-        
+
 
     }
 
@@ -210,7 +210,7 @@ namespace SaveSystem {
         file >> playTime >> killed;
         g.setStats(playTime, killed);
         g.onLoadedFromSave();
-        
+
         std::string token2;
         file >> token2;
 
