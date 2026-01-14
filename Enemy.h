@@ -80,6 +80,9 @@ public:
     BurnCallback burnCallback;
     EnemyStatus getStatus() const;
     void setStatus(const EnemyStatus& s);
+	void setColor(sf::Color c) {
+    shape.setFillColor(c);
+}
 
 private:
     int health;  //życie
@@ -121,6 +124,7 @@ private:
 
 
 #endif
+
 
 
 
