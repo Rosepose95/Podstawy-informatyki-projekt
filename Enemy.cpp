@@ -242,17 +242,7 @@ void Enemy::update(float dt) {
             }
         }
     }
-    if (isBossEnemy) {
-        infestationTimer += dt;
-        if (infestationTimer >= 2.0f) {
-            infestationTimer = 0.f;
-
-            if (infestCallback) {
-                infestCallback(getPosition(), map->tileSize * 2.f, 1);
-
-            }
-        }
-    }
+    
 // --- FIRE DAMAGE OVER TIME ---
 if (burnCallback) {
     burnTimer += dt;
@@ -289,42 +279,7 @@ if (burnCallback) {
         burnTimer = 0.f;
         burnCallback(getPosition(), radius, stacks);
     }
-}
-
-    
-
-    
-    
-
-    
-    if (type == EnemyType::FireBoss) {
-        bossSkillTimer += dt;
-
-        if (bossSkillTimer >= 2.5f) {
-            bossSkillTimer = 0.f;
-            if (bossCallback)
-                bossCallback(getPosition());
-        }
-        
-            if (!warningActive) {
-                warningActive = true;
-                warningClock.restart();
-                warningPos = getPosition();
-            }
-
-            if (warningClock.getElapsedTime().asSeconds() >= 0.8f) {
-                warningActive = false;
-
-                if (bossCallback)
-                    bossCallback(warningPos);
-            }
-        
-
-
-
-    }
-
-    
+}   
 }
 
 
@@ -427,6 +382,7 @@ void Enemy::setStatus(const EnemyStatus& s) {
     if (rage)
         speed = baseSpeed * 1.8f;
 }
+
 
 
 
