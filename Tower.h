@@ -28,6 +28,9 @@ private:
     float baseCooldown = 0.f;
     
     float frozenTimer = 0.f;
+    int slowStacks = 0;
+    float freezeTimer = 0.f;
+
 
 
 
@@ -69,6 +72,7 @@ public:
 
 
 #endif
+
 
 
 
