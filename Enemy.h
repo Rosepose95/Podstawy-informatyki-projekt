@@ -15,11 +15,11 @@ enum class EnemyType {
     Crusher,     // FIRE tank – push wież
     Flame,
     FireBoss,
-	Fireball,
+    Fireball,
 
-	IceShard,     // szybki, lekki slow
-	FrostWalker, // tank + aura slow
-	IceBoss
+    IceShard,     // szybki, lekki slow
+    FrostWalker, // tank + aura slow
+    IceBoss
 
 };
 
@@ -70,19 +70,23 @@ public:
         nextTile = findNextTile();
         shape.setPosition(tileCenter(tile));
     }
+    
 
     bool isBoss() const { return isBossEnemy; }
     bool isRaging() const { return rage; }
     using BurnCallback = std::function<void(sf::Vector2f, float, int)>;
     void setBurnCallback(BurnCallback cb);
+    void applySlow(float factor, float duration);
+    void applyFreeze(float duration);
+    bool isFrozen() const { return frozen; }
 
-    float burnTimer = 0.f;
+    
     BurnCallback burnCallback;
     EnemyStatus getStatus() const;
     void setStatus(const EnemyStatus& s);
-	void setColor(sf::Color c) {
-    shape.setFillColor(c);
-}
+    void setColor(sf::Color c) {
+        shape.setFillColor(c);
+    }
 
 private:
     int health;  //życie
@@ -114,17 +118,24 @@ private:
     bool isBossEnemy = false;
     bool rage = false;
     InfestCallback infestCallback;
-   
+
     float bossSkillTimer = 0.f;
+    sf::Color baseColor;
 
 
+    float burnTimer = 0.f;
+    // --- ICE STATUS ---
+    float slowTimer = 0.f;
+    float slowFactor = 1.f;   // np. 0.5 = 50% speed
 
+    float freezeTimer = 0.f;
+    bool frozen = false;
+    float specialTimer = 0.f;
 
 };
 
 
 #endif
-
 
 
 
