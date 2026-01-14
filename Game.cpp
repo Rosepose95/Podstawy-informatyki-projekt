@@ -320,8 +320,7 @@ void Game::update(float dt) {
     );
 }
 
-            if (!e.isBoss() && e.getType() == EnemyType::Normal)
-    e.setColor(biomeColor);
+            
 
             // --- FIRE BIOME ---
             if (e.getType() == EnemyType::FireBoss ||
@@ -335,25 +334,30 @@ void Game::update(float dt) {
         }
     );
 }
-// --- ICE BIOME ---
-if (e.getType() == EnemyType::IceShard ||
-    e.getType() == EnemyType::FrostWalker ||
-    e.getType() == EnemyType::IceBoss)
-{
+if (e.getType() == EnemyType::FireBoss) {
     e.setBossCallback(
-        [this, &e](sf::Vector2f pos) {
-            slowTowers(pos, 80.f, 1);
+        [this](sf::Vector2f pos) {
+            pushTowersNear(pos);
         }
     );
 }
-if (e.getType() == EnemyType::IceBoss) {
- e.setBossCallback(
-    [this](sf::Vector2f pos) {
-        slowTowers(pos, 120.f, 2);
-        freezeTowers(pos, 100.f, 1.5f);
-        pushTowersNear(pos);
-    }
-);
+else if (e.getType() == EnemyType::IceBoss) {
+    e.setBossCallback(
+        [this](sf::Vector2f pos) {
+            slowTowers(pos, 120.f, 2);
+            freezeTowers(pos, 100.f, 1.5f);
+            pushTowersNear(pos);
+        }
+    );
+}
+else if (e.getType() == EnemyType::Crusher) {
+    e.setBossCallback(
+        [this](sf::Vector2f pos) {
+            pushTowersNear(pos);
+        }
+    );
+}
+
 
 }
 sf::Color biomeColor;
@@ -374,19 +378,12 @@ default:
 
 e.setColor(biomeColor);
 
-            // --- BOSS-SPECYFICZNE ABILITY ---
-            if (e.getType() == EnemyType::FireBoss ||
-            e.getType() == EnemyType::Crusher)
-{
-            e.setBossCallback(
-            [this](sf::Vector2f pos) {
-                pushTowersNear(pos);
-        }
-    );
-}
+            
+            
 
 
-
+if (!e.isBoss() && e.getType() == EnemyType::Normal)
+    e.setColor(biomeColor);
 
             enemiesToSpawn--;
         }
@@ -900,6 +897,7 @@ EnemyType Game::pickEnemyForBiome(Biomes biome, bool isBossWave) {
         return EnemyType::Normal;
     }
 }
+
 
 
 
