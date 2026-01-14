@@ -71,6 +71,32 @@ Enemy::Enemy(int h, float startX, float startY, EnemyType t)
     shape.setOrigin({ 22.f, 22.f });
     shape.setFillColor(sf::Color(140, 50, 30));
     break;
+    case EnemyType::IceShard:
+    baseSpeed = 150.f;
+    maxHealth = h * 0.7f;
+    health = maxHealth;
+    shape.setRadius(12.f);
+    shape.setOrigin({12.f, 12.f});
+    shape.setFillColor(sf::Color(150, 200, 255));
+    break;
+    case EnemyType::FrostWalker:
+    baseSpeed = 45.f;
+    maxHealth = h * 3;
+    health = maxHealth;
+    shape.setRadius(24.f);
+    shape.setOrigin({24.f, 24.f});
+    shape.setFillColor(sf::Color(100, 140, 200));
+    break;
+  
+    case EnemyType::IceBoss:
+    isBossEnemy = true;
+    baseSpeed = 30.f;
+    maxHealth = h * 14;
+    health = maxHealth;
+    shape.setRadius(32.f);
+    shape.setOrigin({32.f, 32.f});
+    shape.setFillColor(sf::Color(180, 220, 255));
+    break;
 
     }
     speed = baseSpeed;
@@ -382,6 +408,7 @@ void Enemy::setStatus(const EnemyStatus& s) {
     if (rage)
         speed = baseSpeed * 1.8f;
 }
+
 
 
 
