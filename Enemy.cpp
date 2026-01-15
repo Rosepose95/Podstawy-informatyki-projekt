@@ -235,31 +235,8 @@ void Enemy::update(float dt) {
     if (specialTimer > 0.f)
         specialTimer -= dt;
 
-    if (isBossEnemy) {
-        float hpRatio = (float)health / maxHealth;
-
-        if (hpRatio <= 0.25f && bossPhase < 3) {
-            bossPhase = 3;
-            if (burnCallback)
-                burnCallback(getPosition(), 140.f, 4);
-        }
-        else if (hpRatio <= 0.5f && bossPhase < 2) {
-            bossPhase = 2;
-            if (bossCallback)
-                bossCallback(getPosition()); // push towers
-        }
-        else if (hpRatio <= 0.75f && bossPhase < 1) {
-            bossPhase = 1;
-            // spawn Flame handled in Game
-            if (bossCallback)
-                bossCallback(getPosition());
-        }
-    }
-
-
     if (nextTile == tilePos)
         nextTile = findNextTile();
-
 
     sf::Vector2f target = tileCenter(nextTile);
     sf::Vector2f pos = shape.getPosition();
@@ -271,8 +248,6 @@ void Enemy::update(float dt) {
         finalSpeed = 0.f;
 
     float moveDist = finalSpeed * dt;
-
-    
 
     if (dist <= moveDist) {
         // SNAP do środka kafelka
@@ -497,4 +472,5 @@ void Enemy::applyFreeze(float duration)
 void Enemy::setBossAbilityCallback(BossAbilityCallback cb) {
     bossAbilityCallback = cb;
 }
+
 
