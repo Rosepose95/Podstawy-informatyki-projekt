@@ -2,14 +2,14 @@
 #include <string>
 #include <unordered_map>
 
-
-
 struct AdventureNode {
     std::string id;
-    bool unlocked = false;
-    bool completed = false;
-    bool boss = false;
+    Biomes biome;
+    bool unlocked;
+    bool completed;
+    bool boss;
 };
+
 
 enum class Biomes {
     Meadow,
@@ -38,3 +38,4 @@ public:
 private:
     std::unordered_map<std::string, AdventureNode> nodes;
 };
+
