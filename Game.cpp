@@ -771,6 +771,16 @@ void Game::startAdventureNode(int nodeId)
     inWorldMap = false;
     waveJustLoaded = false;
     startNextWave();
+    currentBiome = adventure.getBiomeForNode(nodeId);
+
+bool bossNode = adventure.isBossNode(nodeId);
+
+if (bossNode) {
+    spawnBossForBiome(currentBiome);
+} else {
+    spawnEnemiesForBiome(currentBiome);
+}
+
 }
 std::vector<Tower*> Game::getTowersNear(sf::Vector2f pos, float radius) {
     std::vector<Tower*> result;
@@ -929,3 +939,4 @@ void Game::advanceBiome() {
         break;
     }
 }
+
