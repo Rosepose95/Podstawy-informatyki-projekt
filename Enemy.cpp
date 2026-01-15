@@ -332,26 +332,23 @@ void Enemy::update(float dt) {
         default:
             break;
         }
-        if (type == EnemyType::IceBoss) {
-            float hp = (float)health / maxHealth;
+        if (type == EnemyType::IceBoss && bossAbilityCallback) {
+    float hp = (float)health / maxHealth;
 
-            if (hp < 0.75f && bossPhase < 1) {
-                bossPhase = 1;
-                if (bossCallback)
-                    bossCallback(getPosition()); // slow
-            }
-            if (hp < 0.5f && bossPhase < 2) {
-                bossPhase = 2;
-                if (bossCallback)
-                    bossCallback(getPosition()); // freeze
-            }
-            if (hp < 0.25f && bossPhase < 3) {
-                bossPhase = 3;
-                if (bossCallback)
-                    bossCallback(getPosition()); // push
-            }
-        }
-        
+    if (hp <= 0.75f && bossPhase < 1) {
+        bossPhase = 1;
+        bossAbilityCallback(getPosition(), BossAbility::IceSlow);
+    }
+    else if (hp <= 0.5f && bossPhase < 2) {
+        bossPhase = 2;
+        bossAbilityCallback(getPosition(), BossAbility::IceFreeze);
+    }
+    else if (hp <= 0.25f && bossPhase < 3) {
+        bossPhase = 3;
+        bossAbilityCallback(getPosition(), BossAbility::IceShatter);
+    }
+}
+
 
         if (interval > 0.f && burnTimer >= interval) {
             burnTimer = 0.f;
@@ -382,6 +379,13 @@ float Enemy::getRadius() const { //metody do paska
 
 
 void Enemy::draw(sf::RenderWindow& window) const {
+	if (type == EnemyType::IceBoss) {
+    sf::CircleShape aura(45.f);
+    aura.setOrigin({45.f, 45.f});
+    aura.setPosition(getPosition());
+    aura.setFillColor(sf::Color(180,220,255,60));
+    window.draw(aura);
+}
 
    
 
@@ -490,3 +494,7 @@ void Enemy::applyFreeze(float duration)
     frozen = true;
     freezeTimer = std::max(freezeTimer, duration);
 }
+void Enemy::setBossAbilityCallback(BossAbilityCallback cb) {
+    bossAbilityCallback = cb;
+}
+
