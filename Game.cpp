@@ -309,6 +309,34 @@ void Game::update(float dt) {
             float spawnY = static_cast<float>(spawnTile.y * ts + ts / 2);
 
             enemies.emplace_back(currentWaveConfig.enemyHP, spawnX, spawnY, type);
+            enemy.setBossAbilityCallback(
+    [this](sf::Vector2f pos, BossAbility ability)
+    {
+        switch (ability) {
+
+        case BossAbility::IceSlow:
+            for (auto& t : towers) {
+                if (distance(t.getPosition(), pos) < 120.f)
+                    t.applySlow(1.5f, 4.f);
+            }
+            break;
+
+        case BossAbility::IceFreeze:
+            for (auto& t : towers) {
+                if (distance(t.getPosition(), pos) < 100.f)
+                    t.applyFreeze(2.f);
+            }
+            break;
+
+        case BossAbility::IceShatter:
+            for (auto& t : towers) {
+                if (t.isFrozen())
+                    t.forceDestroy();
+            }
+            break;
+        }
+    }
+);
 
             Enemy& e = enemies.back();
             e.setMap(map);
@@ -939,4 +967,5 @@ void Game::advanceBiome() {
         break;
     }
 }
+
 
