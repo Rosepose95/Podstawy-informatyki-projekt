@@ -16,7 +16,7 @@ Tower::Tower(int dmg, float x, float y, int Towertype,
     range(150.f),
     type(clampType(Towertype)),
     pos(x, y),
-    sprite(tex[clampType(Towertype)]),   // <- tu tworzymy sprite z tekstury
+    sprite(tex[clampType(Towertype)]),   
     textures(&tex),
     tileSize(tileSz)
 {
@@ -59,7 +59,7 @@ void Tower::applyType(int newType)
         auto s = (*textures)[type].getSize();
         sprite.setOrigin({ s.x / 2.f, (float)s.y });
 
-        // 1×2 kafelki: szerokoœæ 1 tile, wysokoœæ 2 tile
+        // 1Ã—2 kafelki: szerokoÅ“Ã¦ 1 tile, wysokoÅ“Ã¦ 2 tile
         float targetW = 1.1f * tileSize;
         float targetH = 3.0f * tileSize;
         sprite.setScale({ targetW / s.x, targetH / s.y });
@@ -117,6 +117,7 @@ void Tower::updateAttack(      //zmiana, dodanie lepszej fizyki
 void Tower::draw(sf::RenderWindow& window) const {
     window.draw(sprite);
 }
+
 
 
 
