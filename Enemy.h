@@ -29,10 +29,11 @@ struct EnemyStatus {
     bool rage;
 };
 enum class BossAbility {
-    Slow,
-    Freeze,
-    Push
+    IceSlow,
+    IceFreeze,
+    IceShatter
 };
+
 
 class Enemy {
 public:
@@ -93,6 +94,7 @@ public:
         shape.setFillColor(c);
     }
     std::function<void(sf::Vector2f, BossAbility)> bossCallback;
+    void setBossAbilityCallback(BossAbilityCallback cb);
 
 private:
     int health;  //życie
@@ -110,6 +112,8 @@ private:
     sf::Vector2i prevTile;
     int bossPhase = 0; // 0–3
 
+    BossAbilityCallback bossAbilityCallback;
+   int bossPhase = 0;
 
     float speed;
 
@@ -142,6 +146,7 @@ private:
 
 
 #endif
+
 
 
 
