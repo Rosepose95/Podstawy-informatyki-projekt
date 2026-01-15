@@ -793,23 +793,8 @@ void Game::handleWorldMapClick(sf::Vector2f mouseWorldPos)
     loadMapById(clicked);
     startGame();
 }
-void Game::startAdventureNode(int nodeId)
-{
-    currentNodeId = nodeId;
-    inWorldMap = false;
-    waveJustLoaded = false;
-    startNextWave();
-    currentBiome = adventure.getBiomeForNode(nodeId);
 
-bool bossNode = adventure.isBossNode(nodeId);
 
-if (bossNode) {
-    spawnBossForBiome(currentBiome);
-} else {
-    spawnEnemiesForBiome(currentBiome);
-}
-
-}
 std::vector<Tower*> Game::getTowersNear(sf::Vector2f pos, float radius) {
     std::vector<Tower*> result;
     float r2 = radius * radius;
@@ -967,5 +952,6 @@ void Game::advanceBiome() {
         break;
     }
 }
+
 
 
