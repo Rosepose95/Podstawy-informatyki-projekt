@@ -39,14 +39,12 @@ bool AdventureMode::isBossNode(const std::string& id) const
     return it->second.boss;
 }
 
-void AdventureMode::init()
-{
-    nodes.clear();
-
-    nodes["grasslands"] = { "grasslands", true,  false, false };
-    nodes["desert"]     = { "desert",     false, false, false };
-    nodes["ice"]        = { "ice",         false, false, false };
-    nodes["volcano"]    = { "volcano",     false, false, true  }; // JEDYNY BOSS
+void AdventureMode::init() {
+    nodes["grasslands"] = { "grasslands", Biomes::Meadow, true,  false, false };
+    nodes["forest"]     = { "forest",     Biomes::Forest, false, false, false };
+    nodes["ice"]        = { "ice",        Biomes::Ice,    false, false, true  };
+    nodes["water"]      = { "water",      Biomes::Water,  false, false, false };
+    
 }
 
 int AdventureMode::getRewardGold(const std::string& nodeId) const
@@ -59,28 +57,9 @@ int AdventureMode::getRewardGold(const std::string& nodeId) const
 
     return 25; // fallback
 }
-
-
-
-Biomes AdventureMode::getBiomeForNode(const std::string& nodeId)
-{
-    // PROSTA LOGIKA – na start
-    if (nodeId.find("fire") != std::string::npos)
-        return Biomes::Fire;
-
-    if (nodeId.find("meadow") != std::string::npos)
-        return Biomes::Meadow;
-
-    if (nodeId.find("forest") != std::string::npos)
-        return Biomes::Forest;
-
-    if (nodeId.find("water") != std::string::npos)
-        return Biomes::Water;
-
-    if (nodeId.find("ice") != std::string::npos)
-        return Biomes::Ice;
-
-    // fallback
-    return Biomes::Meadow;
+Biomes AdventureMode::getBiome(const std::string& id) {
+    return nodes.at(id).biome;
 }
+
+
 
