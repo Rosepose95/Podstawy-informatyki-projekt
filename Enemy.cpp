@@ -196,33 +196,6 @@ void Enemy::update(float dt) {
             frozen = false;
         }
     }
-
-    if (isBossEnemy) {
-        bossSkillTimer += dt;
-
-        // faza rage
-        if (!rage && health <= maxHealth * 0.5f) {
-            rage = true;
-            speed = baseSpeed * 1.8f;
-            shape.setFillColor(sf::Color(255, 80, 80));
-        }
-
-
-        // warning + skill
-        if (!warningActive) {
-            warningActive = true;
-            warningClock.restart();
-            warningPos = getPosition();
-        }
-
-        if (warningClock.getElapsedTime().asSeconds() >= 0.8f) {
-            warningActive = false;
-
-            if (bossCallback)
-                bossCallback(warningPos);
-        }
-    }
-
     if (!map) return;
     if (reachedGoal()) return;
     if (isBossEnemy && !rage && health <= maxHealth * 0.5f) {
@@ -306,8 +279,10 @@ void Enemy::update(float dt) {
 
         default:
             break;
-        }
-        if (type == EnemyType::IceBoss && bossAbilityCallback) {
+        }     
+}
+	// --- ICE BOSS ABILITIES ---
+if (type == EnemyType::IceBoss && bossAbilityCallback) {
     float hp = (float)health / maxHealth;
 
     if (hp <= 0.75f && bossPhase < 1) {
@@ -323,6 +298,7 @@ void Enemy::update(float dt) {
         bossAbilityCallback(getPosition(), BossAbility::IceShatter);
     }
 }
+
 
 
         if (interval > 0.f && burnTimer >= interval) {
@@ -472,5 +448,6 @@ void Enemy::applyFreeze(float duration)
 void Enemy::setBossAbilityCallback(BossAbilityCallback cb) {
     bossAbilityCallback = cb;
 }
+
 
 
