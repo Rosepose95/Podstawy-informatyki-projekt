@@ -41,12 +41,14 @@ bool AdventureMode::isBossNode(const std::string& id) const
 
 void AdventureMode::init()
 {
-    nodes["grasslands"] = { "grasslands", false,  false, true};
-    nodes["desert"] = { "desert",     false, false, true };
-    nodes["ice"] = { "ice",        false, false, true };
-    nodes["volcano"] = { "volcano",    false, false, true }; //  BOSS
+    nodes.clear();
 
+    nodes["grasslands"] = { "grasslands", true,  false, false };
+    nodes["desert"]     = { "desert",     false, false, false };
+    nodes["ice"]        = { "ice",         false, false, false };
+    nodes["volcano"]    = { "volcano",     false, false, true  }; // JEDYNY BOSS
 }
+
 int AdventureMode::getRewardGold(const std::string& nodeId) const
 {
     // prosta, bezpieczna logika na start
@@ -81,3 +83,4 @@ Biomes AdventureMode::getBiomeForNode(const std::string& nodeId)
     // fallback
     return Biomes::Meadow;
 }
+
