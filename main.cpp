@@ -140,6 +140,11 @@ int main() {
                     }
                 }
             }
+            if (state == GameState::PLAYING && game.isInWorldMap()) {
+                if (mouseLeftClicked) {
+                    game.handleWorldMapClick(mousePosWorld);
+                }
+            }
 
             // --- obsługa przycisku pauzy ---
             if (state != GameState::MENU) {
@@ -527,4 +532,5 @@ int main() {
 
     return 0;
 }
+
 
