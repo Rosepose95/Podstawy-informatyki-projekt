@@ -136,7 +136,7 @@ Game::Game()
     };
     */
     adventure.init();
-
+    worldMap.init();
 }
 
 // --- Dodawanie przeciwników ---
@@ -883,6 +883,7 @@ void Game::advanceBiome() {
         break;
     }
 }
+
 
 
 
