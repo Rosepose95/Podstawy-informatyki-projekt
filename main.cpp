@@ -1,11 +1,12 @@
-#include <SFML/Graphics.hpp>
+
 #include "Game.h"
 #include "Enemy.h"
 #include "Tower.h"
 #include "Map.h"
 #include "Menu.h"
 #include "PauseMenu.h"
-
+#include <SFML/Graphics.hpp>
+#include "Shop.h"
 // --- stany gry ---
 enum class GameState {
     MENU,

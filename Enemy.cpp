@@ -1,45 +1,91 @@
 #include "Enemy.h"
 #include <cmath>
 #include <algorithm>
+#include <stdexcept>
+
+std::array<sf::Texture, 4> Enemy::s_textures;
+bool Enemy::s_texturesLoaded = false;
+
+void Enemy::loadTextures()
+{
+    if (s_texturesLoaded) return;
+
+    if (!s_textures[0].loadFromFile("assets/enemy_normal.png")) throw std::runtime_error("No assets/enemy_normal.png");
+    if (!s_textures[1].loadFromFile("assets/enemy_fast.png"))   throw std::runtime_error("No assets/enemy_fast.png");
+    if (!s_textures[2].loadFromFile("assets/enemy_tank.png"))   throw std::runtime_error("No assets/enemy_tank.png");
+    if (!s_textures[3].loadFromFile("assets/enemy_boss.png"))   throw std::runtime_error("No assets/enemy_boss.png");
+
+    for (auto& t : s_textures) t.setSmooth(false);
+
+    s_texturesLoaded = true;
+}
 
 Enemy::Enemy(int h, float startX, float startY, EnemyType t)
-	: health(h), maxHealth(h), type(t) { //dodatek typu enemy i życia dla bossa
+    : health(h), maxHealth(h), type(t) { //dodatek typu enemy i życia dla bossa
+
+    loadTextures();
 
     shape.setRadius(15.f);
     shape.setOrigin({ 15.f, 15.f });
-
-    switch (type) {
-    case EnemyType::Normal:
-        speed = 100.f;
-        shape.setFillColor(sf::Color::Red);
-        break;
-
-    case EnemyType::Fast:
-        speed = 160.f;
-        shape.setFillColor(sf::Color::Yellow);
-        break;
-
-    case EnemyType::Tank:
-        speed = 60.f;
-        shape.setFillColor(sf::Color(150, 0, 0));
-        break;
-    case EnemyType::Boss:
-        speed = 40.f;
-        maxHealth = health = h * 5;
-        shape.setRadius(28.f);
-        shape.setOrigin({ 28.f, 28.f });
-        shape.setFillColor(sf::Color(80, 0, 120));
-        break;
-    }
-
     shape.setPosition({ startX, startY });
 
-    tilePos = {
-        int(startX) / 40,
-        int(startY) / 40
-    };
+    applyType(type, h);
+
+    tilePos = { int(startX) / 40, int(startY) / 40 };
     prevTile = tilePos;
     nextTile = tilePos;
+
+}
+
+    void Enemy::applyType(EnemyType t, int h)
+    {
+        type = t;
+
+        int texIndex = 0;
+        switch (type) {
+        case EnemyType::Normal:
+            speed = 100.f;
+            texIndex = 0;
+            shape.setRadius(15.f);
+            shape.setOrigin({ 15.f, 15.f });
+            maxHealth = health = h;
+            break;
+
+        case EnemyType::Fast:
+            speed = 160.f;
+            texIndex = 1;
+            shape.setRadius(15.f);
+            shape.setOrigin({ 15.f, 15.f });
+            maxHealth = health = h;
+            break;
+
+        case EnemyType::Tank:
+            speed = 60.f;
+            texIndex = 2;
+            shape.setRadius(17.f);
+            shape.setOrigin({ 17.f, 17.f });
+            maxHealth = health = h;
+            break;
+
+        case EnemyType::Boss:
+            speed = 40.f;
+            texIndex = 3;
+            maxHealth = health = h * 5;
+            shape.setRadius(28.f);
+            shape.setOrigin({ 28.f, 28.f });
+            break;
+        }
+    
+
+    sprite.setTexture(s_textures[texIndex], true);
+
+    auto s = sprite.getTexture().getSize();
+    sprite.setOrigin({ s.x / 2.f, s.y / 2.f });
+
+    float target = 2.f * shape.getRadius();
+    sprite.setScale({ target / (float)s.x, target / (float)s.y });
+
+    sprite.setPosition(shape.getPosition());
 }
 
 
@@ -47,8 +93,8 @@ void Enemy::setMap(const Map* m) { //nowe fukcja do pathing
     map = m;
     int ts = map->tileSize;
 
-    tilePos.x = shape.getPosition().x / ts;
-    tilePos.y = shape.getPosition().y / ts;
+    tilePos.x = (int)shape.getPosition().x / ts;
+    tilePos.y = (int)shape.getPosition().y / ts;
 
     prevTile = tilePos;
     nextTile = findNextTile();
@@ -118,23 +164,26 @@ void Enemy::update(float dt) {
 
     float moveDist = speed * dt;
 
-    if (dist <= moveDist) {
-        // SNAP do środka kafelka
-        shape.setPosition(target);
+    if (dist > 0.0001f) {
+        sf::Vector2f dir = toTarget / dist;
 
-        prevTile = tilePos;
-        tilePos = nextTile;
-        nextTile = findNextTile();
+        // obrót sprite zgodnie z kierunkiem ruchu
+        float angle = std::atan2(dir.y, dir.x) * 180.f / 3.14159265f;
+        sprite.setRotation(sf::degrees(angle + ROT_OFFSET_DEG));
 
-        return;
+        if (dist <= moveDist) {
+            shape.setPosition(target);
+            sprite.setPosition(target);
+
+            prevTile = tilePos;
+            tilePos = nextTile;
+            nextTile = findNextTile();
+            return;
+        }
+        shape.move(dir * moveDist);
+        sprite.setPosition(shape.getPosition());
     }
-
-    // NORMALNY RUCH
-    sf::Vector2f dir = toTarget / dist;
-    shape.move(dir * moveDist);
 }
-
-
 
 void Enemy::takeDamage(int dmg) { //zmiana
     health -= dmg;
@@ -155,7 +204,7 @@ float Enemy::getRadius() const { //metody do paska
 
 
 void Enemy::draw(sf::RenderWindow& window) const {
-    window.draw(shape);
+    window.draw(sprite);
 
     float ratio = static_cast<float>(health) / maxHealth;
     ratio = std::clamp(ratio, 0.f, 1.f);

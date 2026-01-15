@@ -1,42 +1,79 @@
 #include "Tower.h"
 #include <cmath>
 
-Tower::Tower(int dmg, float x, float y, int Towertype)
+static int clampType(int t) {
+    if (t < 0) return 0;
+    if (t > 2) return 2;
+    return t;
+}
+
+Tower::Tower(int dmg, float x, float y, int Towertype,
+    const std::array<sf::Texture, 3>& tex, int tileSz)
     : damage(dmg),
     cooldown(0.5f),
     timeSinceLastShot(0.f),
     level(1),
     range(150.f),
-    type(Towertype)
+    type(clampType(Towertype)),
+    pos(x, y),
+    sprite(tex[clampType(Towertype)]),   // <- tu tworzymy sprite z tekstury
+    textures(&tex),
+    tileSize(tileSz)
 {
-    shape.setSize({ 40.f, 40.f });
-    shape.setOrigin({ 20.f, 20.f });
-    shape.setPosition({ x, y });
+    sprite.setPosition(pos);
+    applyType(type);
+}
 
-    if (type == 0) { // Wie¿a podstawowa
-        shape.setFillColor(sf::Color::Blue);
+
+void Tower::applyType(int newType)
+{
+    type = clampType(newType);
+
+    if (type < 0) type = 0;
+    if (type > 2) type = 2;
+
+     //STATY per typ
+    if (type == 0) { // 0 (poczatkowa)
         damage = 15;
         range = 150.f;
         cooldown = 0.5f;
+        level = 1;
     }
-    else if (type == 1) { // Wie¿a ulepszona
-        shape.setFillColor(sf::Color::Yellow);
+    else if (type == 1) { // 1
         damage = 30;
         range = 180.f;
         cooldown = 0.4f;
+        level = 2;
     }
-    else if (type >= 2) { // Wie¿a MAX
-        shape.setFillColor(sf::Color::Red);
+    else { // 2
         damage = 60;
         range = 220.f;
         cooldown = 0.3f;
+        level = 3;
+    }
+
+    // GRAFIKA 
+    if (textures && tileSize > 0) {
+        sprite.setTexture((*textures)[type], true);
+
+        auto s = (*textures)[type].getSize();
+        sprite.setOrigin({ s.x / 2.f, (float)s.y });
+
+        // 1×2 kafelki: szerokoœæ 1 tile, wysokoœæ 2 tile
+        float targetW = 1.1f * tileSize;
+        float targetH = 3.0f * tileSize;
+        sprite.setScale({ targetW / s.x, targetH / s.y });
     }
 }
 
+    void Tower::setType(int newType)
+    {
+        applyType(newType);
+    }
 
-sf::Vector2f Tower::getPosition() const { //nowa funkcja
-    return shape.getPosition();
-}
+
+
+
 
 void Tower::updateAttack(      //zmiana, dodanie lepszej fizyki
     std::vector<Enemy>& enemies,
@@ -52,7 +89,7 @@ void Tower::updateAttack(      //zmiana, dodanie lepszej fizyki
         if (e.isDead())
             continue;
 
-        sf::Vector2f diff = e.getPosition() - shape.getPosition();
+        sf::Vector2f diff = e.getPosition() - sprite.getPosition();
         float dist2 = diff.x * diff.x + diff.y * diff.y;
 
         if (dist2 <= bestDist) {
@@ -70,21 +107,15 @@ void Tower::updateAttack(      //zmiana, dodanie lepszej fizyki
     timeSinceLastShot = 0.f;
 
     bullets.emplace_back(
-        shape.getPosition(),
+        sprite.getPosition(),
         target->getPosition(),
         damage
     );
 }
 
-void Tower::upgrade() {
-    level++;
-    damage += 10;
-    range += 20.f;
-    cooldown *= 0.85f;
-}
 
 void Tower::draw(sf::RenderWindow& window) const {
-    window.draw(shape);
+    window.draw(sprite);
 }
 
 

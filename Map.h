@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <SFML/Graphics.hpp>
+#include <array>
+#include <cstdint>
 
 class Map {
 public:
@@ -12,18 +14,44 @@ public:
     char getTile(int x, int y) const;
     int getWidth() const;
     int getHeight() const;
+
     sf::Vector2i baseTile;  //do pathingu
     std::vector<sf::Vector2i> spawnPoints; //do spawnów
+    
     int tileSize = 40; // Rozmiar kafelka (800/20 = 40, 640/16 = 40)
-
+    void drawTree2Tiles(sf::RenderWindow& window, const sf::Texture& tex, int gridX, int gridY);
     void setTile(int x, int y, char type);  //malowanie mapy
     void clearMap();
     void refreshLogic();
     void loadMap();
+    void drawFlag2Tiles(sf::RenderWindow& window, const sf::Texture& tex, int gridX, int gridY);
 
 private:
+
+    std::array<sf::Texture, 4> texTrees;                 // tree_1..tree_4
+    std::vector<std::vector<std::uint8_t>> treeVariant;  
+    std::array<sf::Texture, 3> texSmallStones;                 // smallStone_1..3
+    std::vector<std::vector<std::uint8_t>> stoneVariant;   
+    std::array<sf::Texture, 2> texWeeds;                       // weeds_1..2
+    std::vector<std::vector<std::uint8_t>> weedsVariant;       
+
+
     std::vector<std::vector<char>> grid;
+
+    bool texturesLoaded = false;
+    sf::Texture texGrass;  //trawa (stawianie wiez)
+    sf::Texture texPath;   //sciezka enemies
+    sf::Texture texStone;  //meta 
+    sf::Texture texWater;  
+    sf::Texture texTree;
+
+
+  
+    void loadTextures();
+    void drawTile(sf::RenderWindow& window, const sf::Texture& tex, float x, float y);
+   
 };
+
 
 #endif
 

@@ -7,6 +7,7 @@
 #include "Tower.h"
 #include "Bullet.h"
 #include "Map.h" // dodanie nagłówka mapy
+#include <array>
 
 // --- Struktura konfiguracji fali ---
 struct WaveConfig {
@@ -25,6 +26,14 @@ struct SaveInfo {
 
 class Game {
 private:
+    //tekstury
+    std::array<sf::Texture, 3> towerTextures;
+    bool towerTexturesLoaded = false;
+    void loadTowerTextures();
+    int towerCost(int type) const; // koszt zależny od typu
+    sf::RectangleShape TowerTypeIcon; //ikonka upgrade wiezy
+    void updateTowerTypeIcon();
+
     // --- Obiekty gry ---
     std::vector<Enemy> enemies; // lista przeciwników
     std::vector<Tower> towers;  // lista wież

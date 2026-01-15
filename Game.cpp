@@ -23,12 +23,12 @@ Game::Game()
     , Exit(font)
     , TowerTypeText(font)
     , infoText(font) // dodatkowy tekst informacyjny
-{
+{   
     // --- Wczytanie czcionki ---
     if (!font.openFromFile("assets/ArialMT.ttf")) {
         throw std::runtime_error("Nie można wczytać czcionki");
     }
-
+    
     // --- Ustawienia czcionek i kolorów ---
     waveText.setCharacterSize(20);
     goldText.setCharacterSize(30);
@@ -89,12 +89,18 @@ Game::Game()
     RestartButton.setPosition({ 1240.f / 2.f, 840.f / 2.f });
 
 	// --- Guzik Tower Type ---
-	TowerTypeButton.setSize({ 50.f, 50.f });
+	TowerTypeButton.setSize({ 75.f, 150.f });
 	TowerTypeButton.setFillColor(sf::Color::Blue);
 	TowerTypeButton.setOutlineThickness(3.f);
 	TowerTypeButton.setOutlineColor(sf::Color::Black);
 	TowerTypeButton.setOrigin({ TowerTypeButton.getSize().x / 2.f, TowerTypeButton.getSize().y / 2.f });
 	TowerTypeButton.setPosition({ 1230.f - TowerTypeButton.getSize().x / 2.f, 100.f + TowerTypeButton.getSize().y / 2.f });
+    TowerTypeIcon.setSize({ TowerTypeButton.getSize().x * 0.9f, TowerTypeButton.getSize().y * 0.9f });
+    TowerTypeIcon.setOrigin({ TowerTypeIcon.getSize().x / 2.f, TowerTypeIcon.getSize().y / 2.f });
+    TowerTypeIcon.setPosition(TowerTypeButton.getPosition());
+
+    loadTowerTextures();
+    updateTowerTypeIcon();
 
     // --- Guzik Exit ---
     ExitButton.setSize({ 200.f, 60.f });
@@ -120,6 +126,45 @@ Game::Game()
                      eBounds.position.y + eBounds.size.y / 2.f });
     Exit.setPosition(ExitButton.getPosition());
 }
+    
+    //wczytanie tekstur wież
+    void Game::loadTowerTextures() {
+        if (towerTexturesLoaded) return;
+
+        if (!towerTextures[0].loadFromFile("assets/Tower_1.png"))  throw std::runtime_error("No Tower_1.png");
+        if (!towerTextures[1].loadFromFile("assets/Tower_2.png"))  throw std::runtime_error("No Tower_2.png");
+        if (!towerTextures[2].loadFromFile("assets/Tower_3.png"))  throw std::runtime_error("No Tower_3.png");
+
+        towerTexturesLoaded = true;
+    }
+    //zmiana ikony buttonu po kliknieciu
+    void Game::updateTowerTypeIcon()
+    {
+        loadTowerTextures(); // upewnia się że tekstury są wczytane
+
+        int t = towerUpgradeStep;
+        if (t < 0) t = 0;
+        if (t > 2) t = 2;
+
+        TowerTypeIcon.setTexture(&towerTextures[t], true);
+
+        TowerTypeIcon.setSize({ TowerTypeButton.getSize().x * 0.9f,
+                                TowerTypeButton.getSize().y * 0.9f });
+
+        TowerTypeIcon.setOrigin({ TowerTypeIcon.getSize().x / 2.f,
+                                  TowerTypeIcon.getSize().y / 2.f });
+
+        TowerTypeIcon.setPosition(TowerTypeButton.getPosition());
+    }
+
+    //koszt postawienia wiezy
+    int Game::towerCost(int type) const {
+
+        static const int cost[3] = { 5, 20, 50 };
+        if (type < 0) type = 0;
+        if (type > 2) type = 2;
+        return cost[type];
+    }
 
 // --- Dodawanie przeciwników ---
 void Game::addEnemy(Enemy enemy) {
@@ -135,15 +180,10 @@ void Game::addTower(Tower tower) {
 // --- Umieszczanie wieży na mapie ---
 void Game::placeTower(sf::Vector2f position) {
     if (!map) return;
-
-	// ---sprawdzanie czy gracz ma wystarczająco złota---
-	int cost = 5;
-    if (gold < cost) {
-        infoText.setString("Not enough gold!");
-        infoClock.restart();
-        showInfo = true;
-        return;
-    }
+    loadTowerTextures();
+    const int selectedType = towerUpgradeStep;
+    const int ts = map->tileSize;
+    float tsF = static_cast<float>(ts);
 
     int gridX = static_cast<int>(position.x / map->tileSize);
     int gridY = static_cast<int>(position.y / map->tileSize);
@@ -153,19 +193,56 @@ void Game::placeTower(sf::Vector2f position) {
 
     if (map->getTile(gridX, gridY) != '.')
         return;
+    
 
-    for (const auto& t : towers) {
-        sf::Vector2f pos = t.getPosition();
-        int tx = static_cast<int>(pos.x / map->tileSize);
-        int ty = static_cast<int>(pos.y / map->tileSize);
-        if (tx == gridX && ty == gridY) return;
+   
+
+    auto towerBaseTile = [&](const Tower& t) {
+        int tx = static_cast<int>(t.getPosition().x / ts);
+        int tyBase = static_cast<int>(t.getPosition().y / ts) - 1; 
+        return sf::Vector2i(tx, tyBase);
+        };
+
+
+    // jeśli na tym kafelku jest już wieża, nadpisuje ją i zwraca różnice
+    for (auto& t : towers) {
+        auto bt = towerBaseTile(t);
+        if (bt.x == gridX && std::abs(bt.y - gridY) <= 1) {
+            int currentType = t.getType();
+
+            int cost = towerCost(selectedType) - towerCost(currentType);
+            if (cost < 0) cost = 0; // brak zwrotów przy downgrade
+
+            if (gold < cost) {
+                infoText.setString("Not enough gold!");
+                infoClock.restart();
+                showInfo = true;
+                return;
+            }
+
+            gold -= cost;
+            t.setType(selectedType);
+            return;
+        }
     }
 
-    float tsF = static_cast<float>(map->tileSize);
-    float posX = static_cast<float>(gridX) * tsF + tsF / 2.f;
-    float posY = static_cast<float>(gridY) * tsF + tsF / 2.f;
+   
 
-    towers.emplace_back(20, gridX * tsF + tsF / 2.f, gridY * tsF + tsF / 2.f, towerUpgradeStep);
+    // jeśli kafelek pusty, stawia nową wieżę, jeśli za mało golda daje komunikat 
+    int cost = towerCost(selectedType);
+    if (gold < cost) {
+        infoText.setString("Not enough gold!");
+        infoClock.restart();
+        showInfo = true;
+        return;
+    }
+
+
+   
+    float posX = gridX * tsF + tsF / 2.f;
+    float posY = (gridY + 1) * tsF;  
+
+    towers.emplace_back(20, posX, posY, selectedType, towerTextures, map->tileSize);
     gold-=cost; // odejmowanie złota za postawienie wieży
 }
 
@@ -176,10 +253,11 @@ void Game::setStartTPos(sf::Vector2f pos) {
 
 // --- Start gry ---
 void Game::startGame() {
+    loadTowerTextures();
     // RESETOWANIE ZASOBÓW I SKLEPU 
     gold = 30;               
     towerUpgradeStep = 0;    
-
+    updateTowerTypeIcon();
     // RESETOWANIE WYGLĄDU PRZYCISKU ULEPSZENIA
     TowerTypeButton.setFillColor(sf::Color::Blue);
     TowerTypeText.setString("UP");
@@ -206,10 +284,12 @@ void Game::startGame() {
     // DODANIE WIEŻY STARTOWEJ 
     if (!isCustomMap && map) {
         int ts = map->tileSize;
-        addTower(Tower(20, 14 * ts + ts / 2.f, 11 * ts + ts / 2.f, towerUpgradeStep));
+        addTower(Tower(20,14 * ts + ts / 2.f,(11 + 1) * ts,        // dół kafelka
+            towerUpgradeStep, towerTextures, map->tileSize));
     }
     else {
-        addTower(Tower(20, startTPos.x, startTPos.y, towerUpgradeStep));
+        addTower(Tower(20, startTPos.x, startTPos.y,
+            towerUpgradeStep, towerTextures, map->tileSize));
     }
 
     updateUI();
@@ -363,7 +443,7 @@ void Game::drawUI(sf::RenderWindow& window) const {
     window.draw(enemiesText);
     window.draw(goldText); // złoto
 	window.draw(TowerTypeButton); // przycisk wyboru typu wieży
-
+    window.draw(TowerTypeIcon);
     window.draw(TowerTypeText);
 
 
@@ -407,31 +487,24 @@ bool Game::tryExit(sf::Vector2f mousePos) {
 // --- obsluga przyciksu UP tower ---
 
 void Game::tryTowerType(sf::Vector2f mousePos) {
-    if (!gameOver && TowerTypeButton.getGlobalBounds().contains(mousePos)) {
+    if (gameOver) return;
+    if (!TowerTypeButton.getGlobalBounds().contains(mousePos)) return;
 
-        // --- Ulepszenie z 0 na 1 (Niebieska -> Żółta) ---
-        if (towerUpgradeStep == 0 && gold >= 20) {
-            towerUpgradeStep = 1;
-            gold -= 20;
-            TowerTypeButton.setFillColor(sf::Color::Yellow);
-            TowerTypeText.setString("UP");
-            for (auto& t : towers) t.upgrade();
-        }
-        // --- Ulepszenie z 1 na 2 (Żółta -> Czerwona) ---
-        else if (towerUpgradeStep == 1 && gold >= 50) {
-            towerUpgradeStep = 2;
-            gold -= 50;
-            TowerTypeButton.setFillColor(sf::Color::Red);
-            TowerTypeText.setString("MAX");
-            for (auto& t : towers) t.upgrade();
-        }
-        // --- Komunikat o braku złota ---
-        else if (towerUpgradeStep < 2) {
-            infoText.setString("Not enough gold to upgrade shop!");
-            infoClock.restart();
-            showInfo = true;
-        }
+    towerUpgradeStep = (towerUpgradeStep + 1) % 3; // 0->1->2->0
+
+    if (towerUpgradeStep == 0) {
+        TowerTypeButton.setFillColor(sf::Color::Blue);
+        TowerTypeText.setString("BASIC");
     }
+    else if (towerUpgradeStep == 1) {
+        TowerTypeButton.setFillColor(sf::Color::Yellow);
+        TowerTypeText.setString("UP");
+    }
+    else {
+        TowerTypeButton.setFillColor(sf::Color::Red);
+        TowerTypeText.setString("MAX");
+    }
+    updateTowerTypeIcon();
 }
 
 // --- Gettery ---
@@ -455,7 +528,7 @@ void Game::saveGame(int slot) {
     file << "towers " << towers.size() << "\n";
     for (auto& t : towers) {
         sf::Vector2f pos = t.getPosition();
-        file << pos.x << " " << pos.y << "\n";
+        file << pos.x << " " << pos.y << " " << t.getType() << "\n";
     }
 
     // --- Przeciwnicy ---
@@ -509,12 +582,15 @@ void Game::loadGame(int slot) {
     }
 
     // --- Wieże ---
+    loadTowerTextures();
     file >> label >> towerCount;
     for (int i = 0; i < towerCount; ++i) {
         float x, y;
+        int ttype;
         file >> x >> y;
-        towers.emplace_back(20, x, y, towerUpgradeStep);
+        towers.emplace_back(20, x, y, towerUpgradeStep, towerTextures, map->tileSize);
     }
+    
 
     isBossWave = (currentWave % 5 == 0);
     currentWaveConfig.count = isBossWave ? 1 : (3 + currentWave);
@@ -574,7 +650,7 @@ bool Game::loadAutoSave() {
     int towerCount; file >> towerCount;
     for (int i = 0; i < towerCount; ++i) {
         float x, y; file >> x >> y;
-        towers.emplace_back(20, x, y);
+        towers.emplace_back(20, x, y, towerUpgradeStep, towerTextures, map->tileSize);
     }
 
     updateUI();
