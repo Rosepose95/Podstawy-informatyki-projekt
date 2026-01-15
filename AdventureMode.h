@@ -11,16 +11,6 @@ struct AdventureNode {
 };
 
 
-enum class Biomes {
-    Meadow,
-    Fire,
-    Forest,
-    Water,
-    Ice
-};
-
-
-
 class AdventureMode {
 public:
     void completeNode(const std::string& id);
@@ -38,4 +28,5 @@ public:
 private:
     std::unordered_map<std::string, AdventureNode> nodes;
 };
+
 
