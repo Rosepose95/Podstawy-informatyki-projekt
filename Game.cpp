@@ -22,7 +22,7 @@ Game::Game()
     , Restart(font)
     , Exit(font)
     , TowerTypeText(font)
-    , infoText(font) // dodatkowy tekst informacyjny
+    , infoText(font) 
 {   
     // --- Wczytanie czcionki ---
     if (!font.openFromFile("assets/ArialMT.ttf")) {
@@ -140,7 +140,7 @@ Game::Game()
     //zmiana ikony buttonu po kliknieciu
     void Game::updateTowerTypeIcon()
     {
-        loadTowerTextures(); // upewnia się że tekstury są wczytane
+        loadTowerTextures(); 
 
         int t = towerUpgradeStep;
         if (t < 0) t = 0;
@@ -692,4 +692,5 @@ void Game::HandleHover(sf::Vector2i mousepos) {
 
 bool Game::isClickOnUI(sf::Vector2f mousePos) const {
     return TowerTypeButton.getGlobalBounds().contains(mousePos);
+
 }
