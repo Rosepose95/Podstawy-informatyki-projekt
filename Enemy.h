@@ -28,6 +28,11 @@ struct EnemyStatus {
     EnemyType type;
     bool rage;
 };
+enum class BossAbility {
+    Slow,
+    Freeze,
+    Push
+};
 
 class Enemy {
 public:
@@ -87,6 +92,7 @@ public:
     void setColor(sf::Color c) {
         shape.setFillColor(c);
     }
+    std::function<void(sf::Vector2f, BossAbility)> bossCallback;
 
 private:
     int health;  //życie
@@ -136,6 +142,7 @@ private:
 
 
 #endif
+
 
 
 
