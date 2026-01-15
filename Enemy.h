@@ -49,7 +49,7 @@ public:
 
     using BossAbilityCallback = std::function<void(sf::Vector2f)>;
     BossAbilityCallback bossCallback;
-    void setBossCallback(BossAbilityCallback cb);
+    
 
     sf::Vector2f getPosition() const;
     float getRadius() const;
@@ -93,7 +93,7 @@ public:
     void setColor(sf::Color c) {
         shape.setFillColor(c);
     }
-    std::function<void(sf::Vector2f, BossAbility)> bossCallback;
+
     void setBossAbilityCallback(BossAbilityCallback cb);
 
 private:
@@ -113,7 +113,7 @@ private:
     int bossPhase = 0; // 0–3
 
     BossAbilityCallback bossAbilityCallback;
-   int bossPhase = 0;
+   
 
     float speed;
 
@@ -146,6 +146,7 @@ private:
 
 
 #endif
+
 
 
 
