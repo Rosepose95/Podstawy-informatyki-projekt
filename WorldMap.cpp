@@ -43,10 +43,19 @@ void WorldMap::draw(sf::RenderWindow& win, const AdventureMode& adv) const {
 
         if (!adv.isUnlocked(node.id))
             r.setFillColor(sf::Color(80, 80, 80));
+            r.setOutlineThickness(3.f);
+            r.setOutlineColor(sf::Color::Black);
+
         else if (adv.isCompleted(node.id))
             r.setFillColor(sf::Color(60, 160, 60));
+            r.setOutlineThickness(3.f);
+            r.setOutlineColor(sf::Color::Black);
+
         else
             r.setFillColor(sf::Color(200, 200, 60));
+            r.setOutlineThickness(3.f);
+            r.setOutlineColor(sf::Color::Black);
+
 
         win.draw(r);
     }
@@ -66,6 +75,10 @@ bool WorldMap::handleClick(
             outNodeId = nodes[i].id;
             return true;
         }
+        if (nodes[i].rect.contains(pos) &&
+            adv.isUnlocked(nodes[i].id) &&
+            !adv.isCompleted(nodes[i].id))
+
     }
     return false;
 }
@@ -77,3 +90,4 @@ std::string WorldMap::getNodeAt(sf::Vector2f pos) const {
     }
     return "";
 }
+
