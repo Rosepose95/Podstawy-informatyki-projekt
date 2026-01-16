@@ -5,7 +5,8 @@
 #include "Map.h"
 #include <functional>
 #include <string>
-
+#include <vector>
+class Tower; // forward declaration
 enum class EnemyType {
     Normal,
     Fast,
@@ -19,7 +20,9 @@ enum class EnemyType {
 
     IceShard,     // szybki, lekki slow
     FrostWalker, // tank + aura slow
-    IceBoss
+    IceBoss,
+    IceBomb
+
 
 };
 
@@ -47,15 +50,13 @@ public:
     using InfestCallback = std::function<void(sf::Vector2f, float, int)>;
     void setInfestCallback(InfestCallback cb);
 
-    using BossAbilityCallback = std::function<void(sf::Vector2f)>;
-    BossAbilityCallback bossCallback;
-    
-
+    using BossAbilityCallback = std::function<void(sf::Vector2f, BossAbility)>;
+    void setBaseColor(sf::Color c);
     sf::Vector2f getPosition() const;
     float getRadius() const;
     void setSpeed(float s) { speed = s; }
     void recalculatePath();
-
+    void setTowersRef(const std::vector<Tower>* t) { towers = t; }
     // Ustawienie pozycji kafelka i sąsiednich kafelków po wczytaniu
     void forceWorldPosition(sf::Vector2f pos);
 
@@ -76,7 +77,12 @@ public:
         nextTile = findNextTile();
         shape.setPosition(tileCenter(tile));
     }
-    
+
+    using IceCallback = std::function<void(sf::Vector2f, float, int)>;
+    using PushCallback = std::function<void(sf::Vector2f)>;
+
+    void setIceCallback(IceCallback cb);
+    void setPushCallback(PushCallback cb);
 
     bool isBoss() const { return isBossEnemy; }
     bool isRaging() const { return rage; }
@@ -86,37 +92,36 @@ public:
     void applyFreeze(float duration);
     bool isFrozen() const { return frozen; }
 
-    
+
     BurnCallback burnCallback;
     EnemyStatus getStatus() const;
     void setStatus(const EnemyStatus& s);
     void setColor(sf::Color c) {
         shape.setFillColor(c);
     }
-
+    
     void setBossAbilityCallback(BossAbilityCallback cb);
-
+    bool canReachGoal(const std::vector<Tower*>& towersRef) const;
 private:
     int health;  //życie
     int maxHealth;
     float bossAbilityTimer = 0.f;
-
+    BossAbilityCallback bossAbilityCallback;
     sf::CircleShape shape;
     float infestationTimer = 0.f;
+    float iceAuraTimer = 0.f;
 
     float baseSpeed = 0.f;
+    IceCallback iceCallback;
+    PushCallback pushCallback;
 
     const Map* map; //do pathingu 
     sf::Vector2i tilePos;
     sf::Vector2i nextTile;
     sf::Vector2i prevTile;
     int bossPhase = 0; // 0–3
-
-    BossAbilityCallback bossAbilityCallback;
-   
-
     float speed;
-
+    const std::vector<Tower>* towers = nullptr;
     sf::Vector2i findNextTile() const;
     sf::Vector2f tileCenter(sf::Vector2i tile) const;
     EnemyType type;
@@ -141,15 +146,11 @@ private:
     float freezeTimer = 0.f;
     bool frozen = false;
     float specialTimer = 0.f;
+    float pushTimer = 0.f;
+    float pushCooldown = 3.f; 
+
 
 };
 
 
 #endif
-
-
-
-
-
-
-
