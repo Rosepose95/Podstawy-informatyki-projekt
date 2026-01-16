@@ -328,7 +328,7 @@ void Game::update(float dt)
         if (!waveInProgress &&
             enemies.empty() &&
             enemiesToSpawn == 0 &&
-            adventureWave < 1)
+            adventureWave < 9)
         {
             adventureWave++;
             waveBreakTimer = 0.f;   // <<< TO JEST KLUCZ
@@ -339,7 +339,7 @@ void Game::update(float dt)
         if (!waveInProgress &&
             enemies.empty() &&
             enemiesToSpawn == 0 &&
-            adventureWave >= 1 &&
+            adventureWave >= 9 &&
             !bossSpawned)
         {
             spawnBossForCurrentLevel();
@@ -1303,3 +1303,4 @@ void Game::applyMeadowBossAbility() {
     }
 
 }
+
