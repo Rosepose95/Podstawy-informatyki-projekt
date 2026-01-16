@@ -23,6 +23,8 @@ public:
     int getDamage() const;
     BulletEffect getEffect() const { 
         return effect; }
+    float getRadius() const { return shape.getRadius(); }
+
 private:
     sf::CircleShape shape;
     sf::Vector2f direction; //zmiana zmiennych 
