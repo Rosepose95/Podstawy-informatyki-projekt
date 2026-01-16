@@ -4,6 +4,10 @@
 #include <cmath>
 #include <algorithm>
 #include <iostream>
+#include <queue>
+#include <set>
+#include <vector>
+#include <cmath> // jeśli używasz sqrt itp.
 
 Enemy::Enemy(int h, float startX, float startY, EnemyType t)
     : health(h), maxHealth(h), type(t) { //dodatek typu enemy i życia dla bossa
@@ -15,7 +19,7 @@ Enemy::Enemy(int h, float startX, float startY, EnemyType t)
     case EnemyType::Normal:
         baseSpeed = 100.f;
         shape.setFillColor(sf::Color::Red);
-		baseColor = shape.getFillColor();
+        baseColor = shape.getFillColor();
         break;
 
     case EnemyType::Fast:
@@ -105,6 +109,14 @@ Enemy::Enemy(int h, float startX, float startY, EnemyType t)
         shape.setFillColor(sf::Color(180, 220, 255));
         baseColor = shape.getFillColor();
         break;
+    case EnemyType::IceBomb:
+        baseSpeed = 70.f;
+        maxHealth = h * 1.2f;
+        health = maxHealth;
+        shape.setRadius(18.f);
+        shape.setOrigin({ 18.f, 18.f });
+        shape.setFillColor(sf::Color(200, 240, 255));
+        break;
 
     }
     speed = baseSpeed;
@@ -132,6 +144,7 @@ void Enemy::setMap(const Map* m) { //nowe fukcja do pathing
 
 }
 
+// Enemy.cpp
 sf::Vector2i Enemy::findNextTile() const {
     static const sf::Vector2i dirs[4] = {
         {1, 0}, {-1, 0}, {0, 1}, {0, -1}
@@ -155,6 +168,20 @@ sf::Vector2i Enemy::findNextTile() const {
         if (tile != '#' && tile != '*')
             continue;
 
+        // sprawdzenie wież
+        bool blockedByTower = false;
+        if (towers) {
+            for (auto& t : *towers) {
+                int tx = static_cast<int>(t.getPosition().x) / map->tileSize;
+                int ty = static_cast<int>(t.getPosition().y) / map->tileSize;
+                if (tx == candidate.x && ty == candidate.y) {
+                    blockedByTower = true;
+                    break;
+                }
+            }
+        }
+        if (blockedByTower) continue;
+
         float dx = candidate.x - map->baseTile.x;
         float dy = candidate.y - map->baseTile.y;
         float dist = dx * dx + dy * dy;
@@ -167,6 +194,8 @@ sf::Vector2i Enemy::findNextTile() const {
 
     return best;
 }
+
+
 
 bool Enemy::reachedGoal() const {
     if (!map) return false;
@@ -247,6 +276,24 @@ void Enemy::update(float dt) {
             }
         }
     }
+    if (type == EnemyType::MeadowBoss) {
+        pushTimer += dt;
+        if (pushTimer >= pushCooldown) {
+            pushTimer = 0.f;
+            if (pushCallback)
+                pushCallback(getPosition());
+        }
+    }
+
+    if (type == EnemyType::IceBomb) {
+        iceAuraTimer += dt;
+        if (iceAuraTimer >= 1.0f) {
+            iceAuraTimer = 0.f;
+            if (iceCallback)
+                iceCallback(getPosition(), 90.f, 2);
+        }
+    }
+
 
     // --- FIRE DAMAGE OVER TIME ---
     if (burnCallback && type != EnemyType::IceBoss) {
@@ -279,26 +326,7 @@ void Enemy::update(float dt) {
 
         default:
             break;
-        }     
-}
-	// --- ICE BOSS ABILITIES ---
-if (type == EnemyType::IceBoss && bossAbilityCallback) {
-    float hp = (float)health / maxHealth;
-
-    if (hp <= 0.75f && bossPhase < 1) {
-        bossPhase = 1;
-        bossAbilityCallback(getPosition(), BossAbility::IceSlow);
-    }
-    else if (hp <= 0.5f && bossPhase < 2) {
-        bossPhase = 2;
-        bossAbilityCallback(getPosition(), BossAbility::IceFreeze);
-    }
-    else if (hp <= 0.25f && bossPhase < 3) {
-        bossPhase = 3;
-        bossAbilityCallback(getPosition(), BossAbility::IceShatter);
-    }
-}
-
+        }
 
 
         if (interval > 0.f && burnTimer >= interval) {
@@ -306,8 +334,36 @@ if (type == EnemyType::IceBoss && bossAbilityCallback) {
             burnCallback(getPosition(), radius, stacks);
         }
     }
+    // --- ICE BOSS ABILITIES ---
+    if (type == EnemyType::IceBoss && bossAbilityCallback) {
+        float hp = (float)health / maxHealth;
+
+        if (hp <= 0.75f && bossPhase < 1) {
+            bossPhase = 1;
+            bossAbilityCallback(getPosition(), BossAbility::IceSlow);
+        }
+        else if (hp <= 0.5f && bossPhase < 2) {
+            bossPhase = 2;
+            bossAbilityCallback(getPosition(), BossAbility::IceFreeze);
+        }
+        else if (hp <= 0.25f && bossPhase < 3) {
+            bossPhase = 3;
+            bossAbilityCallback(getPosition(), BossAbility::IceShatter);
+        }
+    }
+    if (type == EnemyType::IceShard || type == EnemyType::FrostWalker) {
+        iceAuraTimer += dt;
+        if (iceAuraTimer >= 2.5f) {
+            iceAuraTimer = 0.f;
+            if (iceCallback) {
+                iceCallback(getPosition(), 80.f, 1);
+            }
+        }
+    }
 
 }
+
+
 
 
 
@@ -330,19 +386,19 @@ float Enemy::getRadius() const { //metody do paska
 
 
 void Enemy::draw(sf::RenderWindow& window) const {
-	if (type == EnemyType::IceBoss) {
-    sf::CircleShape aura(45.f);
-    aura.setOrigin({45.f, 45.f});
-    aura.setPosition(getPosition());
-    aura.setFillColor(sf::Color(180,220,255,60));
-    window.draw(aura);
-}
+    if (type == EnemyType::IceBoss) {
+        sf::CircleShape aura(45.f);
+        aura.setOrigin({ 45.f, 45.f });
+        aura.setPosition(getPosition());
+        aura.setFillColor(sf::Color(180, 220, 255, 60));
+        window.draw(aura);
+    }
 
-   
+
 
     float ratio = static_cast<float>(health) / maxHealth;
     ratio = std::clamp(ratio, 0.f, 1.f);
-    
+
     float r = shape.getRadius();
     sf::Vector2f posi = shape.getPosition();
 
@@ -411,10 +467,6 @@ void Enemy::applyWaveSpeed(float multiplier) {
 void Enemy::setInfestCallback(InfestCallback cb) {
     infestCallback = cb;
 }
-
-void Enemy::setBossCallback(BossAbilityCallback cb) {
-    bossCallback = cb;
-}
 void Enemy::setBurnCallback(BurnCallback cb) {
     burnCallback = cb;
 }
@@ -448,6 +500,58 @@ void Enemy::applyFreeze(float duration)
 void Enemy::setBossAbilityCallback(BossAbilityCallback cb) {
     bossAbilityCallback = cb;
 }
+void Enemy::setBaseColor(sf::Color c) {
+    baseColor = c;
+    shape.setFillColor(c);
+}
+void Enemy::setIceCallback(IceCallback cb) {
+    iceCallback = cb;
+}
 
+void Enemy::setPushCallback(PushCallback cb) {
+    pushCallback = cb;
+}
+bool Enemy::canReachGoal(const std::vector<Tower*>& towersRef) const {
+    sf::Vector2i pos = tilePos;
+    sf::Vector2i goal = map->baseTile;
 
+    std::queue<sf::Vector2i> q;
+    std::set<std::pair<int, int>> visited;
+
+    q.push(pos);
+    visited.insert({ pos.x, pos.y });
+
+    const sf::Vector2i dirs[4] = { {1,0},{-1,0},{0,1},{0,-1} };
+
+    while (!q.empty()) {
+        sf::Vector2i cur = q.front(); q.pop();
+        if (cur == goal) return true;
+
+        for (auto d : dirs) {
+            sf::Vector2i next = cur + d;
+            if (next.x < 0 || next.y < 0 || next.x >= map->getWidth() || next.y >= map->getHeight())
+                continue;
+            if (visited.count({ next.x, next.y })) continue;
+
+            char tile = map->getTile(next.x, next.y);
+            if (tile != '.' && tile != ' ') continue;
+
+            bool blocked = false;
+            for (auto t : towersRef) {
+                int tx = static_cast<int>(t->getPosition().x) / map->tileSize;
+                int ty = static_cast<int>(t->getPosition().y) / map->tileSize;
+                if (tx == next.x && ty == next.y) {
+                    blocked = true;
+                    break;
+                }
+            }
+            if (blocked) continue;
+
+            visited.insert({ next.x, next.y });
+            q.push(next);
+        }
+    }
+
+    return false; // nie można dojść do celu
+}
 
