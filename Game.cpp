@@ -173,6 +173,8 @@ void Game::placeTower(sf::Vector2f position) {
 void Game::setStartTPos(sf::Vector2f pos) {
     startTPos = pos;
 }
+
+
 // --- Start gry ---
 void Game::startGame() {
     enemies.clear();
@@ -182,19 +184,23 @@ void Game::startGame() {
     enemiesToSpawn = 0;
     waveInProgress = false;
     isBossWave = false;
-    playerLives = 20;
+    
     gameOver = false;
     spawnTimer = 0.f;
     waveBreakTimer = 0.f;
+    if (mode == GameMode::Adventure)
+        inWorldMap = false;
+    else
+        inWorldMap = false;
 
     waveJustLoaded = false;
-    inWorldMap = false;
+    
     bossDefeatedThisFrame = false;
 
     // ustawienie slidera fali poza ekranem
     NextWaveText.setString("Get ready for wave 1");
     NextWaveText.setPosition({ -600.f, 420.f });
-
+    
     // dodanie wieży startowej jeśli nie niestandardowa mapa
     if (!isCustomMap && map) {
         int ts = map->tileSize;
@@ -206,30 +212,87 @@ void Game::startGame() {
     startNextWave();
 
 }
-
-
 // --- Rozpoczęcie kolejnej fali ---
 void Game::startNextWave()
 {
+    waveText.setString("Wave " + std::to_string(currentWave));
+
     currentWave++;
     waveJustLoaded = false;
 
-    currentBiome = adventure.getBiomeForNode(currentNodeId);
-
+    // --- bazowy balans ---
     currentWaveConfig.enemyHP = 50 + currentWave * 10;
     currentWaveConfig.speed = 1.0f + currentWave * 0.03f;
 
     spawnDelay = 0.8f;
     spawnTimer = 0.f;
 
-    if (mode == GameMode::Adventure)
-        isBossWave = adventure.isBossNode(currentNodeId);
-    else
+    // =========================
+    // ADVENTURE MODE
+    // =========================
+    if (mode == GameMode::Adventure) {
+        isBossWave = false;                  // boss NIE przez %5
+        enemiesToSpawn = 5 + currentWave;    // normalne fale
+        waveInProgress = true;
+        return;
+    }
+
+    // =========================
+    // ENDLESS MODE
+    // =========================
+    isBossWave = (currentWave % 5 == 0);
+
+    if (isBossWave) {
+        currentWaveConfig.enemyHP *= 2;
+        enemiesToSpawn = 1;
+    }
+    else {
+        enemiesToSpawn = 5 + currentWave;
+    }
+
+    if (currentWave % 3 == 0)
+        advanceBiome();
+
+    waveInProgress = true;
+}
+
+
+// --- Rozpoczęcie kolejnej fali ---
+ /*
+void Game::startNextWave()
+{
+    waveText.setString("Wave " + std::to_string(currentWave));
+
+    currentWave++;
+    waveJustLoaded = false;
+
+    
+
+    currentWaveConfig.enemyHP = 50 + currentWave * 10;
+    currentWaveConfig.speed = 1.0f + currentWave * 0.03f;
+    // --- Endless mode: boss buff ---
+    if (mode == GameMode::Endless && isBossWave) {
+        currentWaveConfig.enemyHP *= 2;
+    }
+
+    spawnDelay = 0.8f;
+    spawnTimer = 0.f;
+
+    if (mode == GameMode::Adventure) {
+        isBossWave = false;
+    }
+    else {
         isBossWave = (currentWave % 5 == 0);
+    }
+
+
+    if (mode == GameMode::Endless && currentWave % 3 == 0)
+        advanceBiome();
+
 
     enemiesToSpawn = isBossWave ? 1 : 5 + currentWave;
     waveInProgress = true;
-}
+}*/
 
 // --- Aktualizacja gry ---
 void Game::update(float dt)
@@ -239,24 +302,74 @@ void Game::update(float dt)
 
     totalPlayTime += dt;
 
-    // --- WORLD MAP ---
-    if (inWorldMap)
-        return;
-
-    if (waveJustLoaded) {
-        waveJustLoaded = false;
+    // ================= WORLD MAP =================
+    if (inWorldMap) {
+        worldMap.update(adventure, dt);
         return;
     }
 
-    // --- KONIEC FALI ---
+    for (auto it = warningTiles.begin(); it != warningTiles.end();) {
+        it->timer -= dt;
+        if (it->timer <= 0.f)
+            it = warningTiles.erase(it);
+        else
+            ++it;
+    }
+
+    if (waveJustLoaded) {
+        waveJustLoaded = false;
+       
+    }
+
+    // ================= ADVENTURE FLOW =================
+    if (mode == GameMode::Adventure) {
+
+        // normalne fale
+        if (!waveInProgress &&
+            enemies.empty() &&
+            enemiesToSpawn == 0 &&
+            adventureWave < 1)
+        {
+            adventureWave++;
+            waveBreakTimer = 0.f;   // <<< TO JEST KLUCZ
+            startNextWave();
+        }
+
+        // boss
+        if (!waveInProgress &&
+            enemies.empty() &&
+            enemiesToSpawn == 0 &&
+            adventureWave >= 1 &&
+            !bossSpawned)
+        {
+            spawnBossForCurrentLevel();
+            bossSpawned = true;
+            return;
+        }
+
+        // boss zabity → world map
+        if (bossSpawned && enemies.empty()) {
+            onMapCompleted();
+            return;
+        }
+    }
+
+
+    // ================= KONIEC FALI =================
     if (waveInProgress && enemies.empty() && enemiesToSpawn == 0) {
         waveInProgress = false;
         waveBreakTimer = 0.f;
         autoSave();
+
+        // Endless: zmiana biomu po bossie
+        if (mode == GameMode::Endless && isBossWave) {
+            advanceBiome();
+        }
     }
 
-    // --- PRZERWA MIĘDZY FALAMI ---
+    // ================= PRZERWA MIĘDZY FALAMI =================
     if (!waveInProgress && enemies.empty() && enemiesToSpawn == 0) {
+
         if (waveBreakTimer == 0.f) {
             NextWaveText.setPosition({ -600.f, 420.f });
             NextWaveText.setString("Get ready for wave " + std::to_string(currentWave + 1));
@@ -271,79 +384,133 @@ void Game::update(float dt)
         }
     }
 
-    // --- SPAWN ENEMIES ---
+    // ================= SPAWN ENEMIES =================
     if (enemiesToSpawn > 0) {
         spawnTimer += dt;
 
         if (spawnTimer >= spawnDelay) {
             spawnTimer = 0.f;
 
-            int ts = map->tileSize;
-            Biomes biome = currentBiome;
-
-            EnemyType type = pickEnemyForBiome(biome, isBossWave);
-
-            // Fire biome random spice
-            if (biome == Biomes::Fire && !isBossWave) {
-                int r = rand() % 6;
-                if (r == 0) type = EnemyType::Fireball;
-                if (currentWave >= 6 && rand() % 8 == 0)
-                    type = EnemyType::Crusher;
-            }
-
-            if (map->spawnPoints.empty())
+            if (!map || map->spawnPoints.empty())
                 return;
 
-            sf::Vector2i spawnTile = map->spawnPoints[rand() % map->spawnPoints.size()];
-            sf::Vector2f spawnPos(
-                spawnTile.x * ts + ts / 2.f,
-                spawnTile.y * ts + ts / 2.f
+            int ts = map->tileSize;
+
+            EnemyType type = pickEnemyForBiome(currentBiome, isBossWave);
+
+            sf::Vector2i tile = map->spawnPoints[rand() % map->spawnPoints.size()];
+            sf::Vector2f pos(
+                tile.x * ts + ts / 2.f,
+                tile.y * ts + ts / 2.f
             );
 
-            enemies.emplace_back(currentWaveConfig.enemyHP, spawnPos.x, spawnPos.y, type);
-            Enemy& e = enemies.back();
+            enemies.emplace_back(
+                currentWaveConfig.enemyHP * enemyHpMultiplier,
+                pos.x, pos.y,
+                type
+            );
+           
 
+            Enemy& e = enemies.back();
             e.setMap(map);
             e.applyWaveSpeed(currentWaveConfig.speed);
 
-            // --- INFESTATION ---
+            // ---------- ABILITIES ----------
+
+            // INFEST
             if (type == EnemyType::Infestor || type == EnemyType::MeadowBoss) {
                 e.setInfestCallback(
-                    [this](sf::Vector2f pos, float radius, int stacks) {
-                        infestTowers(pos, radius, stacks);
+                    [this](sf::Vector2f p, float r, int s) {
+                        infestTowers(p, r, s);
                     }
                 );
             }
-
-            // --- FIRE BIOME ---
+            if (type == EnemyType::Infestor ) {
+                e.setPushCallback(
+                    [this](sf::Vector2f p) {
+                        pushTowersNear(p);
+                    }
+                );
+            }
+            if (type == EnemyType::MeadowBoss) {
+                applyMeadowBossAbility();
+            }
+            // FIRE
             if (type == EnemyType::FireBoss ||
                 type == EnemyType::Flame ||
                 type == EnemyType::Fireball ||
                 type == EnemyType::Crusher)
             {
                 e.setBurnCallback(
-                    [this](sf::Vector2f pos, float radius, int stacks) {
-                        burnTowers(pos, radius, stacks);
+                    [this](sf::Vector2f p, float r, int s) {
+                        burnTowers(p, r, s);
+                    }
+                );
+            }
+            if (type == EnemyType::IceShard || type == EnemyType::FrostWalker) {
+                e.setIceCallback(
+                    [this](sf::Vector2f p, float r, int stacks) {
+                        slowTowers(p, r, stacks);
                     }
                 );
             }
 
-            // --- ICE BOSS ABILITIES ---
+            if (type == EnemyType::Normal) {
+                if (currentBiome == Biomes::Ice)
+                    e.setBaseColor(sf::Color(180, 220, 255));
+                else if (currentBiome == Biomes::Fire)
+                    e.setBaseColor(sf::Color(255, 120, 80));
+                else if (currentBiome == Biomes::Forest)
+                    e.setBaseColor(sf::Color(120, 200, 120));
+            }
+            if (type == EnemyType::IceBomb) {
+                e.setIceCallback(
+                    [this](sf::Vector2f p, float r, int stacks) {
+                        freezeTowers(p, r, 1.5f);
+                    }
+                );
+            }
+
+            // ICE BOSS
             if (type == EnemyType::IceBoss) {
                 e.setBossAbilityCallback(
-                    [this](sf::Vector2f pos, BossAbility ability) {
-                        switch (ability) {
+                    [this](sf::Vector2f p, BossAbility a) {
+                        switch (a) {
                         case BossAbility::IceSlow:
-                            slowTowers(pos, 120.f, 2);
+                            slowTowers(p, 120.f, 2);
                             break;
                         case BossAbility::IceFreeze:
-                            freezeTowers(pos, 100.f, 1.5f);
+                            freezeTowers(p, 100.f, 1.5f);
                             break;
                         case BossAbility::IceShatter:
-                            for (auto& t : towers)
-                                if (t.isFrozen())
-                                    t.forceDestroy();
+                            std::vector<Tower*> left;
+                            std::vector<Tower*> right;
+
+                            float centerX = map->getWidth() * map->tileSize * 0.5f;
+
+                            for (auto& t : towers) {
+                                if (!t.isFrozen())
+                                    continue;
+
+                                if (t.getPosition().x < centerX)
+                                    left.push_back(&t);
+                                else
+                                    right.push_back(&t);
+                            }
+
+                            auto destroySome = [&](std::vector<Tower*>& vec) {
+                                int count = std::min(3, (int)vec.size());
+                                for (int i = 0; i < count; ++i) {
+                                    spawnIceExplosion(vec[i]->getPosition());
+                                    vec[i]->forceDestroy();
+                                }
+                                };
+
+                            destroySome(left);
+                            destroySome(right);
+
                             break;
+
                         }
                     }
                 );
@@ -353,11 +520,11 @@ void Game::update(float dt)
         }
     }
 
-    // --- GAME OVER ---
+    // ================= GAME OVER =================
     if (playerLives <= 0)
         gameOver = true;
 
-    // --- UPDATE ENEMIES ---
+    // ================= UPDATE ENEMIES =================
     for (auto it = enemies.begin(); it != enemies.end();) {
         it->update(dt);
 
@@ -366,47 +533,42 @@ void Game::update(float dt)
             it = enemies.erase(it);
         }
         else if (it->isDead()) {
+            if (it->getType() == EnemyType::IceBomb) {
+                auto nearby = getTowersNear(it->getPosition(), map->tileSize * 1.5f);
 
-            if (it->getType() == EnemyType::FireBoss) {
-                sf::Vector2f pos = it->getPosition();
-                burnTowers(pos, 120.f, 3);
-
-                for (int i = 0; i < 4; ++i) {
-                    Enemy flame(40, pos.x, pos.y, EnemyType::Flame);
-                    flame.setMap(map);
-                    flame.setBurnCallback(
-                        [this](sf::Vector2f p, float r, int s) {
-                            burnTowers(p, r, s);
-                        }
-                    );
-                    enemies.push_back(flame);
+                int count = std::min(2, (int)nearby.size());
+                for (int i = 0; i < count; ++i) {
+                    spawnIceExplosion(nearby[i]->getPosition());
+                    nearby[i]->forceDestroy();
                 }
             }
 
-            if (isBossWave)
+            if (it->isBoss()) {
                 bossDefeatedThisFrame = true;
+            }
 
             it = enemies.erase(it);
         }
+
         else ++it;
     }
 
-    // --- TOWERS ATTACK ---
+    // ================= TOWERS =================
     for (auto& t : towers)
         t.updateAttack(enemies, dt, bullets);
 
-    // --- BULLETS ---
+    // ================= BULLETS =================
     for (auto& b : bullets)
         b.update(dt);
 
-    // --- BULLET <-> ENEMY ---
     for (auto& b : bullets) {
         for (auto& e : enemies) {
             if (e.isDead()) continue;
 
             sf::Vector2f d = b.getPosition() - e.getPosition();
-            if (d.x * d.x + d.y * d.y <= e.getRadius() * e.getRadius()) {
-
+            float r = e.getRadius() + b.getRadius();
+            if (d.x * d.x + d.y * d.y <= r * r)
+            {
                 e.takeDamage(b.getDamage());
 
                 if (b.getEffect() == BulletEffect::Ice) {
@@ -434,19 +596,22 @@ void Game::update(float dt)
     );
 
     updateUI();
-
-    if (bossDefeatedThisFrame) {
-        bossDefeatedThisFrame = false;
-        advanceBiome();
-
-        showInfo = true;
-        infoText.setString("BOSS DEFEATED!");
-        infoClock.restart();
-    }
 }
 
 // --- Rysowanie gry ---
 void Game::draw(sf::RenderWindow& window) const {
+    if (map)
+        map->draw(window);
+
+    for (auto& t : warningTiles) {
+        float ts = map->tileSize;
+        sf::RectangleShape r({ ts, ts });
+        r.setOrigin({ ts / 2.f, ts / 2.f });
+        r.setPosition(t.pos);
+        r.setFillColor(sf::Color(0, 180, 255, 120));
+        window.draw(r);
+    }
+
     for (const auto& t : towers) t.draw(window);
     for (const auto& e : enemies) e.draw(window);
     for (const auto& b : bullets) b.draw(window);
@@ -688,11 +853,10 @@ void Game::onMapCompleted()
 {
     adventure.completeNode(currentNodeId);
     int reward = adventure.getRewardGold(currentNodeId);
-    gold += reward;
+    gold += reward * goldMultiplier;
 
     showNodeCompleted = true;
     nodeCompletedClock.restart();
-    nodeCompletedText.setString("NODE COMPLETED!");
     waveInProgress = false;
     enemies.clear();
     bullets.clear();
@@ -702,7 +866,9 @@ void Game::onMapCompleted()
         adventure.setNodeState(next, true, false);
 
     autoSave();
+    map->refreshLogic(); // <<< DODAJ
     inWorldMap = true;
+
 }
 
 void Game::handleWorldMapClick(sf::Vector2f mouseWorldPos)
@@ -710,21 +876,28 @@ void Game::handleWorldMapClick(sf::Vector2f mouseWorldPos)
     if (!inWorldMap)
         return;
 
-    std::string clicked = worldMap.getNodeAt(mouseWorldPos);
+    std::string nodeId;
 
-    if (clicked.empty())
-        return;
+ 
+    if (worldMap.handleClick(mouseWorldPos, adventure, nodeId)) {
 
-    if (!adventure.isUnlocked(clicked))
-        return;
+        // ustaw aktualny node
+        currentNodeId = nodeId;
 
-    setCurrentNode(clicked);
-    inWorldMap = false;
+        // wyjście z mapy świata
+        inWorldMap = false;
 
-    loadMapById(clicked);
-    startGame();
+        // reset stanu adventure
+        adventureWave = 0;
+        bossSpawned = false;
+        isBossWave = false;
+
+        currentBiome = adventure.getBiomeForNode(nodeId);
+        loadMapById("default");   // lub mapa noda
+        startGame();
+
+    }
 }
-
 
 std::vector<Tower*> Game::getTowersNear(sf::Vector2f pos, float radius) {
     std::vector<Tower*> result;
@@ -757,40 +930,39 @@ void Game::pushTowersNear(sf::Vector2f bossPos)
 {
     int ts = map->tileSize;
 
+    // znajdź najbliższą wieżę w promieniu
+    Tower* nearest = nullptr;
+    float minDist2 = std::numeric_limits<float>::max();
+
     for (auto& t : towers) {
-        sf::Vector2f tp = t.getPosition();
-        sf::Vector2f diff = tp - bossPos;
+        sf::Vector2f diff = t.getPosition() - bossPos;
         float dist2 = diff.x * diff.x + diff.y * diff.y;
-
         if (dist2 <= (ts * 2.5f) * (ts * 2.5f)) {
-
-            int tx = static_cast<int>(tp.x) / ts;
-            int ty = static_cast<int>(tp.y) / ts;
-
-            // prawo
-            if (tx + 1 < map->getWidth() &&
-                map->getTile(tx + 1, ty) == '.') {
-
-                t.setPosition({
-                    (tx + 1) * ts + ts / 2.f,
-                    ty * ts + ts / 2.f
-                    });
-                return;
-            }
-
-            // lewo
-            if (tx - 1 >= 0 &&
-                map->getTile(tx - 1, ty) == '.') {
-
-                t.setPosition({
-                    (tx - 1) * ts + ts / 2.f,
-                    ty * ts + ts / 2.f
-                    });
-                return;
+            if (dist2 < minDist2) {
+                minDist2 = dist2;
+                nearest = &t;
             }
         }
     }
+
+    if (!nearest) return;
+
+    // spróbuj przesunąć najbliższą wieżę w prawo lub lewo
+    int tx = static_cast<int>(nearest->getPosition().x) / ts;
+    int ty = static_cast<int>(nearest->getPosition().y) / ts;
+
+    if (tx + 1 < map->getWidth() && map->getTile(tx + 1, ty) == '.') {
+        nearest->setPosition({ (tx + 1) * ts + ts / 2.f, ty * ts + ts / 2.f });
+    }
+    else if (tx - 1 >= 0 && map->getTile(tx - 1, ty) == '.') {
+        nearest->setPosition({ (tx - 1) * ts + ts / 2.f, ty * ts + ts / 2.f });
+    }
+
+    // pathfinding dopiero po przesunięciu
+    for (auto& e : enemies)
+        e.recalculatePath();
 }
+
 
 
 void Game::burnTowers(sf::Vector2f pos, float radius, int stacks) {
@@ -798,10 +970,17 @@ void Game::burnTowers(sf::Vector2f pos, float radius, int stacks) {
 
     for (auto& t : towers) {
         sf::Vector2f diff = t.getPosition() - pos;
-        if (diff.x * diff.x + diff.y * diff.y <= r2)
+        if (diff.x * diff.x + diff.y * diff.y <= r2) {
             t.addBurn(stacks);
+
+            //  NATYCHMIASTOWE ZNISZCZENIE
+            if (t.getBurnStacks() >= 3) {
+                t.forceDestroy();
+            }
+        }
     }
 }
+
 void Game::slowTowers(sf::Vector2f pos, float radius, int stacks) {
     float r2 = radius * radius;
 
@@ -822,6 +1001,7 @@ void Game::freezeTowers(sf::Vector2f pos, float radius, float time) {
 }
 
 EnemyType Game::pickEnemyForBiome(Biomes biome, bool isBossWave) {
+
     if (isBossWave) {
         switch (biome) {
         case Biomes::Fire:
@@ -835,11 +1015,37 @@ EnemyType Game::pickEnemyForBiome(Biomes biome, bool isBossWave) {
             return EnemyType::MeadowBoss;
         }
     }
+    if (mode == GameMode::Endless) {
 
+        EnemyType pool[] = {
+            EnemyType::Normal,
+            EnemyType::Fast,
+            EnemyType::Infestor,
+            EnemyType::Fireball,
+            EnemyType::Flame,
+            EnemyType::Crusher,
+            EnemyType::IceShard,
+            EnemyType::FrostWalker,
+			EnemyType::IceBomb
+        };
+
+        if (isBossWave) {
+            EnemyType bosses[] = {
+                EnemyType::MeadowBoss,
+                EnemyType::FireBoss,
+                EnemyType::IceBoss
+            };
+            return bosses[rand() % 3];
+        }
+
+        return pool[rand() % (sizeof(pool) / sizeof(pool[0]))];
+    }
+
+    
     switch (biome) {
     case Biomes::Fire: {
         int r = rand() % 5;
-        if (r == 0) return EnemyType::Fast;
+        if (r == 0) return EnemyType::Fireball;
         if (r == 1) return EnemyType::Flame;
         if (r == 2) return EnemyType::Crusher;
         return EnemyType::Normal;
@@ -851,9 +1057,10 @@ EnemyType Game::pickEnemyForBiome(Biomes biome, bool isBossWave) {
         return EnemyType::Normal;
     }
     case Biomes::Ice: {
-        int r = rand() % 4;
-        if (r == 0) return EnemyType::IceShard;
-        if (r == 1) return EnemyType::FrostWalker;
+        int r = rand() % 5;
+        if (r == 0) return EnemyType::IceBomb;
+        if (r == 1) return EnemyType::IceShard;
+        if (r == 2) return EnemyType::FrostWalker;
         return EnemyType::Normal;
     }
 
@@ -883,8 +1090,216 @@ void Game::advanceBiome() {
         break;
     }
 }
+void Game::applyDifficulty(Difficulty diff) {
+    switch (diff) {
+    case Difficulty::Easy:
+        playerLives = 25;
+        enemyHpMultiplier = 0.8f;
+        goldMultiplier = 1.2f;
+        break;
+
+    case Difficulty::Normal:
+        playerLives = 20;
+        enemyHpMultiplier = 1.f;
+        goldMultiplier = 1.f;
+        break;
+
+    case Difficulty::Hard:
+        playerLives = 15;
+        enemyHpMultiplier = 1.3f;
+        goldMultiplier = 0.9f;
+        break;
+    }
+    
+
+}
+void Game::spawnBossForCurrentLevel() {
+    if (!map || map->spawnPoints.empty()) return;
+
+    int ts = map->tileSize;
+    sf::Vector2i tile = map->spawnPoints[0];
+
+    sf::Vector2f pos(
+        tile.x * ts + ts / 2.f,
+        tile.y * ts + ts / 2.f
+    );
+
+    EnemyType type = EnemyType::MeadowBoss;
+    Biomes biome = adventure.getBiomeForNode(currentNodeId);
+
+    if (biome == Biomes::Fire) type = EnemyType::FireBoss;
+    if (biome == Biomes::Ice)  type = EnemyType::IceBoss;
+
+    enemies.emplace_back(300 * enemyHpMultiplier, pos.x, pos.y, type);
+    Enemy& e = enemies.back();
+    e.setMap(map);
+    e.setTowersRef(&towers); // <- boss wie teraz, gdzie są wieże
+
+    // === CALLBACKI ===
+    if (type == EnemyType::MeadowBoss) {
+        e.setPushCallback([this](sf::Vector2f p) {
+            applyMeadowBossAbility();
+            });
+    }
+
+    
+
+    if (type == EnemyType::FireBoss) {
+        e.setBurnCallback(
+            [this](sf::Vector2f p, float r, int s) {
+                burnTowers(p, r, s);
+            }
+        );
+    }
+
+    if (type == EnemyType::IceBoss) {
+        e.setBossAbilityCallback(
+            [this](sf::Vector2f p, BossAbility a) {
+                switch (a) {
+                case BossAbility::IceSlow:
+                    slowTowers(p, 120.f, 2);
+                    break;
+                case BossAbility::IceFreeze:
+                    freezeTowers(p, 100.f, 1.5f);
+                    break;
+                case BossAbility::IceShatter:
+                {
+                    for (auto& t : towers) {
+                        if (t.isFrozen()) {
+                            spawnIceExplosion(t.getPosition());
+                            t.forceDestroy();
+                        }
+                    }
+                    break;
+                }
+                }
+            }
+        );
+    }
+}
+
+ 
+GameMode Game::getMode() const {
+    return mode;
+}
+
+void Game::enterWorldMap() {
+    inWorldMap = true;
+    enemies.clear();
+    bullets.clear();
+    towers.clear();
+
+    adventureWave = 0;
+    bossSpawned = false;
+}
+void Game::spawnIceExplosion(sf::Vector2f pos)
+{
+    warningTiles.push_back({ pos, 1.2f });
+}
+
+void Game::applyIceWave(sf::Vector2f bossPos) {
+    int appliedLeft = 0;
+    int appliedRight = 0;
+
+    for (auto& t : towers) {
+        if (t.isDestroyed())
+            continue;
+
+        float dx = t.getPosition().x - bossPos.x;
+
+        if (dx < 0 && appliedLeft < 3) {
+            t.freeze(2.5f);
+            t.addSlow(2);
+            appliedLeft++;
+        }
+        else if (dx > 0 && appliedRight < 3) {
+            t.freeze(2.5f);
+            t.addSlow(2);
+            appliedRight++;
+        }
+
+        if (appliedLeft >= 3 && appliedRight >= 3)
+            break;
+    }
+}
+bool Game::canMoveTower(int tx, int ty) {
+    if (tx < 0 || ty < 0 || tx >= map->getWidth() || ty >= map->getHeight())
+        return false;
+    if (map->getTile(tx, ty) != '.')
+        return false;
+    for (auto& t : towers) {
+        int ttx = static_cast<int>(t.getPosition().x) / map->tileSize;
+        int tty = static_cast<int>(t.getPosition().y) / map->tileSize;
+        if (ttx == tx && tty == ty)
+            return false;
+    }
+    return true;
+}
 
 
+bool Game::canPushTowerWithoutBlockingPath(int tx, int ty, Tower* movingTower) {
+    int ts = map->tileSize;
 
+    // Sprawdzenie czy tile jest wolny (pomijamy tower, którą przesuwamy)
+    if (tx < 0 || ty < 0 || tx >= map->getWidth() || ty >= map->getHeight())
+        return false;
+    if (map->getTile(tx, ty) != '.')
+        return false;
 
+    for (auto& t : towers) {
+        if (&t == movingTower) continue; // ignorujemy wieżę, którą przesuwamy
+        int ttx = static_cast<int>(t.getPosition().x) / ts;
+        int tty = static_cast<int>(t.getPosition().y) / ts;
+        if (ttx == tx && tty == ty)
+            return false;
+    }
 
+    // symulacja dummyTower dla pathfindingu
+    Tower dummyTower(20, tx * ts + ts / 2.f, ty * ts + ts / 2.f);
+    std::vector<Tower*> testTowers;
+    for (auto& t : towers) testTowers.push_back(&t);
+    testTowers.push_back(&dummyTower);
+
+    for (auto& e : enemies) {
+        if (e.getType() == EnemyType::MeadowBoss) {
+            if (!e.canReachGoal(testTowers))
+                return false;
+        }
+    }
+
+    return true;
+}
+void Game::applyMeadowBossAbility() {
+    if (enemies.empty()) return;
+
+    Enemy& boss = enemies.back();
+    if (boss.getType() != EnemyType::MeadowBoss) return;
+
+    int ts = map->tileSize;
+    float radius = ts * 2.f;
+    float radius2 = radius * radius;
+
+    for (auto& t : towers) {
+        if (t.isDestroyed()) continue;
+
+        sf::Vector2f diff = t.getPosition() - boss.getPosition();
+        if (diff.x * diff.x + diff.y * diff.y > radius2) continue;
+
+        t.addInfestation(2);
+
+        int tx = static_cast<int>(t.getPosition().x) / ts;
+        int ty = static_cast<int>(t.getPosition().y) / ts;
+
+        // przesuwanie w kolejności: prawo, lewo, dół, góra
+        if (tx + 1 < map->getWidth() && canMoveTower(tx + 1, ty))
+            t.setPosition({ (tx + 1) * ts + ts / 2.f, ty * ts + ts / 2.f });
+        else if (tx - 1 >= 0 && canMoveTower(tx - 1, ty))
+            t.setPosition({ (tx - 1) * ts + ts / 2.f, ty * ts + ts / 2.f });
+        else if (ty + 1 < map->getHeight() && canMoveTower(tx, ty + 1))
+            t.setPosition({ tx * ts + ts / 2.f, (ty + 1) * ts + ts / 2.f });
+        else if (ty - 1 >= 0 && canMoveTower(tx, ty - 1))
+            t.setPosition({ tx * ts + ts / 2.f, (ty - 1) * ts + ts / 2.f });
+
+    }
+
+}
