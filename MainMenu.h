@@ -14,7 +14,7 @@ public:
 
     bool confirmClicked() const { return confirmed; }
     bool backClicked() const { return backPressed; }
-
+    
     GameMode getSelectedMode() const { return selectedMode; }
     Difficulty getSelectedDifficulty() const { return selectedDifficulty; }
 
@@ -31,7 +31,7 @@ private:
     Button adventureBtn;
     Button endlessBtn;
 
-    // trudnoœæ
+    // trudnoÅ›Ä‡
     Button easyBtn;
     Button normalBtn;
     Button hardBtn;
