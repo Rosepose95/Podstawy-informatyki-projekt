@@ -19,7 +19,7 @@ Menu::Menu(float width, float height, sf::Font& arial)
     , height(height)
 	, autoSlotText(arial)
 {
-    // --- £ADOWANIE T£A ---
+    // --- ≈ÅADOWANIE T≈ÅA ---
     if (!backgroundTexture.loadFromFile("assets/menugraf.png")) {
         std::cout << "Nie zaladowalo tla" << std::endl;
     }
@@ -27,7 +27,7 @@ Menu::Menu(float width, float height, sf::Font& arial)
     sf::Vector2u texturesize = backgroundTexture.getSize();
     backgroundSpirite.setScale({ width / (float)texturesize.x, height / (float)texturesize.y });
 
-    // --- TYTU£ ---
+    // --- TYTU≈Å ---
     title.setString("TOWER DEFFENCE");
     title.setCharacterSize(80);
     title.setFillColor(sf::Color(0, 0, 128));
@@ -37,7 +37,7 @@ Menu::Menu(float width, float height, sf::Font& arial)
     title.setPosition({ width / 2.f, height * 0.25f });
 
     // --- PRZYCISKI MENU ---
-    float buttonSpacing = 100.f; // odstÍp miÍdzy przyciskami
+    float buttonSpacing = 100.f; // odstƒôp miƒôdzy przyciskami
     float startY = height / 2.f;  // Y pierwszego przycisku (START)
 
     // --- PRZYCISK START ---
@@ -115,7 +115,7 @@ Menu::Menu(float width, float height, sf::Font& arial)
     backText.setString("BACK");
     backText.setCharacterSize(36);
     backText.setFillColor(sf::Color::White);
-    initSlots(arial); // inicjalizacja slotÛw
+    initSlots(arial); // inicjalizacja slot√≥w
 
     float liftUp = -50.f; 
 
@@ -131,13 +131,13 @@ Menu::Menu(float width, float height, sf::Font& arial)
 
     // --- AUTOSAVE TEXT ---
     autoSlotText.setString("[AUTO] " + SaveSystem::getDescription(0));
-    autoSlotText.setCharacterSize(28);          // TAKA SAMA WIELKOå∆ JAK SLOTY
+    autoSlotText.setCharacterSize(28);          // TAKA SAMA WIELKO≈öƒÜ JAK SLOTY
     autoSlotText.setFillColor(sf::Color::Black);
 
-    // R CZNA korekta (JEDYNE MOØLIWE ROZWI•ZANIE)
+    // RƒòCZNA korekta (JEDYNE MO≈ªLIWE ROZWIƒÑZANIE)
     autoSlotText.setPosition({
         autoSlotButton.getPosition().x - 140.f,  // lewo/prawo
-        autoSlotButton.getPosition().y - 20.f   // gÛra/dÛ≥
+        autoSlotButton.getPosition().y - 20.f   // g√≥ra/d√≥≈Ç
         });
     float slotStartY =
         autoSlotButton.getPosition().y + SLOT_HEIGHT + 30.f;
@@ -216,7 +216,7 @@ void Menu::handleHover(sf::Vector2i mousepos)
     }
 }
 
-// --- KLIKNI CIA PRZYCISK”W ---
+// --- KLIKNIƒòCIA PRZYCISK√ìW ---
 bool Menu::isStartClicked(sf::Vector2i mousepos)
 {
     sf::Vector2f m((float)mousepos.x, (float)mousepos.y);
@@ -238,7 +238,7 @@ bool Menu::isEditClicked(sf::Vector2i mousepos)
     return editButton.getGlobalBounds().contains(m) && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left);
 }
 
-// --- OBS£UGA SLOT”W ---
+// --- OBS≈ÅUGA SLOT√ìW ---
 int Menu::slotClicked(sf::Vector2i mousePos)
 {
     if (!inLoadScreen) return -1;
@@ -267,14 +267,14 @@ int Menu::slotClicked(sf::Vector2i mousePos)
 
 
 
-// --- INICJALIZACJA SLOT”W ---
+// --- INICJALIZACJA SLOT√ìW ---
 void Menu::initSlots(sf::Font& font)
 {
     slotButtons.clear();
     slotTexts.clear();
     float totalHeight = 3 * SLOT_HEIGHT + 2 * SLOT_SPACING;
     float autoSlotBottom = autoSlotButton.getPosition().y + SLOT_HEIGHT / 2.f;
-    float startY = autoSlotBottom + SLOT_SPACING; // slot 1 startuje poniøej autosave
+    float startY = autoSlotBottom + SLOT_SPACING; // slot 1 startuje poni≈ºej autosave
 
     for (int i = 0; i < 3; ++i) {
         sf::RectangleShape slot({ SLOT_WIDTH, SLOT_HEIGHT });
@@ -307,7 +307,7 @@ void Menu::initSlots(sf::Font& font)
 
 }
 
-// --- OBS£UGA LOAD SCREEN ---
+// --- OBS≈ÅUGA LOAD SCREEN ---
 void Menu::enterLoadScreen() {
     inLoadScreen = true;
     currentScreen = MenuScreen::LOAD_SLOTS;
@@ -337,7 +337,7 @@ void Menu::setSlotText(int slot, const std::string& text)
     sf::Text& t = slotTexts[slot - 1];
     t.setString(text);
 
-    // przeliczanie origin i ustawienie pozycji na úrodku slotu
+    // przeliczanie origin i ustawienie pozycji na ≈õrodku slotu
     auto bounds = t.getLocalBounds();
     t.setOrigin({ bounds.position.x + bounds.size.x / 2.f, bounds.position.y + bounds.size.y / 2.f });
     t.setPosition(slotButtons[slot - 1].getPosition());
