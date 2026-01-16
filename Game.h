@@ -10,6 +10,15 @@
 #include "Map.h" // dodanie nagłówka mapy
 #include "GameTypes.h"
 
+enum class AdventureLevel {
+    Grass = 0,
+    Ice = 1,
+    Fire = 2
+};
+struct WarningTile {
+    sf::Vector2f pos;
+    float timer;
+};
 
 
 /*struct Biome {
@@ -48,13 +57,28 @@ private:
     std::string currentNodeId;
     WorldMap worldMap;
     bool inWorldMap = true;
+    int adventureWave = 0;
+    int maxAdventureWaves = 10;
+    bool bossAlive = false;
+    
+    static constexpr int MAX_ADVENTURE_WAVES = 3;
+    std::vector<WarningTile> warningTiles;
 
     // --- Statystyki gracza ---
     int playerLives = 20; // życie gracza
     int baseHP;           // zdrowie bazy
-    int gold = 0;         // złoto (z drugiego kodu)
+    int gold = 0;         // złoto 
     bool gameOver;        // flaga Game Over
+    // Adventure state
+    void applyIceWave(sf::Vector2f bossPos);
+   
+    int adventureStage = 0;     // 0–2 (3 levele)
+    bool bossSpawned = false;
+    bool levelFinished = false;
 
+    std::vector<std::pair<Tower*, sf::Vector2f>> pendingTowerMoves;
+
+   
     // --- Fale ---
     int currentWave = 0;     // aktualna fala
     int enemiesToSpawn = 0;  // ile jeszcze przeciwników do spawnu
@@ -62,7 +86,8 @@ private:
     float spawnTimer = 0.f;
     float spawnDelay = 0.6f; // co ile sekund spawn
     bool waveJustLoaded = false;
-
+    float enemyHpMultiplier = 1.f;
+    float goldMultiplier = 1.f;
 
     bool isBossWave = false;     // flaga boss wave
     bool waveInProgress = false; // czy fala w toku
@@ -113,12 +138,13 @@ public:
     void startAdventureNode(int nodeId);
     // --- Map ---
     void setMap(Map* m);  // ustawienie mapy i blokady stawiania wież
-
+    void spawnBossForCurrentLevel();
     // --- Dodawanie jednostek ---
     void addEnemy(Enemy enemy);
     void addTower(Tower tower);
     void placeTower(sf::Vector2f position);
     bool canPlaceTower(sf::Vector2f pos) const;
+    void spawnIceExplosion(sf::Vector2f pos);
 
     // --- Fale ---
     void startNextWave();
@@ -201,6 +227,8 @@ public:
     void onLoadedFromSave();
 
     AdventureMode& getAdventure();
+    void enterWorldMap();
+    GameMode getMode() const;
 
     void setCurrentNode(const std::string& id);
     const std::string& getCurrentNode() const;
@@ -216,6 +244,11 @@ public:
     void setMode(GameMode m);
     void setDifficulty(Difficulty d);
     void advanceBiome();
+    bool isInWorldMap() const { return inWorldMap; }
+    void applyDifficulty(Difficulty diff);
+    void applyMeadowBossAbility();
+    bool canMoveTower(int tx, int ty);
+    bool canPushTowerWithoutBlockingPath(int tx, int ty, Tower* movingTower);
 };
 
 #endif
