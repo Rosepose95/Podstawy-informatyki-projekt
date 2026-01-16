@@ -21,6 +21,8 @@ private:
     int level;
     float range;
 
+    int shotsFired = 0; // licznik wszystkich strzałów
+
     // infestation
     int infestationStacks = 0;
     static constexpr int MAX_INFESTATION = 10;
@@ -29,13 +31,12 @@ private:
 
     int burnStacks = 0;
     float baseCooldown = 0.f;
-    
-    float frozenTimer = 0.f;
+
     int slowStacks = 0;
     float freezeTimer = 0.f;
+    bool frozen = false;
 
-
-
+    
 
     bool destroyed = false;
     sf::RectangleShape shape;
@@ -49,7 +50,7 @@ public:
     bool isDestroyed() const;
     int getInfestationStacks() const;
     float getDamageMultiplier() const;
-    
+
     float getFireRateMultiplier() const;
     // burn
     void addBurn(int stacks);
@@ -71,19 +72,18 @@ public:
 
     sf::Vector2f getPosition() const;
     void draw(sf::RenderWindow& window) const;
-// slow
-void addSlow(int stacks);
-int getSlowStacks() const;
+    // slow
+    void addSlow(int stacks);
+    int getSlowStacks() const;
 
-// freeze
-void freeze(float time);
-bool isFrozen() const;
+    // freeze
+    void freeze(float time);
+    bool isFrozen() const;
 
 };
 
 
 #endif
-
 
 
 
