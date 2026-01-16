@@ -41,26 +41,28 @@ bool AdventureMode::isBossNode(const std::string& id) const
 
 void AdventureMode::init() {
     nodes["grasslands"] = { "grasslands", Biomes::Meadow, true,  false, false };
-    nodes["forest"]     = { "forest",     Biomes::Forest, false, false, false };
-    nodes["ice"]        = { "ice",        Biomes::Ice,    false, false, true  };
-   // nodes["water"]      = { "water",      Biomes::Water,  false, false, false };
-    
+    nodes["forest"] = { "forest",     Biomes::Fire, false, false, false };
+    nodes["ice"] = { "ice",        Biomes::Ice,    false, false, true };
+    // nodes["water"]      = { "water",      Biomes::Water,  false, false, false };
+
 }
 
 int AdventureMode::getRewardGold(const std::string& nodeId) const
-{
+{   
     // prosta, bezpieczna logika na start
     if (nodeId == "grasslands") return 50;
     if (nodeId == "forest")     return 75;
     if (nodeId == "ice")        return 100;
-   // if (nodeId == "volcano")    return 150;
+    // if (nodeId == "volcano")    return 150;
 
     return 25; // fallback
 }
 Biomes AdventureMode::getBiomeForNode(const std::string& id) const {
-    return nodes.at(id).biome;
+    auto it = nodes.find(id);
+    if (it == nodes.end())
+        return Biomes::Meadow; // fallback
+    return it->second.biome;
 }
-
 
 
 
