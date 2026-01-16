@@ -24,7 +24,7 @@ private:
     sf::Text autoSlotText;
 
 
-    // --- Przycisk / prostok¹ty ---
+    // --- Przycisk / prostokÄ…ty ---
     sf::RectangleShape startButton;
     sf::RectangleShape loadButton;
     sf::RectangleShape exitButton;
@@ -33,13 +33,13 @@ private:
     sf::RectangleShape autoSlotButton;
 
 
-    // --- Grafika t³a ---
+    // --- Grafika tÅ‚a ---
     sf::Texture backgroundTexture;
     sf::Sprite backgroundSpirite;
 
     // --- Sloty ---
-    std::vector<sf::RectangleShape> slotButtons; // prostok¹ty slotów
-    std::vector<sf::Text> slotTexts;             // teksty slotów
+    std::vector<sf::RectangleShape> slotButtons; // prostokÄ…ty slotÃ³w
+    std::vector<sf::Text> slotTexts;             // teksty slotÃ³w
     static constexpr float SLOT_WIDTH = 550.f;
     static constexpr float SLOT_HEIGHT = 70.f;
     static constexpr float SLOT_SPACING = 20.f;
@@ -64,10 +64,10 @@ public:
     // --- Rysowanie ---
     void draw(sf::RenderWindow& window);
 
-    // --- Hover / podœwietlanie ---
+    // --- Hover / podÅ›wietlanie ---
     void handleHover(sf::Vector2i mousepos);
 
-    // --- Klikniêcia ---
+    // --- KlikniÄ™cia ---
     bool isStartClicked(sf::Vector2i mousepos);
     bool isLoadClicked(sf::Vector2i mousepos);
     bool isExitClicked(sf::Vector2i mousepos);
@@ -75,7 +75,7 @@ public:
     bool isBackClicked(sf::Vector2i mousePos);
     bool backClicked(sf::Vector2i mousePos);
 
-    // --- Obs³uga slotów ---
+    // --- ObsÅ‚uga slotÃ³w ---
     int slotClicked(sf::Vector2i mousePos);
     void setSlotText(int slot, const std::string& text);
     void initSlots(sf::Font& font);
