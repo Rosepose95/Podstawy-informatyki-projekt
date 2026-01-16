@@ -9,7 +9,7 @@ MainMenu::MainMenu(float width, float height, sf::Font& font)
     sf::RectangleShape background({ width, height });
     background.setFillColor(sf::Color(30, 30, 40));
 
-    // pozycjonowanie i teksty przycisków
+    // pozycjonowanie i teksty przyciskÃ³w
     adventureBtn.text.setString("ADVENTURE");
     adventureBtn.box.setSize({ 300.f, 60.f });
     adventureBtn.box.setPosition({ width / 2.f - 150.f, 150.f });
@@ -73,13 +73,13 @@ void MainMenu::draw(sf::RenderWindow& window) {
     Button* buttons[] = { &adventureBtn, &endlessBtn, &easyBtn, &normalBtn, &hardBtn, &startBtn, &backBtn };
 
     for (auto b : buttons) {
-        // Kolor przycisku – jeœli wybrany, ca³y przycisk na ¿ó³to
+        // Kolor przycisku â€“ jeÅ›li wybrany, caÅ‚y przycisk na Å¼Ã³Å‚to
         if (b->selected) b->box.setFillColor(sf::Color(255, 220, 0));
 
         window.draw(b->box);
         window.draw(b->text);
 
-        // Podkreœlenie tylko dla wybranych przycisków (opcjonalnie)
+        // PodkreÅ›lenie tylko dla wybranych przyciskÃ³w (opcjonalnie)
         if (b->selected) {
             b->box.setOutlineColor(sf::Color::Red);
         }
@@ -106,7 +106,7 @@ void MainMenu::handleClick(sf::Vector2f mousePos) {
         adventureBtn.selected = false;
     }
 
-    // --- POZIOMY TRUDNOŒCI (Easy / Normal / Hard) ---
+    // --- POZIOMY TRUDNOÅšCI (Easy / Normal / Hard) ---
     if (easyBtn.box.getGlobalBounds().contains(mousePos)) {
         selectedDifficulty = Difficulty::Easy;
         easyBtn.selected = true;
