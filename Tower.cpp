@@ -36,8 +36,11 @@ void Tower::updateAttack(
 
     if (freezeTimer > 0.f) {
         freezeTimer -= dt;
-        return;
+        if (freezeTimer <= 0.f) {
+            frozen = false;
+        }
     }
+
 
     Enemy* target = nullptr;
     float bestDist = range * range;
@@ -235,6 +238,12 @@ void Tower::addSlow(int stacks) {
 }
 
 void Tower::freeze(float time) {
+    frozen = true;
     freezeTimer = std::max(freezeTimer, time);
+}
+
+
+bool Tower::isFrozen() const {
+    return frozen;
 }
 
