@@ -1,4 +1,4 @@
-#ifndef MAP_H
+##ifndef MAP_H
 #define MAP_H
 
 #include <vector>
@@ -13,7 +13,7 @@ public:
     int getWidth() const;
     int getHeight() const;
     sf::Vector2i baseTile;  //do pathingu
-    std::vector<sf::Vector2i> spawnPoints; //do spawnów
+    std::vector<sf::Vector2i> spawnPoints; //do spawnÃ³w
     int tileSize = 40; // Rozmiar kafelka (800/20 = 40, 640/16 = 40)
 
     void setTile(int x, int y, char type);  //malowanie mapy
@@ -26,5 +26,6 @@ private:
 };
 
 #endif
+
 
 
