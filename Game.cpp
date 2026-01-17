@@ -22,7 +22,7 @@ Game::Game()
     , Restart(font)
     , Exit(font)
     , TowerTypeText(font)
-    , infoText(font) 
+    , infoText(font) // dodatkowy tekst informacyjny
 {   
     // --- Wczytanie czcionki ---
     if (!font.openFromFile("assets/ArialMT.ttf")) {
@@ -140,7 +140,7 @@ Game::Game()
     //zmiana ikony buttonu po kliknieciu
     void Game::updateTowerTypeIcon()
     {
-        loadTowerTextures(); 
+        loadTowerTextures(); // upewnia się że tekstury są wczytane
 
         int t = towerUpgradeStep;
         if (t < 0) t = 0;
@@ -191,7 +191,7 @@ void Game::placeTower(sf::Vector2f position) {
     if (gridX < 0 || gridY < 0 || gridX >= map->getWidth() || gridY >= map->getHeight())
         return;
 
-    if (map->getTile(gridX, gridY) != '.')
+    if (!map->isBuildable(gridX, gridY))
         return;
     
 
@@ -692,5 +692,4 @@ void Game::HandleHover(sf::Vector2i mousepos) {
 
 bool Game::isClickOnUI(sf::Vector2f mousePos) const {
     return TowerTypeButton.getGlobalBounds().contains(mousePos);
-
 }

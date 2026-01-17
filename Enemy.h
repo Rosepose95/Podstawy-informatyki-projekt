@@ -15,9 +15,10 @@ class Enemy {
 private:
     int health;  //życie
     int maxHealth;
+    EnemyType type = EnemyType::Normal;
 
-    sf::CircleShape shape;
-    sf::Sprite sprite{s_textures[0]};
+    sf::RectangleShape body;
+    float radius = 15.f;
 
     const Map* map = nullptr; //do pathingu 
     sf::Vector2i tilePos;
@@ -26,37 +27,37 @@ private:
 
     float speed;
 
-    static std::array<sf::Texture, 4> s_textures;
-    static bool s_texturesLoaded;
+    static std::array<sf::Texture, 4> s_textures; 
+    static bool s_Loaded;                        
     static void loadTextures();
-
+   
     sf::Vector2i findNextTile() const;
     sf::Vector2f tileCenter(sf::Vector2i tile) const;
-    EnemyType type;
-    void applyType(EnemyType t, int h);
-
+    void applyType(EnemyType t, int baseHP);
 
     static constexpr float ROT_OFFSET_DEG = -90.f;
 
 public:
-    Enemy(int h, float startX, float startY, EnemyType t = EnemyType::Normal); //zmiana metod, wektorów i typów
-    bool reachedGoal() const;
+    Enemy(int h, float startX, float startY, EnemyType t = EnemyType::Normal);
+
     void setMap(const Map* m);
     void update(float dt);
+
+    bool reachedGoal() const;
 
     void takeDamage(int dmg);
     bool isDead() const;
 
     sf::Vector2f getPosition() const;
     float getRadius() const;
-  
+
     void setSpeed(float s) { speed = s; }
 
     void draw(sf::RenderWindow& window) const;
+
     int getHP() const { return health; }
     EnemyType getType() const { return type; }
     int getLifeDamage() const;
-
 };
 
 #endif

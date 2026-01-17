@@ -7,7 +7,15 @@
 char Map::getTile(int x, int y) const { return grid[y][x]; }
 int Map::getWidth() const { return grid[0].size(); }
 int Map::getHeight() const { return grid.size(); }
+bool Map::isBuildable(int x, int y) const
+{
+    if (y < 0 || y >= getHeight() || x < 0 || x >= getWidth()) return false;
 
+    char c = grid[y][x];
+    // budować wolno tylko na czystej trawie '.'
+    // wszystko inne blokuje: ścieżka, woda, meta, drzewa, chwasty, kamienie, most, płoty itd.
+    return (c == '.');
+}
 Map::Map() {
     std::srand((unsigned)std::time(nullptr));
     loadMap();
@@ -16,7 +24,8 @@ Map::Map() {
     texPath.setSmooth(false);
     texStone.setSmooth(false);
     texWater.setSmooth(false);
-
+    texFenceX.setSmooth(false);
+    texFenceY.setSmooth(false);
     for (auto& t : texTrees) t.setSmooth(false);
 }
 
@@ -41,14 +50,52 @@ void Map::loadTextures()
     if (!texWeeds[0].loadFromFile("assets/weeds_1.png")) throw std::runtime_error("No assets/weeds_1.png");
     if (!texWeeds[1].loadFromFile("assets/weeds_2.png")) throw std::runtime_error("No assets/weeds_2.png");
   
-
+    if (!texFenceX.loadFromFile("assets/fence_x.png")) throw std::runtime_error("No assets/fence_x.png");
+    if (!texFenceY.loadFromFile("assets/fence_y.png")) throw std::runtime_error("No assets/fence_y.png");
 
     texturesLoaded = true;
 }
 
+//rysowanie kamiennego płotu, x/y
+void Map::drawFenceX(sf::RenderWindow& window, int gridX, int gridY)
+{
+    sf::Sprite spr(texFenceX);
+    auto s = texFenceX.getSize();
+    if (s.x == 0 || s.y == 0) return;
 
+    float targetW = 3.15f * tileSize;
+    float targetH = 1.f * tileSize;
 
-//rysowanie pojedynczego drzewa
+    spr.setScale({ targetW / (float)s.x, targetH / (float)s.y });
+    spr.setOrigin({ s.x / 2.f, (float)s.y });
+
+    float x = gridX * tileSize + tileSize / 2.f;
+    float y = (gridY + 1) * (float)tileSize;
+
+    spr.setPosition({ x, y });
+    window.draw(spr);
+}
+
+void Map::drawFenceY(sf::RenderWindow& window, int gridX, int gridY)
+{
+    sf::Sprite spr(texFenceY);
+    auto s = texFenceY.getSize();
+    if (s.x == 0 || s.y == 0) return;
+
+    float targetW = 1.f * tileSize;
+    float targetH = 2.2f * tileSize;
+
+    spr.setScale({ targetW / (float)s.x, targetH / (float)s.y });
+    spr.setOrigin({ s.x / 2.f, (float)s.y });
+
+    float x = gridX * tileSize + tileSize / 2.f;
+    float y = (gridY + 1) * (float)tileSize;
+
+    spr.setPosition({ x, y });
+    window.draw(spr);
+}
+
+//rysowanie na pojedynczym kafelku
 void Map::drawTile(sf::RenderWindow& window, const sf::Texture& tex, float x, float y)
 {
     sf::Sprite spr(tex);
@@ -63,23 +110,20 @@ void Map::drawTile(sf::RenderWindow& window, const sf::Texture& tex, float x, fl
     window.draw(spr);
 }
 
-//rysowanie drzew na dowolną ilość kafelków
+//rysowanie na dowolną ilość kafelków
 void Map::drawTree2Tiles(sf::RenderWindow& window, const sf::Texture& tex, int gridX, int gridY)
 {
     sf::Sprite spr(tex);
     auto s = tex.getSize();
     if (s.x == 0 || s.y == 0) return;
 
-    //skalowanie drzew 
+    //skalowanie 
     float targetW = 1.2f * tileSize;
-    float targetH = 1.4f * tileSize;
+    float targetH = 1.7f * tileSize;
 
     spr.setScale({ targetW / (float)s.x, targetH / (float)s.y });
-
-    
     spr.setOrigin({ s.x / 2.f, (float)s.y });
 
-   
     float x = gridX * tileSize + tileSize / 2.f;
     float y = (gridY + 1) * tileSize;
 
@@ -94,16 +138,12 @@ void Map::drawFlag2Tiles(sf::RenderWindow& window, const sf::Texture& tex, int g
     auto s = tex.getSize();
     if (s.x == 0 || s.y == 0) return;
 
-    // 1×2 kafelki (w górę)
     float targetW = 1.f * tileSize;
     float targetH = 2.f * tileSize;
 
     spr.setScale({ targetW / (float)s.x, targetH / (float)s.y });
-
-    // kotwica: dół-środek (żeby stało na kafelku z '*')
     spr.setOrigin({ s.x / 2.f, (float)s.y });
 
-    // pozycja: środek kafelka w X, dół kafelka w Y
     float x = gridX * tileSize + tileSize / 2.f;
     float y = (gridY + 1) * tileSize;
 
@@ -115,27 +155,27 @@ void Map::drawFlag2Tiles(sf::RenderWindow& window, const sf::Texture& tex, int g
 
 void Map::loadMap() {
     std::vector<std::string> layout = {
-        "..........#W.........S....#....", // 0  
-        ".S......A.#...W...........#.WA.", // 1
-        "#######...###########.A...#....", // 2
-        "......#.S...........#.....#.S..", // 3
-        "...####.....A...W...#..W..#..S.", // 4
-        "...#............~~..#######....", // 5
-        ".A.#...########.~~W.#.......A..", // 6
-        "...#..S#......#.....#.......S..", // 7
-        "...#####...W..#######.A..SW....", // 8
-        ".....W....A...#..~~~~~~~~~~~~~~", // 9  
-        ".S......W....*#*.~........###W.", // 10 
-        "..############*#########..#.###", // 11     
-        "..#..........*#*.~.....#..#....", // 12
-        "..#....W....W.#..~..W..####....", // 13
-        "~~#~~~~~~~~~~~#~~~....W.....W..", // 14
-        "..#....S....W.#.......#######S.", // 15 
-        "..#W.A........#....A..#.....#..", // 16
-        "..#........S..#.....S.#.A.###..", // 17
-        "..#.W..S......#########...#...A", // 18
-        "###........A............S.#....", // 19
-        ".W..A..W...S..........W...#...."  // 20 
+        ".~.X.X.X.X#.XXXXXXXXXXXXX~#.XX.", // 0  
+        "Y~S..W...A#A..W......S.~~~#AWAY", // 1
+        "#######.W.###########.A~..#....", // 2
+        ".~.S..#..A.......S..#..~..#.S.Y", // 3
+        "Y~.####.....A.W.~~~~#~~~W.#..S.", // 4
+        ".~.#....S.......~~~W#######...Y", // 5
+        "Y~.#.W.########.~~~.#......AW..", // 6
+        ".~.#####......#...W.#.......S.Y", // 7
+        "Y~.........W..#######.A..SW~~~~", // 8
+        ".~~~.W....A...#..~~~~~~~~~~~...", // 9  
+        "YS.~....W....S#S.~........###WY", // 10 
+        ".#############*#########..#.###", // 11     
+        "Y#.~.......W.S#S.~.....####....", // 12
+        ".#.~~~~~~~~~~~#~~~...S.......SY", // 13
+        "Y#.......S....#.W.....W....W..", // 14
+        ".#.A...S....W.#.......#######SY", // 15 
+        "Y#...A........#....A..#.....#..", // 16
+        ".#.........S..#.....S.#.A.###.Y", // 17
+        "Y#..W..S......#########...#....", // 18
+        ".#.........A.....W...W..S.#..AY", // 19
+        "Y#.X.X.X.X.X.X.X.X.X.X.X.X#.X.X."  // 20 
     };
     int rows = (int)layout.size();           //pion liczy znaki
     int cols = (int)layout[0].size();        //poziom liczy znaki
@@ -163,7 +203,7 @@ void Map::loadMap() {
                 treeVariant[i][j] = std::rand() % 4;
                 
                 if (i - 1 >= 0 && grid[i - 1][j] == '.') {
-                    grid[i - 1][j] = 'x'; // zajęte przez koronę drzewa
+                    grid[i - 1][j] = 'c'; // brak mozliwosci budowania wiez na "drugim" kafelku ktory zajmuje drzewo
                 }
             }
             else if (grid[i][j] == 'S') {                 // mały kamień losowany 1-3
@@ -201,7 +241,7 @@ void Map::loadMap() {
                     drawTile(window, texGrass, px, py);
                 }
 
-                //  OBIEKTY/DEKORACJE NA WIERZCHU
+                //  OBIEKTY/DEKORACJE 
                 if (c == 'A') {
                     drawTree2Tiles(window, texTrees[treeVariant[i][j]], j, i);
                 } // małe kamienie
@@ -212,14 +252,20 @@ void Map::loadMap() {
                     drawTile(window, texWeeds[weedsVariant[i][j]], px, py);
                 }
                 else if (c == '*') {
-                    // stone jako flagi (baza
+                    // stone jako flagi (baza)
                     drawFlag2Tiles(window, texStone, j, i);
                 }
+                else if (c == 'X') {
+                    drawFenceX(window, j, i);
+                }
+                else if (c == 'Y') {
+                    drawFenceY(window, j, i);
+                }
+
             }
         }
         
     }
-    
 //rysowanie mnapy
 void Map::setTile(int x, int y, char type) {
     if (y >= 0 && y < grid.size() && x >= 0 && x < grid[0].size()) {

@@ -25,7 +25,9 @@ public:
     void refreshLogic();
     void loadMap();
     void drawFlag2Tiles(sf::RenderWindow& window, const sf::Texture& tex, int gridX, int gridY);
-
+    void drawFenceX(sf::RenderWindow& window, int gridX, int gridY);
+    void drawFenceY(sf::RenderWindow& window, int gridX, int gridY);
+    bool isBuildable(int x, int y) const;
 private:
 
     std::array<sf::Texture, 4> texTrees;                 // tree_1..tree_4
@@ -37,14 +39,15 @@ private:
 
 
     std::vector<std::vector<char>> grid;
-
+  
     bool texturesLoaded = false;
     sf::Texture texGrass;  //trawa (stawianie wiez)
     sf::Texture texPath;   //sciezka enemies
     sf::Texture texStone;  //meta 
-    sf::Texture texWater;  
-    sf::Texture texTree;
-
+    sf::Texture texWater;  //woda
+    sf::Texture texTree;   //drzewo
+    sf::Texture texFenceX;  //kamienny płot poziomy
+    sf::Texture texFenceY;  //kamienny płot pionowy
 
   
     void loadTextures();

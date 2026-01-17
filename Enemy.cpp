@@ -4,11 +4,11 @@
 #include <stdexcept>
 
 std::array<sf::Texture, 4> Enemy::s_textures;
-bool Enemy::s_texturesLoaded = false;
+bool Enemy::s_Loaded = false;
 
 void Enemy::loadTextures()
 {
-    if (s_texturesLoaded) return;
+    if (s_Loaded) return;
 
     if (!s_textures[0].loadFromFile("assets/enemy_normal.png")) throw std::runtime_error("No assets/enemy_normal.png");
     if (!s_textures[1].loadFromFile("assets/enemy_fast.png"))   throw std::runtime_error("No assets/enemy_fast.png");
@@ -17,89 +17,81 @@ void Enemy::loadTextures()
 
     for (auto& t : s_textures) t.setSmooth(false);
 
-    s_texturesLoaded = true;
+    s_Loaded = true;
 }
 
-Enemy::Enemy(int h, float startX, float startY, EnemyType t)
-    : health(h), maxHealth(h), type(t) { //dodatek typu enemy i życia dla bossa
-
+Enemy::Enemy(int h, float startX, float startY, EnemyType t) {
     loadTextures();
 
-    shape.setRadius(15.f);
-    shape.setOrigin({ 15.f, 15.f });
-    shape.setPosition({ startX, startY });
+    
+    body.setPosition({ startX, startY });
+    applyType(t, h);
 
-    applyType(type, h);
-
+   
     tilePos = { int(startX) / 40, int(startY) / 40 };
     prevTile = tilePos;
     nextTile = tilePos;
-
 }
 
-    void Enemy::applyType(EnemyType t, int h)
+    void Enemy::applyType(EnemyType t, int baseHP)
     {
         type = t;
 
         int texIndex = 0;
+        
         switch (type) {
         case EnemyType::Normal:
             speed = 100.f;
+            radius = 25.f;
+            maxHealth = health = baseHP;
             texIndex = 0;
-            shape.setRadius(15.f);
-            shape.setOrigin({ 15.f, 15.f });
-            maxHealth = health = h;
             break;
 
         case EnemyType::Fast:
             speed = 160.f;
+            radius = 22.f;
+            maxHealth = health = baseHP;
             texIndex = 1;
-            shape.setRadius(15.f);
-            shape.setOrigin({ 15.f, 15.f });
-            maxHealth = health = h;
             break;
 
         case EnemyType::Tank:
             speed = 60.f;
+            radius = 30.f;
+            maxHealth = health = baseHP;
             texIndex = 2;
-            shape.setRadius(17.f);
-            shape.setOrigin({ 17.f, 17.f });
-            maxHealth = health = h;
             break;
 
         case EnemyType::Boss:
             speed = 40.f;
+            radius = 35.f;
+            maxHealth = health = baseHP * 5;
             texIndex = 3;
-            maxHealth = health = h * 5;
-            shape.setRadius(28.f);
-            shape.setOrigin({ 28.f, 28.f });
             break;
         }
+
     
 
-    sprite.setTexture(s_textures[texIndex], true);
-
-    auto s = sprite.getTexture().getSize();
-    sprite.setOrigin({ s.x / 2.f, s.y / 2.f });
-
-    float target = 2.f * shape.getRadius();
-    sprite.setScale({ target / (float)s.x, target / (float)s.y });
-
-    sprite.setPosition(shape.getPosition());
-}
+        body.setSize({ 2.f * radius, 2.f * radius });
+        body.setOrigin({ radius, radius });
+        body.setTexture(&s_textures[texIndex], true);
+    }
 
 
-void Enemy::setMap(const Map* m) { //nowe fukcja do pathing
+
+void Enemy::setMap(const Map* m) {
     map = m;
+    if (!map) return;
+
     int ts = map->tileSize;
 
-    tilePos.x = (int)shape.getPosition().x / ts;
-    tilePos.y = (int)shape.getPosition().y / ts;
+    sf::Vector2f pos = body.getPosition();
+    tilePos.x = (int)(pos.x / (float)ts);
+    tilePos.y = (int)(pos.y / (float)ts);
 
     prevTile = tilePos;
     nextTile = findNextTile();
-
 }
+
 
 sf::Vector2i Enemy::findNextTile() const {
     static const sf::Vector2i dirs[4] = {
@@ -124,8 +116,8 @@ sf::Vector2i Enemy::findNextTile() const {
         if (tile != '#' && tile != '*')
             continue;
 
-        float dx = candidate.x - map->baseTile.x;
-        float dy = candidate.y - map->baseTile.y;
+        float dx = (float)candidate.x - map->baseTile.x;
+        float dy = (float)candidate.y - map->baseTile.y;
         float dist = dx * dx + dy * dy;
 
         if (dist < bestDist) {
@@ -143,46 +135,45 @@ bool Enemy::reachedGoal() const {
 }
 
 
+sf::Vector2f Enemy::getPosition() const {
+    return body.getPosition();
+}
+
 sf::Vector2f Enemy::tileCenter(sf::Vector2i tile) const {
     float ts = static_cast<float>(map->tileSize);
-    return {
-        tile.x * ts + ts / 2.f,
-        tile.y * ts + ts / 2.f
-    };
+    return { tile.x * ts + ts / 2.f, tile.y * ts + ts / 2.f };
 }
 
 void Enemy::update(float dt) {
     if (!map) return;
     if (reachedGoal()) return;
 
-
     sf::Vector2f target = tileCenter(nextTile);
-    sf::Vector2f pos = shape.getPosition();
+    sf::Vector2f pos = body.getPosition();
 
     sf::Vector2f toTarget = target - pos;
     float dist = std::sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y);
-
     float moveDist = speed * dt;
 
-    if (dist > 0.0001f) {
-        sf::Vector2f dir = toTarget / dist;
+    if (dist <= 0.0001f) return;
 
-        // obrót sprite zgodnie z kierunkiem ruchu
-        float angle = std::atan2(dir.y, dir.x) * 180.f / 3.14159265f;
-        sprite.setRotation(sf::degrees(angle + ROT_OFFSET_DEG));
+    sf::Vector2f dir = { toTarget.x / dist, toTarget.y / dist };
 
-        if (dist <= moveDist) {
-            shape.setPosition(target);
-            sprite.setPosition(target);
+    // obrót zgodnie z ruchem
+    float angleDeg = std::atan2(dir.y, dir.x) * 180.f / 3.14159265f;
+    body.setRotation(sf::degrees(angleDeg + ROT_OFFSET_DEG));
 
-            prevTile = tilePos;
-            tilePos = nextTile;
-            nextTile = findNextTile();
-            return;
-        }
-        shape.move(dir * moveDist);
-        sprite.setPosition(shape.getPosition());
+
+    if (dist <= moveDist) {
+        body.setPosition(target);
+
+        prevTile = tilePos;
+        tilePos = nextTile;
+        nextTile = findNextTile();
+        return;
     }
+
+    body.move(dir * moveDist);
 }
 
 void Enemy::takeDamage(int dmg) { //zmiana
@@ -194,26 +185,22 @@ bool Enemy::isDead() const {
     return health <= 0;
 }
 
-sf::Vector2f Enemy::getPosition() const {
-    return shape.getPosition();
+float Enemy::getRadius() const
+{
+    return radius;
 }
-
-float Enemy::getRadius() const { //metody do paska
-    return shape.getRadius();
-}
-
 
 void Enemy::draw(sf::RenderWindow& window) const {
-    window.draw(sprite);
+    window.draw(body);
 
-    float ratio = static_cast<float>(health) / maxHealth;
+    float ratio = (maxHealth > 0) ? (float)health / (float)maxHealth : 0.f;
     ratio = std::clamp(ratio, 0.f, 1.f);
 
-    sf::Vector2f pos = shape.getPosition();
+    sf::Vector2f pos = body.getPosition();
 
     sf::RectangleShape back({ 36.f, 5.f });
     back.setFillColor(sf::Color::Red);
-    back.setPosition({ pos.x - 18.f, pos.y - 30.f });
+    back.setPosition({ pos.x - 18.f, pos.y - radius - 12.f });
 
     sf::RectangleShape hp({ 36.f * ratio, 5.f });
     hp.setFillColor(sf::Color::Green);
@@ -223,10 +210,9 @@ void Enemy::draw(sf::RenderWindow& window) const {
     window.draw(hp);
 }
 int Enemy::getLifeDamage() const {
-    if (type == EnemyType::Boss)
-        return 5;   // boss zabiera 5 żyć
-    return 1;       // normalny wróg
+    {
+        return (type == EnemyType::Boss) ? 5 : 1;       //boss zabiera 5 żyć
+    }
+
 }
-
-
 

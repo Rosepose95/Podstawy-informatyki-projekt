@@ -18,7 +18,7 @@ private:
 
     sf::Vector2f pos;
 
-    sf::Sprite sprite;
+    sf::Sprite sprite; // OK, bo zainicjalizujemy go w konstruktorze
 
     const std::array<sf::Texture, 3>* textures = nullptr;
     int tileSize = 0;
@@ -40,7 +40,6 @@ public:
 };
 
 #endif
-
 
 
 
