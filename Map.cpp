@@ -15,7 +15,9 @@ bool Map::isBuildable(int x, int y) const
     // budować wolno tylko na czystej trawie '.'
     // wszystko inne blokuje: ścieżka, woda, meta, drzewa, chwasty, kamienie, most, płoty itd.
     return (c == '.');
+
 }
+
 Map::Map() {
     std::srand((unsigned)std::time(nullptr));
     loadMap();
@@ -26,13 +28,14 @@ Map::Map() {
     texWater.setSmooth(false);
     texFenceX.setSmooth(false);
     texFenceY.setSmooth(false);
+    texTowerEditor.setSmooth(false);
     for (auto& t : texTrees) t.setSmooth(false);
 }
 
 void Map::loadTextures()
 {
     if (texturesLoaded) return;
-
+    if (!texTowerEditor.loadFromFile("assets/Tower_1.png")) throw std::runtime_error("No assets/Tower_1.png");
     if (!texGrass.loadFromFile("assets/grass_2.png")) throw std::runtime_error("No assets/grass_2.png");
     if (!texPath.loadFromFile("assets/path.png"))   throw std::runtime_error("No assets/path.png");
     if (!texStone.loadFromFile("assets/stone.png")) throw std::runtime_error("No assets/stone.png");
@@ -106,6 +109,28 @@ void Map::drawTile(sf::RenderWindow& window, const sf::Texture& tex, float x, fl
         float sy = (float)tileSize / (float)s.y;
         spr.setScale({ sx, sy });
     }
+    spr.setPosition({ x, y });
+    window.draw(spr);
+}
+
+void Map::drawTower2Tiles(sf::RenderWindow& window, int gridX, int gridY)
+{
+    sf::Sprite spr(texTowerEditor);
+    auto s = texTowerEditor.getSize();
+    if (s.x == 0 || s.y == 0) return;
+
+    // wieża: 1 kafelek szerokości, 2 kafelki wysokości
+    float targetW = 1.f * tileSize;
+    float targetH = 2.f * tileSize;
+
+    spr.setScale({ targetW / (float)s.x, targetH / (float)s.y });
+
+    // dół-środek tekstury stoi na kafelku
+    spr.setOrigin({ s.x / 2.f, (float)s.y });
+
+    float x = gridX * tileSize + tileSize / 2.f;
+    float y = (gridY + 1) * tileSize;     // dół kafelka bazowego
+
     spr.setPosition({ x, y });
     window.draw(spr);
 }
@@ -241,6 +266,9 @@ void Map::loadMap() {
                 }
 
                 //  OBIEKTY/DEKORACJE 
+                if (c == 'T') {
+                    drawTower2Tiles(window, j, i);
+                }
                 if (c == 'A') {
                     drawTree2Tiles(window, texTrees[treeVariant[i][j]], j, i);
                 } // małe kamienie
@@ -294,5 +322,3 @@ void Map::refreshLogic() {
         }
     }
 }
-
-

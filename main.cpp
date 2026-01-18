@@ -191,7 +191,7 @@ int main() {
 
                                 if (map.getTile(j, i) == 'T') {
                                     float centerx = j * ts + ts / 2.f;
-                                    float centery = i * ts + ts / 2.f;
+                                    float centery = (i + 1) * ts;
 
                                     game.setStartTPos({ centerx, centery });
 
@@ -309,10 +309,10 @@ int main() {
                 int tilex = (int)wordlpos.x / ts;
                 int tiley = (int)wordlpos.y / ts;
 
-                //sprawdzamy czy nie wychdzi poza nasza mape
-                if (tilex >= 0 && tilex <= 30 && tiley >= 0 && tiley <= 20) {
+                // sprawdzamy czy nie wychodzi poza mapę
+                if (tilex >= 0 && tilex < map.getWidth() && tiley >= 0 && tiley < map.getHeight()) {
 
-                    //jesli ktos bedzie chcial postawic kolejna wieze to ta 1 sie skasuje
+                    // jeśli pędzel to wieża - usuń starą wieżę (stary znak 'T')
                     if (currentBrush == 'T') {
                         for (int i = 0; i < map.getHeight(); i++) {
                             for (int j = 0; j < map.getWidth(); j++) {

@@ -143,8 +143,6 @@ Game::Game()
         loadTowerTextures(); // upewnia się że tekstury są wczytane
 
         int t = towerUpgradeStep;
-        if (t < 0) t = 0;
-        if (t > 2) t = 2;
 
         TowerTypeIcon.setTexture(&towerTextures[t], true);
 
@@ -194,9 +192,6 @@ void Game::placeTower(sf::Vector2f position) {
     if (!map->isBuildable(gridX, gridY))
         return;
     
-
-   
-
     auto towerBaseTile = [&](const Tower& t) {
         int tx = static_cast<int>(t.getPosition().x / ts);
         int tyBase = static_cast<int>(t.getPosition().y / ts) - 1; 
@@ -219,7 +214,6 @@ void Game::placeTower(sf::Vector2f position) {
                 showInfo = true;
                 return;
             }
-
             gold -= cost;
             t.setType(selectedType);
             return;
@@ -236,9 +230,6 @@ void Game::placeTower(sf::Vector2f position) {
         showInfo = true;
         return;
     }
-
-
-   
     float posX = gridX * tsF + tsF / 2.f;
     float posY = (gridY + 1) * tsF;  
 

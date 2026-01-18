@@ -28,6 +28,7 @@ public:
     void drawFenceX(sf::RenderWindow& window, int gridX, int gridY);
     void drawFenceY(sf::RenderWindow& window, int gridX, int gridY);
     bool isBuildable(int x, int y) const;
+    void drawTower2Tiles(sf::RenderWindow& window, int gridX, int gridY);
 private:
 
     std::array<sf::Texture, 4> texTrees;                 // tree_1..tree_4
@@ -48,7 +49,7 @@ private:
     sf::Texture texTree;   //drzewo
     sf::Texture texFenceX;  //kamienny płot poziomy
     sf::Texture texFenceY;  //kamienny płot pionowy
-
+    sf::Texture texTowerEditor; //textura wieży do edytora
   
     void loadTextures();
     void drawTile(sf::RenderWindow& window, const sf::Texture& tex, float x, float y);
