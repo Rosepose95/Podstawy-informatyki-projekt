@@ -8,7 +8,7 @@
 #include "SaveSystem.h"
 #include "AdventureMode.h"
 #include "WorldMap.h"
-#include "Shop.h"
+
 #include "MainMenu.h"
 #include "GameTypes.h"
 
@@ -29,7 +29,7 @@ int main() {
     Map map;
     game.setMap(&map);
 
-
+	
 
 
     sf::Font font;
@@ -97,18 +97,7 @@ int main() {
 
     bool canPaint = false;
     char currentBrush = '#';
-    auto updateBrushPreview = [&]() {
-        const sf::Texture* tex = nullptr;
 
-        if (currentBrush == 'T') {
-            tex = &game.getTowerTexture(0);   // startowa wieża do podglądu
-        }
-        else {
-            tex = &map.getBrushTexture(currentBrush); // trawa/path/meta itd.
-        }
-        hudBG.setFillColor(sf::Color::White);
-        hudBG.setTexture(tex, true);
-        };
     while (window.isOpen()) {
         sf::Vector2i mousepos = sf::Mouse::getPosition(window);
 
@@ -125,7 +114,7 @@ int main() {
                 window.close();
                 continue;
             }
-
+            
 
             // --- KLIKNIĘCIA GAME OVER ---
             if (game.isGameOver()) {
@@ -153,7 +142,7 @@ int main() {
                     mouseLeftClicked = false;
                 }
             }
-
+            
 
             // --- obsługa przycisku pauzy ---
             if (state != GameState::MENU) {
@@ -213,15 +202,12 @@ int main() {
 
                         else { // MENU GŁÓWNE
                             if (menu.isStartClicked(mousepos)) {
-
-                                game.isCustomMap = false;
-                                map.mapId = "default";
                                 map.loadMap();
                                 map.refreshLogic();
                                 state = GameState::MODE_SELECT;
                                 showMainMenu = true;
                                 mouseLeftClicked = false;
-
+                                modeMenu.reset();
 
 
 
@@ -236,7 +222,6 @@ int main() {
                                 state = GameState::EDITOR;
                                 map.clearMap();
                                 canPaint = false;
-                                updateBrushPreview();
                             }
                         }
                     }
@@ -248,48 +233,42 @@ int main() {
 
                 if (const auto* mouse = ev->getIf<sf::Event::MouseButtonPressed>()) {
                     if (mouse->button == sf::Mouse::Button::Left) {
-                        modeMenu.handleClick(window.mapPixelToCoords(mousepos));
+                        sf::Vector2f clickPos = window.mapPixelToCoords(mouse->position);
+                        modeMenu.handleClick(clickPos);
+
+                        if (modeMenu.confirmClicked()) {
+                            game.setMode(modeMenu.getSelectedMode());
+                            game.setDifficulty(modeMenu.getSelectedDifficulty());
+                            game.applyDifficulty(modeMenu.getSelectedDifficulty());
+
+                            map.mapId = "default";
+                            map.loadMap();
+                            map.refreshLogic();
+
+                            if (game.getMode() == GameMode::Adventure) game.enterWorldMap();
+                            else game.startGame();
+
+                            state = GameState::PLAYING;
+                            modeMenu.reset(); // resetujemy menu po rozpoczęciu gry
+                        }
+
+                        if (modeMenu.backClicked()) {
+                            state = GameState::MENU;
+                            modeMenu.reset();
+                        }
                     }
                 }
 
-                if (modeMenu.backClicked()) {
-                    state = GameState::MENU;
-                    modeMenu.reset();
-                }
-
-                if (modeMenu.confirmClicked()) {
-                    game.setMode(modeMenu.getSelectedMode());
-                    game.setDifficulty(modeMenu.getSelectedDifficulty());
-                    game.applyDifficulty(modeMenu.getSelectedDifficulty());
-
-                    map.mapId = "default";
-                    map.loadMap();
-                    map.refreshLogic();
-
-                    if (game.getMode() == GameMode::Adventure) {
-                        game.enterWorldMap();
-                    }
-                    else {
-                        game.startGame();
-                    }
-
-                    state = GameState::PLAYING;
-                    mouseLeftClicked = false;
-                }
+                
             }
-
-
-
-
-
 
             // --- TRYB EDITORA ---
             else if (state == GameState::EDITOR) {
                 if (const auto* key = ev->getIf<sf::Event::KeyPressed>()) {
-                        if (key->code == sf::Keyboard::Key::Num1) { currentBrush = '.'; updateBrushPreview(); }
-                        if (key->code == sf::Keyboard::Key::Num2) { currentBrush = '#'; updateBrushPreview(); }
-                        if (key->code == sf::Keyboard::Key::Num3) { currentBrush = '*'; updateBrushPreview(); }
-                        if (key->code == sf::Keyboard::Key::Num4) { currentBrush = 'T'; updateBrushPreview(); }
+                    if (key->code == sf::Keyboard::Key::Num1) currentBrush = '.';
+                    if (key->code == sf::Keyboard::Key::Num2) currentBrush = '#';
+                    if (key->code == sf::Keyboard::Key::Num3) currentBrush = '*';
+                    if (key->code == sf::Keyboard::Key::Num4) currentBrush = 'T';
 
                     if (key->code == sf::Keyboard::Key::Enter) {
 
@@ -303,7 +282,7 @@ int main() {
 
                                 if (map.getTile(j, i) == 'T') {
                                     float centerx = j * ts + ts / 2.f;
-                                    float centery = (i + 1) * ts;
+                                    float centery = i * ts + ts / 2.f;
 
                                     game.setStartTPos({ centerx, centery });
 
@@ -319,7 +298,7 @@ int main() {
                         map.refreshLogic();
                         game.startGame();
                         state = GameState::MODE_SELECT;
-
+                        mouseLeftClicked = false;
 
 
                     }
@@ -337,38 +316,40 @@ int main() {
                     if (mouse->button == sf::Mouse::Button::Left)
                         canPaint = false;
                 }
-                auto updateBrushPreview = [&]() {
-                    const sf::Texture* tex = nullptr;
-
-                    if (currentBrush == 'T') {
-                        tex = &game.getTowerTexture(0); // preview startowej wieży
-                    }
-                    else {
-                        tex = &map.getBrushTexture(currentBrush); // trawa/path/meta/woda
-                    }
-                    hudBG.setTexture(tex, true);
-
-                    hudBG.setFillColor(sf::Color::White);
-                    hudBG.setTexture(tex, true);
-                    };
+                if (currentBrush == '.') {
+                    hudBG.setFillColor(sf::Color::Green);
+                }
+                else if (currentBrush == '#') {
+                    hudBG.setFillColor(sf::Color(150, 150, 150));
+                }
+                else if (currentBrush == '*') {
+                    hudBG.setFillColor(sf::Color(255, 100, 0));
+                }
+                else {
+                    hudBG.setFillColor(sf::Color::Blue);
+                }
             }
-        
 
-            else if (state == GameState::PLAYING && !game.isGameOver() && !inWorldMap) {
-                // --- ROZGRYWKA ---
-                 // stawianie wież
-                if (const auto* mouse = ev->getIf<sf::Event::MouseButtonPressed>()) {
-                    if (mouse->button == sf::Mouse::Button::Left) {
-                        sf::Vector2f clickPos = window.mapPixelToCoords(mouse->position);
 
-                        if (game.isClickOnUI(clickPos)) {
-                            game.tryTowerType(clickPos);
-                        }
-                        else if (pauseButton.getGlobalBounds().contains(clickPos)) {}
-                        else {
+            // --- ROZGRYWKA ---
+            if (state == GameState::PLAYING &&
+                !game.isGameOver() &&
+                !game.isInWorldMap()) // <- nowe zabezpieczenie
+            {
+
+
+                // stawianie wież
+                if (state == GameState::PLAYING && !game.isGameOver() && !game.isInWorldMap()) {
+                    if (const auto* mouse = ev->getIf<sf::Event::MouseButtonPressed>()) {
+                        if (mouse->button == sf::Mouse::Button::Left) {
+                            sf::Vector2f clickPos = window.mapPixelToCoords(mouse->position);
+
+                            if (pauseButton.getGlobalBounds().contains(clickPos)) continue;
+
+                            sf::Vector2f worldPos = window.mapPixelToCoords(mouse->position);
                             int tileSize = map.tileSize;
-                            int tileX = static_cast<int>(clickPos.x) / tileSize;
-                            int tileY = static_cast<int>(clickPos.y) / tileSize;
+                            int tileX = static_cast<int>(worldPos.x) / tileSize;
+                            int tileY = static_cast<int>(worldPos.y) / tileSize;
                             float centerX = tileX * tileSize + tileSize / 2.f;
                             float centerY = tileY * tileSize + tileSize / 2.f;
 
@@ -376,6 +357,7 @@ int main() {
                         }
                     }
                 }
+
             }
             // --- PAUZA ---
             else if (state == GameState::PAUSED) {
@@ -450,10 +432,10 @@ int main() {
             int tilex = (int)wordlpos.x / ts;
             int tiley = (int)wordlpos.y / ts;
 
-            // sprawdzamy czy nie wychodzi poza mapę
-            if (tilex >= 0 && tilex < map.getWidth() && tiley >= 0 && tiley < map.getHeight()) {
+            //sprawdzamy czy nie wychdzi poza nasza mape
+            if (tilex >= 0 && tilex <= 30 && tiley >= 0 && tiley <= 20) {
 
-                // jeśli pędzel to wieża - usuń starą wieżę (stary znak 'T')
+                //jesli ktos bedzie chcial postawic kolejna wieze to ta 1 sie skasuje
                 if (currentBrush == 'T') {
                     for (int i = 0; i < map.getHeight(); i++) {
                         for (int j = 0; j < map.getWidth(); j++) {
@@ -465,7 +447,6 @@ int main() {
                 }
                 map.setTile(tilex, tiley, currentBrush);
             }
-        }
         }
 
         float dt = clock.restart().asSeconds();
