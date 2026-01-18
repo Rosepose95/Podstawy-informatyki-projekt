@@ -17,6 +17,7 @@
 Game::Game()
     :autoSaveIcon(autoSaveTexture)
     , font()
+    , goldText(font)
     , waveText(font)
     , enemiesText(font)
     , livesText(font)
@@ -27,33 +28,39 @@ Game::Game()
     , gameOver(false)
     , Restart(font)
     , Exit(font)
-    , infoText(font) // dodatkowy tekst informacyjny
+    , TowerTypeText(font)
+    , infoText(font) 
     , autoSaveText(font)
     , nodeCompletedText(font)
 
 {
-    // --- Wczytanie czcionki ---
+    //Wczytanie czcionki 
     if (!font.openFromFile("assets/ArialMT.ttf")) {
         throw std::runtime_error("Nie można wczytać czcionki");
     }
 
     // --- Ustawienia czcionek i kolorów ---
     waveText.setCharacterSize(20);
+    goldText.setCharacterSize(30);
     enemiesText.setCharacterSize(20);
     livesText.setCharacterSize(20);
     GameOverText.setCharacterSize(80); // duży tekst Game Over
     NextWaveText.setCharacterSize(60);
-    Restart.setCharacterSize(30);
+    Restart.setCharacterSize(30); //
+    Exit.setCharacterSize(30);
+    TowerTypeText.setCharacterSize(20);
     infoText.setCharacterSize(24); // infoText z drugiego kodu
 
     waveText.setFillColor(sf::Color::Black);
+    goldText.setFillColor(sf::Color::Black);
     enemiesText.setFillColor(sf::Color::Black);
     livesText.setFillColor(sf::Color::Black);
     GameOverText.setFillColor(sf::Color::Red);
     NextWaveText.setFillColor(sf::Color::Green);
     Restart.setFillColor(sf::Color::White);
     Exit.setFillColor(sf::Color::White);
-    infoText.setFillColor(sf::Color::Green);
+    TowerTypeText.setFillColor(sf::Color::Black);
+    infoText.setFillColor(sf::Color::Green); // infoText kolor
 
     // --- Pozycje tekstów na ekranie ---
     waveText.setPosition({ 10.f, 20.f });
@@ -112,6 +119,20 @@ Game::Game()
     autoSaveText.setFillColor(sf::Color(0, 200, 0, 0));
     autoSaveIcon.setPosition({ 500.f, 792.f });
     autoSaveText.setPosition({ 530.f, 780.f });
+    // --- NODE COMPLETED TEXT ---
+    nodeCompletedText.setFont(font);
+    nodeCompletedText.setString("NODE COMPLETED!");
+    nodeCompletedText.setCharacterSize(48);
+    nodeCompletedText.setFillColor(sf::Color::Yellow);
+
+    // wyśrodkowany na górze
+    auto ncb = nodeCompletedText.getLocalBounds();
+    nodeCompletedText.setOrigin({
+        ncb.position.x + ncb.size.x / 2.f,
+        ncb.position.y + ncb.size.y / 2.f
+        });
+    nodeCompletedText.setPosition({ 1240.f / 2.f, 120.f });
+
 
     // --- Wczytanie tekstury ikonki zapisu ---
     if (!autoSaveTexture.loadFromFile("assets/save1.png"))
@@ -211,11 +232,12 @@ void Game::startGame() {
     }
     startNextWave();
 
+
 }
 // --- Rozpoczęcie kolejnej fali ---
 void Game::startNextWave()
 {
-    waveText.setString("Wave " + std::to_string(currentWave));
+   
 
     currentWave++;
     waveJustLoaded = false;
@@ -301,12 +323,13 @@ void Game::update(float dt)
         return;
 
     totalPlayTime += dt;
-
-    // ================= WORLD MAP =================
+   // ================= WORLD MAP =================
     if (inWorldMap) {
         worldMap.update(adventure, dt);
+        updateUI(dt);   // <<< MUSI BYĆ
         return;
     }
+
 
     for (auto it = warningTiles.begin(); it != warningTiles.end();) {
         it->timer -= dt;
@@ -321,6 +344,7 @@ void Game::update(float dt)
        
     }
 
+    
     // ================= ADVENTURE FLOW =================
     if (mode == GameMode::Adventure) {
 
@@ -330,9 +354,12 @@ void Game::update(float dt)
             enemiesToSpawn == 0 &&
             adventureWave < 9)
         {
-            adventureWave++;
-            waveBreakTimer = 0.f;   // <<< TO JEST KLUCZ
-            startNextWave();
+            
+            if (waveBreakTimer >= breakDuration) {
+                adventureWave++;
+                startNextWave();
+                waveBreakTimer = 0.f;
+            }
         }
 
         // boss
@@ -355,6 +382,7 @@ void Game::update(float dt)
     }
 
 
+
     // ================= KONIEC FALI =================
     if (waveInProgress && enemies.empty() && enemiesToSpawn == 0) {
         waveInProgress = false;
@@ -367,12 +395,13 @@ void Game::update(float dt)
         }
     }
 
-    // ================= PRZERWA MIĘDZY FALAMI =================
+   // ================= PRZERWA MIĘDZY FALAMI =================
     if (!waveInProgress && enemies.empty() && enemiesToSpawn == 0) {
-
+		
         if (waveBreakTimer == 0.f) {
             NextWaveText.setPosition({ -600.f, 420.f });
             NextWaveText.setString("Get ready for wave " + std::to_string(currentWave + 1));
+			
         }
 
         waveBreakTimer += dt;
@@ -380,6 +409,7 @@ void Game::update(float dt)
 
         if (waveBreakTimer >= breakDuration) {
             startNextWave();
+            waveInProgress = true;
             waveBreakTimer = 0.f;
         }
     }
@@ -432,9 +462,15 @@ void Game::update(float dt)
                     }
                 );
             }
+            // MEADOW BOSS (ENDLESS FIX)
             if (type == EnemyType::MeadowBoss) {
-                applyMeadowBossAbility();
+                e.setPushCallback(
+                    [this](sf::Vector2f p) {
+                        applyMeadowBossAbility();
+                    }
+                );
             }
+
             // FIRE
             if (type == EnemyType::FireBoss ||
                 type == EnemyType::Flame ||
@@ -595,7 +631,7 @@ void Game::update(float dt)
         towers.end()
     );
 
-    updateUI();
+    updateUI(dt);
 }
 
 // --- Rysowanie gry ---
@@ -615,9 +651,9 @@ void Game::draw(sf::RenderWindow& window) const {
     for (const auto& t : towers) t.draw(window);
     for (const auto& e : enemies) e.draw(window);
     for (const auto& b : bullets) b.draw(window);
+
     if (inWorldMap) {
         worldMap.draw(window, adventure);
-        return;
     }
 
     if (!waveInProgress && enemies.empty() && enemiesToSpawn == 0)
@@ -631,20 +667,62 @@ void Game::draw(sf::RenderWindow& window) const {
         window.draw(ExitButton);
         window.draw(Exit);
     }
+
+    drawUI(window);
 }
 
-// --- Rysowanie UI ---
-void Game::drawUI(sf::RenderWindow& window) {
-    window.draw(waveText);
-    window.draw(enemiesText);
+void Game::updateUI(float dt) {
+    // teksty
+    waveText.setString("Wave: " + std::to_string(currentWave));
+    enemiesText.setString("Enemies: " + std::to_string(enemies.size() + enemiesToSpawn));
+
+    // --- NODE COMPLETED ---
     if (showNodeCompleted) {
-        if (nodeCompletedClock.getElapsedTime().asSeconds() < 2.f)
-            window.draw(nodeCompletedText);
-        else
+        if (nodeCompletedClock.getElapsedTime().asSeconds() >= 2.f)
             showNodeCompleted = false;
     }
 
-    if (showInfo && infoClock.getElapsedTime().asSeconds() < 2.f)
+    // --- INFO ---
+    if (showInfo) {
+        if (infoClock.getElapsedTime().asSeconds() >= 2.f)
+            showInfo = false;
+    }
+
+    // --- AUTO SAVE ---
+    if (showAutoSave) {
+        float t = autoSaveClock.getElapsedTime().asSeconds();
+
+        if (t < 2.f) {
+            int alpha = 255;
+            if (t < 0.5f)
+                alpha = int(255 * (t / 0.5f));
+            else if (t > 1.5f)
+                alpha = int(255 * (1.f - (t - 1.5f) / 0.5f));
+
+            autoSaveText.setFillColor(sf::Color(0, 200, 0, alpha));
+            autoSaveIcon.setColor(sf::Color(255, 255, 255, alpha));
+
+            autoSaveIcon.setPosition({
+                autoSaveText.getPosition().x - 40.f,
+                autoSaveText.getPosition().y - 4.f
+                });
+        }
+        else {
+            showAutoSave = false;
+        }
+    }
+}
+
+
+// --- Rysowanie UI ---
+void Game::drawUI(sf::RenderWindow& window) const {
+    window.draw(waveText);
+    window.draw(enemiesText);
+
+    if (showNodeCompleted)
+        window.draw(nodeCompletedText);
+
+    if (showInfo)
         window.draw(infoText);
 
     for (int i = 0; i < playerLives; ++i) {
@@ -654,40 +732,12 @@ void Game::drawUI(sf::RenderWindow& window) {
         window.draw(life);
     }
 
-    // --- AUTO-SAVE ---
     if (showAutoSave) {
-        float t = autoSaveClock.getElapsedTime().asSeconds();
-        if (t < 2.f) {
-            int alpha = 255;
-            if (t < 0.5f) alpha = static_cast<int>(255 * (t / 0.5f));
-            else if (t > 1.5f) alpha = static_cast<int>(255 * (1.f - (t - 1.5f) / 0.5f));
-
-            autoSaveText.setFillColor(sf::Color(0, 200, 0, alpha));
-            autoSaveIcon.setColor(sf::Color(255, 255, 255, alpha));
-
-            autoSaveIcon.setPosition({
-                autoSaveText.getPosition().x - 40.f,
-                autoSaveText.getPosition().y - 4.f
-                });
-
-            window.draw(autoSaveText);
-            window.draw(autoSaveIcon);
-
-            autoSaveIcon.setColor(sf::Color(255, 255, 255, 255));
-
-        }
-        else {
-            showAutoSave = false;
-        }
+        window.draw(autoSaveText);
+        window.draw(autoSaveIcon);
     }
 }
 
-
-// --- Aktualizacja UI ---
-void Game::updateUI() {
-    waveText.setString("Wave: " + std::to_string(currentWave));
-    enemiesText.setString("Enemies: " + std::to_string(enemies.size() + enemiesToSpawn));
-}
 
 // --- Map ---
 void Game::setMap(Map* m) { map = m; }
@@ -1303,4 +1353,3 @@ void Game::applyMeadowBossAbility() {
     }
 
 }
-
