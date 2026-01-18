@@ -17,7 +17,6 @@
 Game::Game()
     :autoSaveIcon(autoSaveTexture)
     , font()
-    , goldText(font)
     , waveText(font)
     , enemiesText(font)
     , livesText(font)
@@ -28,39 +27,33 @@ Game::Game()
     , gameOver(false)
     , Restart(font)
     , Exit(font)
-    , TowerTypeText(font)
-    , infoText(font) 
+    , infoText(font) // dodatkowy tekst informacyjny
     , autoSaveText(font)
     , nodeCompletedText(font)
 
 {
-    //Wczytanie czcionki 
+    // --- Wczytanie czcionki ---
     if (!font.openFromFile("assets/ArialMT.ttf")) {
         throw std::runtime_error("Nie można wczytać czcionki");
     }
 
     // --- Ustawienia czcionek i kolorów ---
     waveText.setCharacterSize(20);
-    goldText.setCharacterSize(30);
     enemiesText.setCharacterSize(20);
     livesText.setCharacterSize(20);
     GameOverText.setCharacterSize(80); // duży tekst Game Over
     NextWaveText.setCharacterSize(60);
-    Restart.setCharacterSize(30); //
-    Exit.setCharacterSize(30);
-    TowerTypeText.setCharacterSize(20);
+    Restart.setCharacterSize(30);
     infoText.setCharacterSize(24); // infoText z drugiego kodu
 
     waveText.setFillColor(sf::Color::Black);
-    goldText.setFillColor(sf::Color::Black);
     enemiesText.setFillColor(sf::Color::Black);
     livesText.setFillColor(sf::Color::Black);
     GameOverText.setFillColor(sf::Color::Red);
     NextWaveText.setFillColor(sf::Color::Green);
     Restart.setFillColor(sf::Color::White);
     Exit.setFillColor(sf::Color::White);
-    TowerTypeText.setFillColor(sf::Color::Black);
-    infoText.setFillColor(sf::Color::Green); // infoText kolor
+    infoText.setFillColor(sf::Color::Green);
 
     // --- Pozycje tekstów na ekranie ---
     waveText.setPosition({ 10.f, 20.f });
@@ -174,7 +167,8 @@ void Game::addTower(Tower tower) {
 // --- Umieszczanie wieży na mapie ---
 void Game::placeTower(sf::Vector2f position) {
     if (!map) return;
-
+    if (towerPlaceLockTimer > 0.f)
+        return;
     int gridX = static_cast<int>(position.x / map->tileSize);
     int gridY = static_cast<int>(position.y / map->tileSize);
     if (gridX < 0 || gridY < 0 || gridX >= map->getWidth() || gridY >= map->getHeight()) return;
@@ -205,7 +199,7 @@ void Game::startGame() {
     enemiesToSpawn = 0;
     waveInProgress = false;
     isBossWave = false;
-    
+    towerPlaceLockTimer = 1.f;
     gameOver = false;
     spawnTimer = 0.f;
     waveBreakTimer = 0.f;
@@ -235,48 +229,39 @@ void Game::startGame() {
 
 }
 // --- Rozpoczęcie kolejnej fali ---
-void Game::startNextWave()
-{
-   
-
+void Game::startNextWave() {
     currentWave++;
     waveJustLoaded = false;
 
-    // --- bazowy balans ---
     currentWaveConfig.enemyHP = 50 + currentWave * 10;
     currentWaveConfig.speed = 1.0f + currentWave * 0.03f;
 
     spawnDelay = 0.8f;
     spawnTimer = 0.f;
 
-    // =========================
-    // ADVENTURE MODE
-    // =========================
     if (mode == GameMode::Adventure) {
-        isBossWave = false;                  // boss NIE przez %5
-        enemiesToSpawn = 5 + currentWave;    // normalne fale
-        waveInProgress = true;
+        if (adventureWave < 9) {
+            // normalna fala
+            isBossWave = false;
+            enemiesToSpawn = 5 + currentWave;
+            waveInProgress = true; // start normalnej fali
+        }
+        else {
+            // boss czeka w update()
+            isBossWave = true;
+            enemiesToSpawn = 0;
+            waveInProgress = false;
+        }
         return;
     }
 
-    // =========================
-    // ENDLESS MODE
-    // =========================
+    // Endless Mode pozostaje bez zmian
     isBossWave = (currentWave % 5 == 0);
-
-    if (isBossWave) {
-        currentWaveConfig.enemyHP *= 2;
-        enemiesToSpawn = 1;
-    }
-    else {
-        enemiesToSpawn = 5 + currentWave;
-    }
-
-    if (currentWave % 3 == 0)
-        advanceBiome();
-
+    enemiesToSpawn = isBossWave ? 1 : 5 + currentWave;
     waveInProgress = true;
 }
+
+
 
 
 // --- Rozpoczęcie kolejnej fali ---
@@ -330,6 +315,11 @@ void Game::update(float dt)
         return;
     }
 
+    if (towerPlaceLockTimer > 0.f) {
+        towerPlaceLockTimer -= dt;
+        if (towerPlaceLockTimer < 0.f)
+            towerPlaceLockTimer = 0.f;
+    }
 
     for (auto it = warningTiles.begin(); it != warningTiles.end();) {
         it->timer -= dt;
@@ -347,39 +337,25 @@ void Game::update(float dt)
     
     // ================= ADVENTURE FLOW =================
     if (mode == GameMode::Adventure) {
-
-        // normalne fale
-        if (!waveInProgress &&
-            enemies.empty() &&
-            enemiesToSpawn == 0 &&
-            adventureWave < 9)
-        {
-            
-            if (waveBreakTimer >= breakDuration) {
-                adventureWave++;
-                startNextWave();
-                waveBreakTimer = 0.f;
-            }
+        // zakończenie normalnej fali
+        if (waveInProgress && enemies.empty() && enemiesToSpawn == 0) {
+            waveInProgress = false;
+            waveBreakTimer = 0.f;
+            adventureWave++;
         }
 
         // boss
-        if (!waveInProgress &&
-            enemies.empty() &&
-            enemiesToSpawn == 0 &&
-            adventureWave >= 9 &&
-            !bossSpawned)
-        {
+        if (!waveInProgress && enemies.empty() && adventureWave >= 9 && !bossSpawned) {
             spawnBossForCurrentLevel();
             bossSpawned = true;
-            return;
         }
 
-        // boss zabity → world map
+        // po zabiciu bossa → world map
         if (bossSpawned && enemies.empty()) {
             onMapCompleted();
-            return;
         }
     }
+
 
 
 
