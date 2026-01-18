@@ -151,8 +151,8 @@ public:
     void startGame();  // reset gry
 
     // --- UI ---
-    void updateUI();
-    void drawUI(sf::RenderWindow& window);
+    void updateUI(float dt);
+    void drawUI(sf::RenderWindow& window) const;
     void draw(sf::RenderWindow& window) const;
 
     // --- Obsługa przycisków ---
