@@ -155,7 +155,7 @@ void Map::drawFlag2Tiles(sf::RenderWindow& window, const sf::Texture& tex, int g
 
 void Map::loadMap() {
     std::vector<std::string> layout = {
-        "W~XXXXXXXX#.XXXXXXXXXXXXX~#.XXW", // 0  
+        "W~.XXXXXXX#.XXXXXXXXXXXXX~#.XXW", // 0  
         "Y~S..W...A#A..W......S.~~~#AWAY", // 1
         "#######.W.###########.A~..#...W", // 2
         "W~.S..#..A.......S..#..~..#.S.Y", // 3
@@ -294,4 +294,5 @@ void Map::refreshLogic() {
         }
     }
 }
+
 
