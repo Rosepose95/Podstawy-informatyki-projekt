@@ -2,8 +2,6 @@
 #include <cmath>
 
 static int clampType(int t) {
-    if (t < 0) return 0;
-    if (t > 2) return 2;
     return t;
 }
 
@@ -28,9 +26,6 @@ Tower::Tower(int dmg, float x, float y, int Towertype,
 void Tower::applyType(int newType)
 {
     type = clampType(newType);
-
-    if (type < 0) type = 0;
-    if (type > 2) type = 2;
 
      //STATY per typ
     if (type == 0) { // 0 (poczatkowa)
@@ -118,6 +113,7 @@ void Tower::updateAttack(      //zmiana, dodanie lepszej fizyki
 void Tower::draw(sf::RenderWindow& window) const {
     window.draw(sprite);
 }
+
 
 
 
