@@ -132,8 +132,9 @@ public:
     // --- Flagi dodatkowe ---
     bool isCustomMap = false; // czy mapa niestandardowa
 
+
     bool isClickOnUI(sf::Vector2f mousePos) const; 
-    
+    const sf::Texture& getTowerTexture(int type) const;
 
     void setStartTPos(sf::Vector2f pos);
 };

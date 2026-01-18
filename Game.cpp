@@ -499,6 +499,11 @@ void Game::tryTowerType(sf::Vector2f mousePos) {
 }
 
 // --- Gettery ---
+const sf::Texture& Game::getTowerTexture(int type) const
+{
+    int t = type;
+    return towerTextures[t];
+}
 int Game::getBaseHP() const { return baseHP; }
 bool Game::isGameOver() const { return gameOver; }
 

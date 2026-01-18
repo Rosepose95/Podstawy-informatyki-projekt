@@ -8,6 +8,7 @@ char Map::getTile(int x, int y) const { return grid[y][x]; }
 int Map::getWidth() const { return grid[0].size(); }
 int Map::getHeight() const { return grid.size(); }
 bool Map::isBuildable(int x, int y) const
+
 {
     if (y < 0 || y >= getHeight() || x < 0 || x >= getWidth()) return false;
 
@@ -15,7 +16,17 @@ bool Map::isBuildable(int x, int y) const
     // budować wolno tylko na czystej trawie '.'
     // wszystko inne blokuje: ścieżka, woda, meta, drzewa, chwasty, kamienie, most, płoty itd.
     return (c == '.');
+}
 
+const sf::Texture& Map::getBrushTexture(char brush) const
+{
+    switch (brush) {
+    case '#': return texPath;
+    case '*': return texStone;
+    case '~': return texWater;
+    case '.': return texGrass;
+    default:  return texGrass; 
+    }
 }
 
 Map::Map() {

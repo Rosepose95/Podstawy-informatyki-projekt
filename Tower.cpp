@@ -54,7 +54,6 @@ void Tower::applyType(int newType)
         auto s = (*textures)[type].getSize();
         sprite.setOrigin({ s.x / 2.f, (float)s.y });
 
-       
         float targetW = 1.1f * tileSize;
         float targetH = 3.0f * tileSize;
         sprite.setScale({ targetW / s.x, targetH / s.y });
@@ -113,7 +112,6 @@ void Tower::updateAttack(      //zmiana, dodanie lepszej fizyki
 void Tower::draw(sf::RenderWindow& window) const {
     window.draw(sprite);
 }
-
 
 
 

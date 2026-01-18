@@ -29,6 +29,7 @@ public:
     void drawFenceY(sf::RenderWindow& window, int gridX, int gridY);
     bool isBuildable(int x, int y) const;
     void drawTower2Tiles(sf::RenderWindow& window, int gridX, int gridY);
+    const sf::Texture& getBrushTexture(char brush) const; //getter na tekstury do edytora
 private:
 
     std::array<sf::Texture, 4> texTrees;                 // tree_1..tree_4

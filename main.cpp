@@ -83,7 +83,18 @@ int main() {
 
     bool canPaint = false;
     char currentBrush = '#';
+    auto updateBrushPreview = [&]() {
+        const sf::Texture* tex = nullptr;
 
+        if (currentBrush == 'T') {
+            tex = &game.getTowerTexture(0);   // startowa wieża do podglądu
+        }
+        else {
+            tex = &map.getBrushTexture(currentBrush); // trawa/path/meta itd.
+        }
+        hudBG.setFillColor(sf::Color::White);
+        hudBG.setTexture(tex, true);
+        };
 
     while (window.isOpen()) {
         sf::Vector2i mousepos = sf::Mouse::getPosition(window);
@@ -162,6 +173,7 @@ int main() {
                                 state = GameState::EDITOR;
                                 map.clearMap();
                                 canPaint = false;
+                                updateBrushPreview();
                             }
                         }
                     }
@@ -174,10 +186,11 @@ int main() {
             // --- TRYB EDITORA ---
             else if (state == GameState::EDITOR) {
                 if (const auto* key = ev->getIf<sf::Event::KeyPressed>()) {
-                    if (key->code == sf::Keyboard::Key::Num1) currentBrush = '.';
-                    if (key->code == sf::Keyboard::Key::Num2) currentBrush = '#';
-                    if (key->code == sf::Keyboard::Key::Num3) currentBrush = '*';
-                    if (key->code == sf::Keyboard::Key::Num4) currentBrush = 'T';
+                    if (key->code == sf::Keyboard::Key::Num1) { currentBrush = '.'; updateBrushPreview(); }
+                    if (key->code == sf::Keyboard::Key::Num2) { currentBrush = '#'; updateBrushPreview(); }
+                    if (key->code == sf::Keyboard::Key::Num3) { currentBrush = '*'; updateBrushPreview(); }
+                    if (key->code == sf::Keyboard::Key::Num4) { currentBrush = 'T'; updateBrushPreview(); }
+
 
                     if (key->code == sf::Keyboard::Key::Enter) {
 
@@ -221,18 +234,20 @@ int main() {
                     if (mouse->button == sf::Mouse::Button::Left)
                         canPaint = false;
                 }
-                if (currentBrush == '.') {
-                    hudBG.setFillColor(sf::Color::Green);
-                }
-                else if (currentBrush == '#') {
-                    hudBG.setFillColor(sf::Color(150, 150, 150));
-                }
-                else if (currentBrush == '*') {
-                    hudBG.setFillColor(sf::Color(255, 100, 0));
-                }
-                else {
-                    hudBG.setFillColor(sf::Color::Blue);
-                }
+                auto updateBrushPreview = [&]() {
+                    const sf::Texture* tex = nullptr;
+
+                    if (currentBrush == 'T') {
+                        tex = &game.getTowerTexture(0); // preview startowej wieży
+                    }
+                    else {
+                        tex = &map.getBrushTexture(currentBrush); // trawa/path/meta/woda
+                    }
+                    hudBG.setTexture(tex, true);
+
+                    hudBG.setFillColor(sf::Color::White); 
+                    hudBG.setTexture(tex, true);          
+                    };
             }
 
             // --- ROZGRYWKA ---
