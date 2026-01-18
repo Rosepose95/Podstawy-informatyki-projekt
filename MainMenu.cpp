@@ -73,17 +73,20 @@ void MainMenu::draw(sf::RenderWindow& window) {
     Button* buttons[] = { &adventureBtn, &endlessBtn, &easyBtn, &normalBtn, &hardBtn, &startBtn, &backBtn };
 
     for (auto b : buttons) {
-        // Kolor przycisku – jeśli wybrany, cały przycisk na żółto
-        if (b->selected) b->box.setFillColor(sf::Color(255, 220, 0));
+        if (b->selected)
+            b->box.setFillColor(sf::Color(255, 220, 0));
+        else if (b->hovered)
+            b->box.setFillColor(sf::Color(200, 200, 50));
+        else
+            b->box.setFillColor(sf::Color(220, 220, 220));
 
         window.draw(b->box);
         window.draw(b->text);
 
-        // Podkreślenie tylko dla wybranych przycisków (opcjonalnie)
-        if (b->selected) {
-            b->box.setOutlineColor(sf::Color::Red);
-        }
+        // Podkreślenie tylko dla wybranych przycisków
+        b->box.setOutlineColor(b->selected ? sf::Color::Red : sf::Color::Black);
     }
+
 }
 
 
@@ -91,50 +94,68 @@ void MainMenu::draw(sf::RenderWindow& window) {
 
 
 void MainMenu::handleClick(sf::Vector2f mousePos) {
-    backPressed = false;
-    confirmed = false;
 
-    // --- TRYBY GRY (Adventure / Endless) ---
+    // --- TRYBY GRY ---
     if (adventureBtn.box.getGlobalBounds().contains(mousePos)) {
         selectedMode = GameMode::Adventure;
         adventureBtn.selected = true;
         endlessBtn.selected = false;
     }
-    if (endlessBtn.box.getGlobalBounds().contains(mousePos)) {
+    else if (endlessBtn.box.getGlobalBounds().contains(mousePos)) {
         selectedMode = GameMode::Endless;
         endlessBtn.selected = true;
         adventureBtn.selected = false;
     }
 
-    // --- POZIOMY TRUDNOŚCI (Easy / Normal / Hard) ---
+    // --- POZIOMY TRUDNOŚCI ---
     if (easyBtn.box.getGlobalBounds().contains(mousePos)) {
         selectedDifficulty = Difficulty::Easy;
         easyBtn.selected = true;
         normalBtn.selected = false;
         hardBtn.selected = false;
     }
-    if (normalBtn.box.getGlobalBounds().contains(mousePos)) {
+    else if (normalBtn.box.getGlobalBounds().contains(mousePos)) {
         selectedDifficulty = Difficulty::Normal;
         normalBtn.selected = true;
         easyBtn.selected = false;
         hardBtn.selected = false;
     }
-    if (hardBtn.box.getGlobalBounds().contains(mousePos)) {
+    else if (hardBtn.box.getGlobalBounds().contains(mousePos)) {
         selectedDifficulty = Difficulty::Hard;
         hardBtn.selected = true;
         easyBtn.selected = false;
         normalBtn.selected = false;
     }
 
-    // --- START / BACK ---
-    if (startBtn.box.getGlobalBounds().contains(mousePos)) confirmed = true;
-    if (backBtn.box.getGlobalBounds().contains(mousePos)) backPressed = true;
+    // --- START ---
+    if (startBtn.box.getGlobalBounds().contains(mousePos)) {
+        if ((adventureBtn.selected || endlessBtn.selected) &&
+            (easyBtn.selected || normalBtn.selected || hardBtn.selected))
+        {
+            confirmed = true;
+        }
+    }
+
+    // --- BACK ---
+    if (backBtn.box.getGlobalBounds().contains(mousePos)) {
+        backPressed = true;
+    }
 }
-
-
 void MainMenu::reset() {
     confirmed = false;
     backPressed = false;
     selectedMode = GameMode::Adventure;
     selectedDifficulty = Difficulty::Normal;
+
+    Button* buttons[] = { &adventureBtn, &endlessBtn, &easyBtn, &normalBtn, &hardBtn, &startBtn, &backBtn };
+    for (auto b : buttons) {
+        b->selected = false;
+        b->hovered = false;
+        b->box.setFillColor(sf::Color(220, 220, 220));
+        b->box.setOutlineColor(sf::Color::Black);
+    }
+
+    // ustawiamy domyślny tryb i trudność
+    adventureBtn.selected = true;
+    normalBtn.selected = true;
 }
