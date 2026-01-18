@@ -132,6 +132,7 @@ private:
 
     GameMode mode = GameMode::Adventure;
     Difficulty difficulty = Difficulty::Normal;
+    float towerPlaceLockTimer = 0.f; // ile czasu jeszcze nie można stawiać wież
 
 public:
     Game();
@@ -249,6 +250,7 @@ public:
     void applyMeadowBossAbility();
     bool canMoveTower(int tx, int ty);
     bool canPushTowerWithoutBlockingPath(int tx, int ty, Tower* movingTower);
+   
 };
 
 #endif
