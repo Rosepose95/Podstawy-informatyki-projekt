@@ -175,7 +175,7 @@ void Map::loadMap() {
         "W#.........S..#.....S.#.A.###.Y", // 17
         "Y#..W..S......#########...#...W", // 18
         "W#.........A.....W...W..S.#..AY", // 19
-        "Y#XXXXXXXXXXXXXXXXXXXXXXXX#XXXX"  // 20 
+        "Y#WXXXXXXXXXXXXXXXXXXXXXXX#.XXX"  // 20 
     };
     int rows = (int)layout.size();           //pion liczy znaki
     int cols = (int)layout[0].size();        //poziom liczy znaki
@@ -294,3 +294,4 @@ void Map::refreshLogic() {
         }
     }
 }
+
