@@ -17,7 +17,7 @@ private:
     static std::array<sf::Texture, 3> s_textures;
     static bool s_loaded;
     static void loadTextures();
-
+    //rotacja w zaleznosci od poczatkowego polozenia grafiki
     static constexpr float ROT_OFFSET_DEG = +90.f; 
 
 public:
@@ -33,7 +33,6 @@ public:
     sf::Vector2f getPosition() const;
     int getDamage() const;
 };
-
 #endif
 
 
