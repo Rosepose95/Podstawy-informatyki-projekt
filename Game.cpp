@@ -23,13 +23,17 @@ Game::Game()
     , Exit(font)
     , TowerTypeText(font)
     , infoText(font) // dodatkowy tekst informacyjny
-{   
+
+{
+    
     // --- Wczytanie czcionki ---
     if (!font.openFromFile("assets/ArialMT.ttf")) {
         throw std::runtime_error("Nie można wczytać czcionki");
     }
-    
+
     // --- Ustawienia czcionek i kolorów ---
+  
+    waveText.setPosition({});
     waveText.setCharacterSize(20);
     goldText.setCharacterSize(30);
     enemiesText.setCharacterSize(20);
@@ -73,8 +77,6 @@ Game::Game()
     Restart.setString("Restart");
     Exit.setString("Exit");
     TowerTypeText.setString("UP");
-
-    
 
     // --- Ekran Game Over ---
     GameOverScreen.setSize({ 1240.f, 840.f });
@@ -158,7 +160,7 @@ Game::Game()
     //koszt postawienia wiezy
     int Game::towerCost(int type) const {
 
-        static const int cost[3] = { 5, 20, 50 };
+        static const int cost[3] = { 10, 40, 90 };
         if (type < 0) type = 0;
         if (type > 2) type = 2;
         return cost[type];
@@ -219,8 +221,6 @@ void Game::placeTower(sf::Vector2f position) {
             return;
         }
     }
-
-   
 
     // jeśli kafelek pusty, stawia nową wieżę, jeśli za mało golda daje komunikat 
     int cost = towerCost(selectedType);
@@ -451,8 +451,11 @@ void Game::drawUI(sf::RenderWindow& window) const {
 
 // --- Aktualizacja UI ---
 void Game::updateUI() {
+    waveText.setPosition({80.f, 55.f });
     waveText.setString("Wave: " + std::to_string(currentWave));
+    enemiesText.setPosition({ 80.f, 35.f });
     enemiesText.setString("Enemies: " + std::to_string(enemies.size() + enemiesToSpawn));
+    goldText.setPosition({ 550.f, 35.f });
     goldText.setString("gold: " + std::to_string(gold));
 }
 
@@ -485,15 +488,18 @@ void Game::tryTowerType(sf::Vector2f mousePos) {
 
     if (towerUpgradeStep == 0) {
         TowerTypeButton.setFillColor(sf::Color::Blue);
-        TowerTypeText.setString("BASIC");
+        TowerTypeText.setString("Level 1\n\n\n\n\n\n\n   10");
+        TowerTypeText.setPosition({ 1158.f, 97.f });
     }
     else if (towerUpgradeStep == 1) {
         TowerTypeButton.setFillColor(sf::Color::Yellow);
-        TowerTypeText.setString("UP");
+        TowerTypeText.setString("Level 2\n\n\n\n\n\n\n   40");
+        TowerTypeText.setPosition({ 1158.f, 97.f });
     }
     else {
         TowerTypeButton.setFillColor(sf::Color::Red);
-        TowerTypeText.setString("MAX");
+        TowerTypeText.setString("Level 3\n\n\n\n\n\n\n   90");
+        TowerTypeText.setPosition({ 1158.f, 97.f });
     }
     updateTowerTypeIcon();
 }
@@ -517,7 +523,6 @@ void Game::saveGame(int slot) {
     file << "lives " << playerLives << "\n";
     file << "gold " << gold << "\n";
     file << "shopLevel " << towerUpgradeStep << "\n"; 
-
 
 
     // --- Wieże ---

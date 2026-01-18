@@ -38,7 +38,6 @@ Enemy::Enemy(int h, float startX, float startY, EnemyType t) {
         type = t;
 
         int texIndex = 0;
-        
         switch (type) {
         case EnemyType::Normal:
             speed = 100.f;
@@ -68,8 +67,6 @@ Enemy::Enemy(int h, float startX, float startY, EnemyType t) {
             texIndex = 3;
             break;
         }
-
-    
 
         body.setSize({ 2.f * radius, 2.f * radius });
         body.setOrigin({ radius, radius });

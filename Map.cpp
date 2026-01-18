@@ -11,7 +11,6 @@ bool Map::isBuildable(int x, int y) const
 
 {
     if (y < 0 || y >= getHeight() || x < 0 || x >= getWidth()) return false;
-
     char c = grid[y][x];
     // budować wolno tylko na czystej trawie '.'
     // wszystko inne blokuje: ścieżka, woda, meta, drzewa, chwasty, kamienie, most, płoty itd.
@@ -275,7 +274,6 @@ void Map::loadMap() {
                     // grass
                     drawTile(window, texGrass, px, py);
                 }
-
                 //  OBIEKTY/DEKORACJE 
                 if (c == 'T') {
                     drawTower2Tiles(window, j, i);

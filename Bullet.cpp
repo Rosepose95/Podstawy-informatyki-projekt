@@ -40,12 +40,12 @@ Bullet::Bullet(sf::Vector2f start, sf::Vector2f target, int dmg, int bulletType)
     body.setScale({ scale, scale });
     body.setPosition(start);
   
+    //rotacja strza³y w momencie wystrza³u
     if (len > 0.0001f) {
         float angleDeg = std::atan2(direction.y, direction.x) * 180.f / 3.14159265f;
         body.setRotation(sf::degrees(angleDeg + ROT_OFFSET_DEG));
     }
 }
-
 void Bullet::update(float dt) {
     if (dead) return;
     body.move(direction * speed * dt);

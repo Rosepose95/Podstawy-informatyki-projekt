@@ -22,7 +22,6 @@ Tower::Tower(int dmg, float x, float y, int Towertype,
     applyType(type);
 }
 
-
 void Tower::applyType(int newType)
 {
     type = clampType(newType);
@@ -53,7 +52,7 @@ void Tower::applyType(int newType)
 
         auto s = (*textures)[type].getSize();
         sprite.setOrigin({ s.x / 2.f, (float)s.y });
-
+        //skalowanie grafiki toweru, 3 w górê, 1.1 szerokoœæ
         float targetW = 1.1f * tileSize;
         float targetH = 3.0f * tileSize;
         sprite.setScale({ targetW / s.x, targetH / s.y });
@@ -64,10 +63,6 @@ void Tower::applyType(int newType)
     {
         applyType(newType);
     }
-
-
-
-
 
 void Tower::updateAttack(      //zmiana, dodanie lepszej fizyki
     std::vector<Enemy>& enemies,
@@ -107,7 +102,6 @@ void Tower::updateAttack(      //zmiana, dodanie lepszej fizyki
         type
     );
 }
-
 
 void Tower::draw(sf::RenderWindow& window) const {
     window.draw(sprite);

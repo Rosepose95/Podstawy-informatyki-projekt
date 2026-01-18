@@ -27,7 +27,7 @@ Menu::Menu(float width, float height, sf::Font& arial)
     backgroundSpirite.setScale({ width / (float)texturesize.x, height / (float)texturesize.y });
 
     // --- TYTUŁ ---
-    title.setString("TOWER DEFFENCE");
+    title.setString("Bug Apocalypse");
     title.setCharacterSize(80);
     title.setFillColor(sf::Color(0, 0, 128));
     title.setStyle(sf::Text::Bold | sf::Text::Italic);
