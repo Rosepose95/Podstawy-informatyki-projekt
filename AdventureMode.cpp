@@ -43,7 +43,7 @@ void AdventureMode::init() {
     nodes["grasslands"] = { "grasslands", Biomes::Meadow, true,  false, false };
     nodes["forest"] = { "forest",     Biomes::Fire, false, false, false };
     nodes["ice"] = { "ice",        Biomes::Ice,    false, false, true };
-    // nodes["water"]      = { "water",      Biomes::Water,  false, false, false };
+  
 
 }
 
@@ -53,7 +53,7 @@ int AdventureMode::getRewardGold(const std::string& nodeId) const
     if (nodeId == "grasslands") return 50;
     if (nodeId == "forest")     return 75;
     if (nodeId == "ice")        return 100;
-    // if (nodeId == "volcano")    return 150;
+    
 
     return 25; // fallback
 }
@@ -63,6 +63,7 @@ Biomes AdventureMode::getBiomeForNode(const std::string& id) const {
         return Biomes::Meadow; // fallback
     return it->second.biome;
 }
+
 
 
 
