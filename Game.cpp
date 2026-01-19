@@ -389,6 +389,10 @@ void Game::update(float dt)
             waveBreakTimer = 0.f;
         }
     }
+    if (mode == GameMode::Adventure)
+        inWorldMap = false;
+    else
+        inWorldMap = false; // Custom i Endless = normalna gra
 
     // ================= SPAWN ENEMIES =================
     if (enemiesToSpawn > 0) {
@@ -919,7 +923,11 @@ void Game::handleWorldMapClick(sf::Vector2f mouseWorldPos)
         isBossWave = false;
 
         currentBiome = adventure.getBiomeForNode(nodeId);
-        loadMapById("default");   // lub mapa noda
+        if (isCustomMap)
+            loadMapById("custom");
+        else
+            loadMapById("default");
+        // lub mapa noda
         startGame();
 
     }
