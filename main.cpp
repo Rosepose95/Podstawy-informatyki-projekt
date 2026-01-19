@@ -97,6 +97,7 @@ int main() {
 
     bool canPaint = false;
     char currentBrush = '#';
+    bool startFromEditor = false;
 
     while (window.isOpen()) {
         sf::Vector2i mousepos = sf::Mouse::getPosition(window);
@@ -241,12 +242,25 @@ int main() {
                             game.setDifficulty(modeMenu.getSelectedDifficulty());
                             game.applyDifficulty(modeMenu.getSelectedDifficulty());
 
-                            map.mapId = "default";
-                            map.loadMap();
-                            map.refreshLogic();
+                            if (startFromEditor) {
+                                map.mapId = "custom";
+                                map.refreshLogic();
+                            }
+                            else {
+                                map.mapId = "default";
+                                map.loadMap();
+                                map.refreshLogic();
+                            }
 
-                            if (game.getMode() == GameMode::Adventure) game.enterWorldMap();
-                            else game.startGame();
+
+                            game.startGame();
+                            startFromEditor = false;
+
+                            if (game.getMode() == GameMode::Adventure)
+                                game.enterWorldMap();
+
+                            state = GameState::PLAYING;
+
 
                             state = GameState::PLAYING;
                             modeMenu.reset(); // resetujemy menu po rozpoczęciu gry
@@ -295,9 +309,17 @@ int main() {
                         if (!TowerFound) {
                             game.setStartTPos({ 14 * ts + ts / 2.f, 11 * ts + ts / 2.f });
                         }
+                        game.isCustomMap = true;
+                        map.mapId = "custom";
                         map.refreshLogic();
-                        game.startGame();
+
+                        startFromEditor = true;
                         state = GameState::MODE_SELECT;
+                        showMainMenu = true;
+                        modeMenu.reset();
+
+
+
                         mouseLeftClicked = false;
 
 
