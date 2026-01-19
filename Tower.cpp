@@ -102,74 +102,49 @@ void Tower::upgrade() {
 void Tower::draw(sf::RenderWindow& window) const {
     window.draw(shape);
 
-
-    float y = shape.getPosition().y - 30.f;
-    float x = shape.getPosition().x - 12.f;
-    // --- Wskaźniki efektów ---
-    float yb = shape.getPosition().y - 30.f;  // start nad wieżą
-    float xb = shape.getPosition().x - 20.f;  // wyrównanie do środka wieży
-    float barWidth = 40.f;                   // szerokość pasków
-    float barHeight = 5.f;                   // wysokość pasków
+    float barWidth = 40.f;
+    float barHeight = 5.f;
     float spacing = 2.f;
 
-    // Funkcja pomocnicza do rysowania paska
+    float barX = shape.getPosition().x - barWidth / 2.f;
+    float barY = shape.getPosition().y - 30.f;
+
     auto drawBar = [&](int current, int max, sf::Color color) {
+        if (max <= 0 || current <= 0)
+            return;
+
+        // tło
         sf::RectangleShape bg({ barWidth, barHeight });
-        bg.setFillColor(sf::Color(50, 50, 50, 200));
-        bg.setPosition({ xb, yb });
+        bg.setFillColor(sf::Color(40, 40, 40, 200));
+        bg.setPosition({ barX, barY });
         window.draw(bg);
 
-        if (max > 0 && current > 0) {
-            float ratio = static_cast<float>(current) / max;
-            sf::RectangleShape fg({ barWidth * ratio, barHeight });
-            fg.setFillColor(color);
-            fg.setPosition({ xb, yb });
-            window.draw(fg);
-        }
+        // wypełnienie
+        float ratio = static_cast<float>(current) / max;
+        sf::RectangleShape fg({ barWidth * ratio, barHeight });
+        fg.setFillColor(color);
+        fg.setPosition({barX, barY});
+        window.draw(fg);
 
-        y -= (barHeight + spacing);  // przesuwamy pasek wyżej
+        barY -= (barHeight + spacing); // 👈 przesuwamy w górę
         };
-    if (burnStacks > 0) {
-        sf::CircleShape c(4.f);
-        c.setFillColor(sf::Color::Red);
-        c.setPosition({ x, y });
-        window.draw(c);
-        x += 10.f;
-        drawBar(burnStacks, MAX_BURN, sf::Color::Red);
-    }
 
-    if (infestationStacks > 0) {
-        sf::CircleShape c(4.f);
-        c.setFillColor(sf::Color(120, 0, 120));
-        c.setPosition({ x, y });
-        window.draw(c);
-        x += 10.f;
-        drawBar(infestationStacks, MAX_INFESTATION, sf::Color(120, 0, 120));    // fioletowy
-    }
+    // 🔥 Burn
+    drawBar(burnStacks, MAX_BURN, sf::Color::Red);
 
-    if (slowStacks > 0) {
-        sf::CircleShape c(4.f);
-        c.setFillColor(sf::Color(150, 200, 255));
-        c.setPosition({ x, y });
-        window.draw(c);
-        x += 10.f;
-        drawBar(slowStacks, 5, sf::Color(150, 200, 255)); // niebieski
-    }
+    // ☣ Infestation
+    drawBar(infestationStacks, MAX_INFESTATION, sf::Color(120, 0, 120));
 
+    // 🐌 Slow
+    drawBar(slowStacks, 5, sf::Color(150, 200, 255));
+
+    // ❄ Freeze (czas)
     if (freezeTimer > 0.f) {
-        sf::CircleShape c(5.f);
-        c.setFillColor(sf::Color(120, 180, 255, 180));
-        c.setPosition({ x, y - 4.f });
-        window.draw(c);
-        drawBar(static_cast<int>(freezeTimer * 10), 50, sf::Color(120, 180, 255, 180)); // jasny niebieski
+        int freezeValue = static_cast<int>(freezeTimer * 10);
+        drawBar(freezeValue, 50, sf::Color(120, 180, 255));
     }
-
-
-        
-    
-
-
 }
+
 void Tower::addInfestation(int stacks) {
     infestationStacks += stacks;
     infestationStacks = std::min(infestationStacks, MAX_INFESTATION);
@@ -246,4 +221,3 @@ void Tower::freeze(float time) {
 bool Tower::isFrozen() const {
     return frozen;
 }
-
