@@ -59,6 +59,23 @@ int main() {
     sf::RectangleShape pauseOverlay({ 1240.f, 840.f });
     pauseOverlay.setFillColor(sf::Color(0, 0, 0, 150)); // półprzezroczyste tło pauzy
 
+    // --- ZMIENNA PRĘDKOŚCI ---
+    float gameSpeed = 1.0f; // 1.0f to norma, 2.0f to przyspieszenie
+
+    // --- PRZYCISK PRZYSPIESZENIA ---
+    sf::RectangleShape speedButton({ 40.f, 40.f });
+    speedButton.setPosition({ 1240.f - 100.f, 10.f }); // 50 pikseli na lewo od pauzy
+    sf::Color speedNormal(200, 200, 200);
+    sf::Color speedActive(255, 215, 0); // Złoty kolor, gdy x2 jest włączone
+    speedButton.setFillColor(speedNormal);
+
+	// --- TEKST PRĘDKOŚCI ---
+    sf::Text speedText(font);
+    speedText.setString("x1");
+    speedText.setCharacterSize(18);
+    speedText.setFillColor(sf::Color::Black);
+    speedText.setPosition({ 1240.f - 92.f, 18.f });
+
     // --- HUD edytora mapy ---
     sf::Text editorHUD(font);
     editorHUD.setString(
@@ -271,6 +288,19 @@ int main() {
 
                             game.placeTower({ centerX, centerY });
                         }
+						//--- PRZYCISK PRĘDKOŚCI ---
+                        if (speedButton.getGlobalBounds().contains(clickPos)) {
+                            if (gameSpeed == 1.0f) {
+                                gameSpeed = 2.0f;
+                                speedButton.setFillColor(speedActive);
+                                speedText.setString("x2");
+                            }
+                            else {
+                                gameSpeed = 1.0f;
+                                speedButton.setFillColor(speedNormal);
+                                speedText.setString("x1");
+                            }
+                        }
                     }
                 }
 }
@@ -343,7 +373,9 @@ int main() {
         }
 
         float dt = clock.restart().asSeconds();
-        if (state == GameState::PLAYING) game.update(dt);
+        if (state == GameState::PLAYING) {
+            game.update(dt * gameSpeed);
+		} // zwiekszenie predkosci gry zmiana
         if (!pauseClicked) {
             pauseButton.setFillColor(
                 pauseButton.getGlobalBounds().contains(sf::Vector2f{ static_cast<float>(mousepos.x), static_cast<float>(mousepos.y) })
@@ -413,6 +445,8 @@ int main() {
                 game.HandleHover(mousepos);
             if (!game.isGameOver()) {
                 window.draw(pauseButton);
+                window.draw(speedButton); // Rysujemy tło przycisku prędkości
+                window.draw(speedText);   // Rysujemy napis x1/x2
                 if (state == GameState::PLAYING) window.draw(pauseIcon);
                 else window.draw(playIcon);
             }
